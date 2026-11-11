@@ -31,7 +31,7 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 
 ## Who it's for
 
-- **For AI tinkerers:** an MCP server with 76 tools over search, your collection and your decks; vector similarity over oracle text (MiniLM embeddings in pgvector); and a rules classifier that labels cards by deckbuilding role (ramp, card advantage, targeted or mass disruption, plan), searchable with `pred:`.
+- **For AI tinkerers:** an MCP server with 77 tools over search, your collection and your decks; vector similarity over oracle text (MiniLM embeddings in pgvector); and a rules classifier that labels cards by deckbuilding role (ramp, card advantage, targeted or mass disruption, plan), searchable with `pred:`.
 - **For self-hosters:** one compose file, runs on CPU, and your collection and decks stay in your own Postgres. After the first sync, normal use makes no calls to Scryfall's API beyond three small catalog lookups at startup.
 - **For players:** a web UI for your collection and wishlist, deck import from Moxfield, Archidekt and Deckbox, "what should I buy next", a Commander bracket estimate, and combos from Commander Spellbook.
 
@@ -41,6 +41,7 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 - Search about 34,600 unique cards with Scryfall syntax, plus `pred:`, `has:combo`, `combo:`, `edhrec<` and ownership operators.
 - Find similar cards by embedding, or substitutes that keep a card's deck role.
 - Inspect each card's oracle tags, related cards, combos and predicted role labels; see why a label applies and override it.
+- See every printing of a card and how many of each you own.
 - Match names despite typos, with autocomplete and a random-card button.
 
 **Collection**
@@ -58,7 +59,7 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 - Analyse mana base, legality, upgrades, price, goldfish turns and opening hands; compare, diff and export lists for Arena or MTGO.
 
 **AI and API**
-- Expose the API as 76 MCP tools at `/mcp` (everything except the refresh trigger and the liveness probe), with optional bearer-token auth.
+- Expose the API as 77 MCP tools at `/mcp` (everything except the refresh trigger and the liveness probe), with optional bearer-token auth.
 - Return Scryfall-shaped JSON: card bodies are Scryfall's own payload (plus role labels) and every error, including request-validation failures, uses Scryfall's envelope.
 - Browse the live OpenAPI schema at `http://localhost:8000/docs`.
 
@@ -168,7 +169,7 @@ With the stack running, add the server to Claude Code:
 claude mcp add --transport http biblioplex http://localhost:8000/mcp
 ```
 
-Other clients take the same URL as a streamable-HTTP server. **20 of the 76 tools write data** (decks, collection, wishlist), so set `MCP_AUTH_TOKEN` in `.env` (`openssl rand -hex 32`) and pass `--header "Authorization: Bearer $MCP_AUTH_TOKEN"` whenever anything but you can reach the API. Then try:
+Other clients take the same URL as a streamable-HTTP server. **20 of the 77 tools write data** (decks, collection, wishlist), so set `MCP_AUTH_TOKEN` in `.env` (`openssl rand -hex 32`) and pass `--header "Authorization: Bearer $MCP_AUTH_TOKEN"` whenever anything but you can reach the API. Then try:
 
 - "Which Commander-legal red-green ramp creatures do I already own, and which is most played?"
 - "Evaluate my <deck name> deck: bracket, combos in it, combos one card away, and what to add for card advantage."
@@ -208,7 +209,7 @@ Compose publishes ports 8000 (API) and 8080 (web) on `127.0.0.1` only. The REST 
 ## Documentation
 
 - [Search syntax](docs/search-syntax.md): operators, Biblioplex extensions, tested queries
-- [MCP server](docs/mcp.md): client setup, auth, all 76 tools, example prompts
+- [MCP server](docs/mcp.md): client setup, auth, all 77 tools, example prompts
 - [HTTP API reference](docs/api.md): every endpoint with curl examples
 - [Web UI](docs/web-ui.md): what each tab does
 - [Configuration](docs/configuration.md): environment variables
