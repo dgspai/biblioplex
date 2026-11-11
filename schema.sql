@@ -339,6 +339,25 @@ CREATE TABLE IF NOT EXISTS cards_staging (
     raw                jsonb       NOT NULL
 );
 
+-- Every printing of every card (cards keeps one per oracle), refilled by
+-- PRINTINGS_SQL in the collapse transaction. Backs GET /cards/{id}/printings.
+CREATE TABLE IF NOT EXISTS printings (
+    id                 uuid        PRIMARY KEY,
+    oracle_id          uuid        NOT NULL,
+    set_code           text,
+    set_name           text,
+    collector_number   text,
+    released_at        date,
+    rarity             text,
+    finishes           text[],
+    image_small        text,
+    image_normal       text,
+    usd                numeric,
+    usd_foil           numeric
+);
+
+CREATE INDEX IF NOT EXISTS printings_oracle_id_idx ON printings (oracle_id);
+
 -- D18.1: Inventory tracking table. Stores user owned card quantities,
 -- linked to `cards.oracle_id`. Includes optional set_code/set_name from export.
 CREATE TABLE IF NOT EXISTS inventory (
