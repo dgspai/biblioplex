@@ -1,0 +1,23 @@
+name: PR title
+
+# Squash merges make the PR title the commit on main, and semantic-release
+# derives the version bump from it.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Title follows conventional commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          re='^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-z0-9._/-]+\))?!?: [^ ].*$'
+          if [[ "$TITLE" =~ $re ]]; then echo "ok: $TITLE"; exit 0; fi
+          echo "::error::PR title must be '<type>(scope)?: subject' (feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert). Got: $TITLE"
+          exit 1
