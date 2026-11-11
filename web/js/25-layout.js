@@ -127,3 +127,15 @@ document.addEventListener("click", (e) => {
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) d.close();
   }
 });
+
+// Phones show list or detail, not both (style.css): a fresh render of a
+// detail pane opens it, Back returns to the list.
+for (const pane of document.querySelectorAll(".cards-split > .detail-pane, #deckDetail")) {
+  const split = pane.closest(".cards-split, .decks-split");
+  const back = Object.assign(document.createElement("button"), { type: "button", className: "split-back", textContent: "← Back" });
+  back.addEventListener("click", () => split.classList.remove("detail-open"));
+  split.append(back);
+  new MutationObserver(() => {
+    split.classList.toggle("detail-open", !pane.querySelector(":scope > .empty:only-child"));
+  }).observe(pane, { childList: true });
+}

@@ -881,7 +881,7 @@ async function _loadDeck(deckId) {
   // for the newly-selected deck.
   _deckTimelineFilter = null;
   _deckViewBranch = null;
-  deckDetailEl.innerHTML = `<p class="empty">Loading…</p>`;
+  deckDetailEl.innerHTML = `<p class="loading">Loading…</p>`;
   try {
     const [deck, versions] = await Promise.all([
       api(`/decks/${encodeURIComponent(deckId)}`),
