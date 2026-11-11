@@ -52,6 +52,7 @@ def test_readonly_posts_are_real_tools() -> None:
 def test_known_tools() -> None:
     _, hints = _annotated()
     assert hints["search_cards"] == {"readOnlyHint": True}
+    assert hints["get_card_printings"] == {"readOnlyHint": True}
     assert hints["analyze_decklist"] == {"readOnlyHint": True}
     assert hints["delete_deck"]["destructiveHint"] is True
     assert hints["clear_inventory_collection"]["destructiveHint"] is True
