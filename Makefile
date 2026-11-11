@@ -3,6 +3,8 @@ VENV ?= $(firstword $(wildcard .venv) $(HOME)/.virtualenvs/biblioplex)
 PY   := $(VENV)/bin/python
 PIP  := $(VENV)/bin/pip
 BIN  := $(VENV)/bin
+# Editable installs freeze version metadata; CI bumps pyproject.toml.
+STAMP := $(VENV)/.biblioplex-installed
 
 # Pass-through args: `make test ARGS="-k named"` / `make lint ARGS=--fix`.
 ARGS ?=
@@ -22,8 +24,11 @@ help:  ## Print available targets
 	@echo "  VENV=$(VENV)  (override: make <target> VENV=/path)"
 	@echo "  ARGS=$(ARGS)  (extra args, e.g. make test ARGS=\"-k named\")"
 
-install:  ## pip install -e ".[dev]" into $(VENV)
-	$(PIP) install -e ".[dev]"
+install: $(STAMP)  ## pip install -e ".[dev]" into $(VENV) (re-runs when pyproject.toml changes)
+
+$(STAMP): pyproject.toml
+	$(PIP) install -q -e ".[dev]"
+	@touch $@
 
 hooks:  ## install git hooks (gitleaks, personal-data paths, noreply email on push)
 	$(BIN)/pre-commit install --hook-type pre-commit --hook-type pre-push
@@ -37,7 +42,7 @@ lint:  ## ruff check src tests  (ARGS=--fix to autofix)
 typecheck:  ## mypy src
 	$(BIN)/mypy src $(ARGS)
 
-test:  ## pytest -n $(XDIST) (ARGS="-k foo" etc; XDIST=0 for serial)
+test: $(STAMP)  ## pytest -n $(XDIST) (ARGS="-k foo" etc; XDIST=0 for serial)
 	@if [ "$(XDIST)" = "0" ]; then \
 	    $(BIN)/pytest $(ARGS); \
 	else \

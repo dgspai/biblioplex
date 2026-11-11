@@ -201,6 +201,7 @@ select, button {
   transition: background-color .12s, border-color .12s, color .12s;
 }
 select:hover, button:hover { background: var(--bg-hover); }
+select { max-width: 100%; }
 button[type="submit"], .btn--primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 button[type="submit"]:hover, .btn--primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--fg)); }
 /* Page container for the form-like tabs (Decks, Settings, Build, Compare).
@@ -266,6 +267,7 @@ main {
 }
 .splitter:hover, .splitter:focus-visible { background: linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat; }
 .splitter:focus-visible { outline: none; }
+.split-back { display: none; }
 
 .empty, .loading {
   color: var(--fg-muted);
@@ -719,22 +721,36 @@ ul.cards .meta .foil { color: var(--accent); }
 .inv-missing-qty { font-variant-numeric: tabular-nums; color: var(--fg-muted); }
 .inv-missing-name { font-weight: 500; }
 
-/* Mobile: stack panes vertically; results becomes a scrollable header. */
+/* Phone: bottom tab bar; list and detail take turns on one screen. */
 @media (max-width: 768px) {
-  .cards-split {
-    grid-template-columns: 1fr;
-    grid-template-rows: 40vh 0 auto;
+  body, body.sidebar-collapsed { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; height: 100dvh; }
+  .app-main { grid-row: 1; height: auto; min-height: 0; }
+  .sidebar {
+    grid-row: 2; flex-direction: row; gap: 0; padding: 0 0 env(safe-area-inset-bottom);
+    border-right: 0; border-top: 1px solid var(--border);
   }
-  .cards-split > .split-pane:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .brand, #sidebarToggle, #themeToggle { display: none; }
+  .sidebar-foot { display: contents; }
+  .nav-item, .sidebar-collapsed .nav-item {
+    flex: 1; flex-direction: column; justify-content: center; gap: 2px;
+    padding: var(--sp-2) 0; font-size: var(--fs-xs); background: none;
+  }
+  .nav-item.active, .nav-item:hover { background: none; }
+  .nav-item.active { color: var(--accent); }
+  .sidebar .icon { width: 20px; height: 20px; }
+  .sidebar-collapsed .sidebar .nav-label { position: static; width: auto; height: auto; clip: auto; }
+  input, select, textarea { font-size: 16px; }
+  :is(.cards-split, .decks-split) { display: grid; grid-template: auto minmax(0, 1fr) / minmax(0, 1fr); }
+  :is(.cards-split, .decks-split) > * { grid-area: 2 / 1; min-height: 0; overflow-y: auto; border: 0; }
   .splitter { display: none; }
-  body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
-  .sidebar { flex-direction: row; align-items: center; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: var(--sp-1) var(--sp-2); }
-  .brand { display: none; }
-  .nav-item { width: auto; }
-  .sidebar-foot { margin: 0 0 0 auto; }
-  #sidebarToggle { display: none; }
-  body.sidebar-collapsed { grid-template-columns: 1fr; }
-  .app-main { height: auto; min-height: 0; }
+  /* visibility, not display, so the list keeps its scroll position. */
+  :not(.detail-open) > :is(.detail-pane, .decks-detail-col),
+  .detail-open > :is(.split-pane:not(.detail-pane), .decks-list-col) { visibility: hidden; }
+  .detail-open > .split-back {
+    display: block; grid-area: 1 / 1; text-align: left; color: var(--accent);
+    border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: var(--sp-2) var(--sp-4);
+  }
+}
 }
 
 
@@ -798,12 +814,6 @@ ul.cards .meta .foil { color: var(--accent); }
 .decks-list-col { border-right: 1px solid var(--border); padding: 8px; }
 #deckDetail { max-width: 1100px; }
 #deckDetail > .empty:only-child { text-align: center; padding-top: 30vh; }
-/* One column on narrow screens — the detail pane needs the width more
-   than the list does. */
-@media (max-width: 800px) {
-  .decks-split { grid-template-columns: 1fr; grid-template-rows: 40vh auto; }
-  .decks-list-col { border-right: 0; border-bottom: 1px solid var(--border); }
-}
 .decks-detail-col h2 { font-size: var(--fs-xl); margin: 0; }
 .decks-detail-col h3 { font-size: var(--fs-sm); font-weight: 500; margin: 20px 0 6px; color: var(--fg-muted); }
 .deck-list { list-style: none; margin: 0; padding: 0; }
@@ -1079,13 +1089,16 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-slot-goals { font-weight: 600; margin: 0.2rem 0 0.6rem; text-transform: capitalize; }
 .build-query-echo { font-family: monospace; font-size: 0.8em; margin-bottom: 0.4rem; word-break: break-word; }
 @media (max-width: 680px) {
-  .build-layout { flex-direction: column; }
-  .build-sidenav { flex-direction: row; flex-wrap: wrap; width: auto; position: static; }
+  .build-layout { flex-direction: column; align-items: stretch; }
+  .build-sidenav { flex-direction: row; overflow-x: auto; width: auto; position: static; }
+  .build-navstep { flex: none; }
+  .build-scoreboard { position: static; }
 }
 .build-nav { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.2rem; border-top: 1px solid var(--border); padding-top: 0.8rem; }
 .build-nav #buildReset { margin-left: auto; }
 .build-cmd { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.5rem 0; }
 .build-cmd input[type=text] { flex: 1 1 12rem; }
+.build-cmd > label { min-width: 0; }
 .build-paste { margin-top: 1rem; }
 .build-paste textarea { width: 100%; font-family: monospace; }
 .build-otags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
