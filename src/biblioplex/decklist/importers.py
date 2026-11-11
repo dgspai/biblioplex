@@ -48,7 +48,7 @@ _SECTION_VALUES = {
 # Whole elements whose TEXT is not deck content. `<title>` in particular
 # sits before the card run and would otherwise parse as a card.
 _NON_CONTENT_RE = re.compile(r"(?is)<(head|script|style)\b.*?</\1>")
-_TAG_RE = re.compile(r"<[^>]+>")
+_TAG_RE = re.compile(r"<[^<>]+>")
 _HTML_HINTS = ("<br", "<html", "<!doctype html", "<body")
 
 
