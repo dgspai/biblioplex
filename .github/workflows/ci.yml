@@ -109,7 +109,7 @@ jobs:
       # App token: the app is the ruleset bypass actor on main; GITHUB_TOKEN
       # can't be one on a personal repo.
       - id: app
-        uses: actions/create-github-app-token@v2
+        uses: actions/create-github-app-token@v3
         with:
           app-id: ${{ vars.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
