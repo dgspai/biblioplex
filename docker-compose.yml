@@ -1,0 +1,45 @@
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: biblioplex
+      POSTGRES_USER: biblioplex
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "biblioplex"]
+      interval: 5s
+  api:
+    build: .
+    environment:
+      DATABASE_URL: postgresql+psycopg://biblioplex:${DB_PASSWORD}@db:5432/biblioplex
+      HF_EMBED_MODEL: ${HF_EMBED_MODEL:-sentence-transformers/all-MiniLM-L6-v2}
+      HF_EMBED_DIM: ${HF_EMBED_DIM:-384}
+      HF_EMBED_DEVICE: ${HF_EMBED_DEVICE:-cpu}
+      EMBED_BATCH: ${EMBED_BATCH:-256}
+      BULK_SOURCE_TYPE: ${BULK_SOURCE_TYPE:-default_cards}
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      SEARCH_DEFAULT_FILTER: ${SEARCH_DEFAULT_FILTER:-}
+      AUTO_REFRESH_IF_EMPTY: ${AUTO_REFRESH_IF_EMPTY:-true}
+      COMBOS_SOURCE_URL: ${COMBOS_SOURCE_URL-https://json.commanderspellbook.com/variants.json.gz}
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+      HF_HOME: /models
+    volumes:
+      - hfcache:/models
+    ports: ["${BIND_ADDR:-127.0.0.1}:8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+  web:
+    build: ./web
+    environment:
+      DEFAULT_Q: ${DEFAULT_Q:-game:paper f:commander}
+    ports: ["${BIND_ADDR:-127.0.0.1}:8080:80"]
+    depends_on:
+      - api
+volumes:
+  pgdata:
+  hfcache:

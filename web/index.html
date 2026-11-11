@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Biblioplex</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%232563eb'/%3E%3Cpath d='M4 3.5h6a2 2 0 0 1 2 2v7H6a2 2 0 0 1-2-2z' fill='none' stroke='white' stroke-width='1.4' stroke-linejoin='round'/%3E%3Cpath d='M6.5 6.5h3' stroke='white' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Shell: four sections. The eight data-tab ids are the routing truth
+       (?tab=); a section groups them, and sub-views live in .segments. -->
+  <nav class="sidebar" aria-label="Sections">
+    <a href="/" class="brand">Biblioplex</a>
+    <button type="button" id="tabSearch" title="Cards" class="nav-item active" data-tab="search" data-section="cards" aria-pressed="true"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.5" y="1.5" width="9" height="13" rx="1.5"/></svg><span class="nav-label">Cards</span></button>
+    <button type="button" title="Collection" class="nav-item" data-section="collection" data-goto-tab="inventory"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 5l6-3 6 3v6l-6 3-6-3z"/><path d="M2 5l6 3 6-3M8 8v6"/></svg><span class="nav-label">Collection</span></button>
+    <button type="button" title="Decks" class="nav-item" data-section="decks" data-goto-tab="decks"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="3.5" width="8" height="11" rx="1.5"/><path d="M3 12V3a1.5 1.5 0 0 1 1.5-1.5H10"/></svg><span class="nav-label">Decks</span></button>
+    <button type="button" id="tabCombos" title="Combos" class="nav-item" data-tab="combos" data-section="combos" aria-pressed="false"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 8c-1.5-2-2.5-3-4-3a3 3 0 0 0 0 6c1.5 0 2.5-1 4-3s2.5-3 4-3a3 3 0 0 1 0 6c-1.5 0-2.5-1-4-3z"/></svg><span class="nav-label">Combos</span></button>
+    <div class="sidebar-foot">
+      <button type="button" id="tabSettings" title="Settings" class="nav-item" data-tab="settings" data-section="settings" aria-pressed="false"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg><span class="nav-label">Settings</span></button>
+      <button type="button" id="sidebarToggle" aria-label="Collapse sidebar" title="Collapse sidebar  [" aria-expanded="true"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M6 2.5v11"/></svg></button>
+      <button type="button" id="themeToggle" class="btn--ghost" aria-label="Toggle dark mode" title="Toggle dark mode"><svg class="icon" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 2a6 6 0 0 1 0 12z" fill="currentColor"/></svg></button>
+    </div>
+  </nav>
+
+  <div class="app-main">
+  <div id="banner" role="status" aria-live="polite" hidden></div>
+
+  <div class="segments" data-section="collection" hidden>
+    <button type="button" id="tabInventory" data-tab="inventory" aria-pressed="false">Inventory</button>
+    <button type="button" id="tabWishlist" data-tab="wishlist" aria-pressed="false">Wishlist</button>
+  </div>
+  <div class="segments" data-section="decks" hidden>
+    <button type="button" id="tabDecks" data-tab="decks" aria-pressed="false">Library</button>
+    <button type="button" id="tabBuild" data-tab="build" aria-pressed="false">Build</button>
+    <button type="button" id="tabCompare" data-tab="compare" aria-pressed="false">Compare</button>
+  </div>
+
+  <main id="searchPane">
+    <form id="searchForm" class="cards-filters" role="search">
+      <label for="q" class="visually-hidden">Search query</label>
+      <div class="q-wrap">
+        <input id="q" name="q" type="search" spellcheck="false" autocapitalize="off" placeholder="Search cards" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="acDropdown" required>
+        <ul id="acDropdown" class="ac-dropdown" role="listbox" hidden></ul>
+        <ul id="historyDropdown" class="ac-dropdown history-dropdown" role="listbox" aria-label="Recent searches" hidden></ul>
+      </div>
+      <label for="order" class="visually-hidden">Order</label>
+      <select id="order" name="order">
+        <option value="relevance">best match</option>
+        <option value="name">name</option>
+        <option value="cmc">cmc</option>
+        <option value="power">power</option>
+        <option value="toughness">toughness</option>
+        <option value="released">released</option>
+        <option value="rarity">rarity</option>
+        <option value="color">color</option>
+        <option value="edhrec">edhrec</option>
+        <option value="usd">usd</option>
+      </select>
+      <label for="dir" class="visually-hidden">Direction</label>
+      <select id="dir" name="dir" title="Sort direction">
+        <option value="auto">auto</option>
+        <option value="asc">asc ↑</option>
+        <option value="desc">desc ↓</option>
+      </select>
+      <button type="submit" class="visually-hidden">Search</button>
+      <button type="button" id="randomBtn" class="icon-btn" title="Random card" aria-label="Random card"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="12" height="12" rx="2.5"/><circle cx="5.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r=".9" fill="currentColor" stroke="none"/></svg></button>
+      <a href="https://github.com/dgspai/biblioplex/blob/main/docs/search-syntax.md" target="_blank" rel="noopener" class="icon-btn" aria-label="Search syntax" title="Search syntax"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.5"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4"/><circle cx="8" cy="11.6" r=".5" fill="currentColor"/></svg></a>
+    </form>
+    <div id="cardsSplit" class="cards-split">
+      <section id="results" class="split-pane" aria-label="Search results" aria-live="polite">
+        <p class="empty">Loading…</p>
+      </section>
+      <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize panes" title="Drag to resize"></div>
+      <section id="detail" class="split-pane detail-pane" aria-label="Card detail">
+        <p class="empty">Select a card to see details.</p>
+      </section>
+    </div>
+    <nav id="cardsPager" class="pager-bar" hidden>
+      <span id="cardsPageInfo"></span>
+      <button type="button" id="cardsPrev">← prev</button>
+      <button type="button" id="cardsNext">next →</button>
+    </nav>
+  </main>
+
+  <section id="comparePane" class="page" aria-label="Deck compare" hidden>
+    <form id="compareForm">
+      <div class="compare-inputs">
+        <label>Deck A
+          <textarea id="compareA" name="a" rows="14" placeholder="1 Sol Ring&#10;1 Cultivate"></textarea>
+        </label>
+        <label>Deck B
+          <textarea id="compareB" name="b" rows="14" placeholder="1 Sol Ring&#10;1 Rampant Growth"></textarea>
+        </label>
+      </div>
+      <div class="deck-actions">
+        <button type="submit">Compare</button>
+      </div>
+    </form>
+    <div id="compareResult" aria-live="polite"></div>
+  </section>
+
+
+  <section id="combosPane" aria-label="Combo browse" hidden>
+    <form id="combosForm" class="cards-filters combos-filters" role="search">
+      <div id="combosCardChips" class="chips combos-card-chips" aria-label="Selected cards"></div>
+      <label for="combosCards" class="visually-hidden">Add a card</label>
+      <input id="combosCards" type="text" list="combosCardList" placeholder="Cards" title="Type a card name, pick a suggestion" autocomplete="off">
+      <datalist id="combosCardList"></datalist>
+      <div id="combosCi" class="combos-ci" role="group" aria-label="Color identity" title="Combos within these colors; C = colorless only">
+        <button type="button" class="ci-btn" data-ci="W" aria-pressed="false" aria-label="White" title="White"><img src="https://svgs.scryfall.io/card-symbols/W.svg" alt="" width="20" height="20"></button>
+        <button type="button" class="ci-btn" data-ci="U" aria-pressed="false" aria-label="Blue" title="Blue"><img src="https://svgs.scryfall.io/card-symbols/U.svg" alt="" width="20" height="20"></button>
+        <button type="button" class="ci-btn" data-ci="B" aria-pressed="false" aria-label="Black" title="Black"><img src="https://svgs.scryfall.io/card-symbols/B.svg" alt="" width="20" height="20"></button>
+        <button type="button" class="ci-btn" data-ci="R" aria-pressed="false" aria-label="Red" title="Red"><img src="https://svgs.scryfall.io/card-symbols/R.svg" alt="" width="20" height="20"></button>
+        <button type="button" class="ci-btn" data-ci="G" aria-pressed="false" aria-label="Green" title="Green"><img src="https://svgs.scryfall.io/card-symbols/G.svg" alt="" width="20" height="20"></button>
+        <button type="button" class="ci-btn" data-ci="C" aria-pressed="false" aria-label="Colorless" title="Colorless"><img src="https://svgs.scryfall.io/card-symbols/C.svg" alt="" width="20" height="20"></button>
+      </div>
+      <label for="combosResultQ" class="visually-hidden">Produces</label>
+      <input id="combosResultQ" type="text" placeholder="Produces" autocomplete="off">
+      <label for="combosQ" class="visually-hidden">Text in requirements or steps</label>
+      <input id="combosQ" type="text" placeholder="Text" title="Text in requirements or steps" autocomplete="off">
+      <label for="combosSort" class="visually-hidden">Sort</label>
+      <select id="combosSort">
+        <option value="id">default order</option>
+        <option value="cards">fewest cards</option>
+      </select>
+      <button type="submit" class="visually-hidden">Search</button>
+      <button type="button" id="combosResetBtn" class="icon-btn" title="Clear filters" aria-label="Clear filters"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    </form>
+    <div id="combosSplit" class="cards-split">
+      <section id="combosResults" class="split-pane" aria-label="Combos" aria-live="polite">
+        <p class="empty">Loading…</p>
+      </section>
+      <div id="combosSplitter" class="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize combos panes" title="Drag to resize"></div>
+      <section id="combosDetail" class="split-pane detail-pane" aria-label="Combo detail">
+        <p class="empty">Select a combo to see details.</p>
+      </section>
+    </div>
+    <nav id="combosPager" class="pager-bar" hidden>
+      <span id="combosPageInfo"></span>
+      <button type="button" id="combosPrev">← prev</button>
+      <button type="button" id="combosNext">next →</button>
+    </nav>
+  </section>
+
+  <section id="inventoryPane" aria-label="Collection inventory" hidden>
+    <form id="inventorySearchForm" class="cards-filters inv-search" role="search">
+      <label for="invQ" class="visually-hidden">Filter owned cards</label>
+      <input id="invQ" type="search" placeholder="Filter" autocomplete="off">
+      <button type="submit" class="visually-hidden">Filter</button>
+      <div id="invSummary" class="inv-summary"></div>
+    </form>
+    <div id="invSplit" class="cards-split">
+      <section id="invResults" class="split-pane" aria-label="Owned cards" aria-live="polite">
+        <p class="empty">Loading…</p>
+      </section>
+      <div id="invSplitter" class="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize inventory panes" title="Drag to resize"></div>
+      <section id="invDetail" class="split-pane detail-pane" aria-label="Card detail">
+        <p class="empty">Select a card to see details.</p>
+      </section>
+    </div>
+    <nav id="invPager" class="pager-bar" hidden>
+      <span id="invPageInfo"></span>
+      <button type="button" id="invPrev">← prev</button>
+      <button type="button" id="invNext">next →</button>
+    </nav>
+  </section>
+
+  <section id="wishlistPane" aria-label="Wishlist" hidden>
+    <form id="wishlistSearchForm" class="cards-filters inv-search" role="search">
+      <label for="wlQ" class="visually-hidden">Filter wanted cards</label>
+      <input id="wlQ" type="search" placeholder="Filter" autocomplete="off">
+      <button type="submit" class="visually-hidden">Filter</button>
+      <div id="wlSummary" class="inv-summary"></div>
+    </form>
+    <div id="wlSplit" class="cards-split">
+      <section id="wlResults" class="split-pane" aria-label="Wanted cards" aria-live="polite">
+        <p class="empty">Loading…</p>
+      </section>
+      <div id="wlSplitter" class="splitter" role="separator" aria-orientation="vertical" tabindex="0" aria-label="Resize wishlist panes" title="Drag to resize"></div>
+      <section id="wlDetail" class="split-pane detail-pane" aria-label="Card detail">
+        <p class="empty">Select a card to see details.</p>
+      </section>
+    </div>
+    <nav id="wlPager" class="pager-bar" hidden>
+      <span id="wlPageInfo"></span>
+      <button type="button" id="wlPrev">← prev</button>
+      <button type="button" id="wlNext">next →</button>
+    </nav>
+  </section>
+
+  <section id="decksPane" aria-label="Deck library" hidden>
+    <form id="deckSearchForm" class="cards-filters inv-search" role="search">
+      <label for="deckQ" class="visually-hidden">Filter decks</label>
+      <input id="deckQ" type="search" placeholder="Filter" autocomplete="off">
+      <button type="submit" class="visually-hidden">Filter</button>
+      <!-- D19.25 / D19.44: sort and filter go through the API, never a
+           reorder of the current page (the list is paginated). -->
+      <label for="deckSort" class="visually-hidden">Sort</label>
+      <select id="deckSort">
+        <option value="updated" selected>Recent</option>
+        <option value="name">Name</option>
+        <option value="coverage">Owned %</option>
+        <option value="missing_cost">Cost to finish</option>
+      </select>
+      <label for="deckSortDir" class="visually-hidden">Sort direction</label>
+      <select id="deckSortDir">
+        <option value="desc" selected>↓</option>
+        <option value="asc">↑</option>
+      </select>
+      <label for="deckCompletion" class="visually-hidden">Show</label>
+      <select id="deckCompletion">
+        <option value="" selected>All decks</option>
+        <option value="incomplete">Missing cards</option>
+        <option value="complete">Complete</option>
+      </select>
+      <button type="button" class="btn--ghost" data-open-dialog="deckPlanCard">Buy next</button>
+      <button type="button" class="btn--primary" data-open-dialog="deckImportDialog">Import</button>
+    </form>
+    <div id="deckLibStatus" class="deck-lib-status" role="status" aria-live="polite"></div>
+    <div class="decks-split">
+      <div class="decks-list-col">
+        <!-- D19.18: folder tree, from GET /decks/folders (ancestors derived
+             server-side). -->
+        <div id="deckFolders" class="deck-folders" aria-label="Deck folders"></div>
+        <div id="decksList" aria-live="polite"></div>
+        <p class="deck-cost-note">Prices: cheapest printing, as of the last card refresh.</p>
+      </div>
+      <div class="decks-detail-col">
+        <div id="deckDetail"><p class="empty">Pick a deck to see its versions.</p></div>
+      </div>
+    </div>
+
+    <dialog id="deckImportDialog" aria-labelledby="decksImportH">
+      <div class="dialog-head">
+        <h2 id="decksImportH">Import deck</h2>
+        <button type="button" class="icon-btn" data-close-dialog aria-label="Close">✕</button>
+      </div>
+      <form id="deckImportForm" class="inv-sync">
+        <label for="deckFile" class="visually-hidden">Export file</label>
+        <input id="deckFile" type="file" accept=".txt,.csv,.html,.htm,text/plain,text/csv,text/html">
+        <details class="inv-paste">
+          <summary>Paste instead</summary>
+          <label for="deckPasteText" class="visually-hidden">Decklist text</label>
+          <textarea id="deckPasteText" rows="8" placeholder="Commander&#10;1 Iroh, Grand Lotus&#10;&#10;Deck&#10;1 Sol Ring"></textarea>
+        </details>
+        <label for="deckName" class="visually-hidden">Deck name</label>
+        <input id="deckName" type="text" placeholder="Name" autocomplete="off">
+        <!-- D19.26 / D19.35: optional metadata, collapsed so the common case
+             stays a file picker and Import. Same DECK_META_INPUTS collector. -->
+        <details class="inv-paste deck-import-meta">
+          <summary>Details</summary>
+          <div class="deck-meta-grid">
+            <label for="deckImportBranch">List</label>
+            <select id="deckImportBranch">
+              <option value="main" selected>main</option>
+              <option value="deckbox">deckbox</option>
+              <option value="moxfield">moxfield</option>
+              <option value="archidekt">archidekt</option>
+            </select>
+            <label for="deckImportMessage">Note</label>
+            <input id="deckImportMessage" type="text" autocomplete="off">
+            <label for="deckImportDeckbox">Deckbox</label>
+            <input id="deckImportDeckbox" type="url" inputmode="url" autocomplete="off" placeholder="https://deckbox.org/sets/…">
+            <label for="deckImportMoxfield">Moxfield</label>
+            <input id="deckImportMoxfield" type="url" inputmode="url" autocomplete="off" placeholder="https://moxfield.com/decks/…">
+            <label for="deckImportArchidekt">Archidekt</label>
+            <input id="deckImportArchidekt" type="url" inputmode="url" autocomplete="off" placeholder="https://archidekt.com/decks/…">
+            <label for="deckImportNotes">Description</label>
+            <textarea id="deckImportNotes" rows="3"></textarea>
+          </div>
+        </details>
+        <div class="dialog-actions"><button type="submit" id="deckImportBtn">Import</button></div>
+      </form>
+      <div id="deckImportStatus" role="status" aria-live="polite"></div>
+      <div id="deckImportDiff" class="deck-import-diff"></div>
+    </dialog>
+
+    <!-- D19.46: library-wide planner; a dialog because it answers a
+         pre-shopping question, not an every-visit one. -->
+    <dialog id="deckPlanCard" class="deck-plan-card" aria-labelledby="deckPlanH">
+      <div class="dialog-head">
+        <h2 id="deckPlanH">What should I buy next?</h2>
+        <button type="button" class="icon-btn" data-close-dialog aria-label="Close">✕</button>
+      </div>
+      <form id="deckPlanForm" class="inv-sync">
+        <label for="deckPlanBudget">Budget (USD)</label>
+        <input id="deckPlanBudget" type="number" min="0" step="0.01" placeholder="any" inputmode="decimal">
+        <label for="deckPlanMaxCards">Max cards</label>
+        <input id="deckPlanMaxCards" type="number" min="1" step="1" placeholder="any" inputmode="numeric">
+        <div class="dialog-actions"><button type="submit">Plan</button></div>
+      </form>
+      <div id="deckPlanStatus" role="status" aria-live="polite"></div>
+      <div id="deckPlanResult"></div>
+    </dialog>
+  </section>
+
+  <section id="buildPane" class="page" aria-label="Guided deck builder" hidden></section>
+
+  <section id="settingsPane" class="page" aria-label="Settings" hidden>
+    <section class="settings-group" aria-labelledby="setImportH">
+      <h2 id="setImportH" title="Export from Deckbox while logged in, then upload the CSV here. Deckbox requires a session to export, so there is no URL sync.">Import from Deckbox</h2>
+      <form id="inventorySyncForm" class="inv-sync">
+        <h3>Inventory</h3>
+        <div class="inv-sync-row">
+          <label for="invCsvFile" class="visually-hidden">Inventory CSV file</label>
+          <input id="invCsvFile" type="file" accept=".csv,text/csv">
+          <label for="invMode" class="visually-hidden">Sync mode</label>
+          <select id="invMode" title="replace = the export is the whole truth; merge = only update the cards it lists">
+            <option value="replace" selected>replace</option>
+            <option value="merge">merge</option>
+          </select>
+          <button type="submit" id="invSyncBtn">Import</button>
+          <button type="button" id="invClearBtn" class="btn btn--danger btn--sm">Clear</button>
+        </div>
+        <details class="inv-paste">
+          <summary class="help">Paste CSV</summary>
+          <label for="invCsvText" class="visually-hidden">Inventory CSV text</label>
+          <textarea id="invCsvText" rows="5" placeholder="Count,Name,Edition&#10;2,Sol Ring,Commander 2021"></textarea>
+        </details>
+        <!-- Hidden until Bug.32 is fixed: Deckbox serves /sets/<id>/export
+             to anonymous callers as an HTML login page, so URL sync cannot
+             work. The API route still exists and 422s with an explanation;
+             only the input is hidden. Unhide this block when the fetch
+             path works again. See todo.md Bug.32 / D18.19. -->
+        <div class="inv-sync-row" id="invDeckboxUrlRow" hidden>
+          <label for="invDeckboxUrl" class="help">Deckbox set URL / id:</label>
+          <input id="invDeckboxUrl" type="text" placeholder="https://deckbox.org/sets/3293466" autocomplete="off">
+        </div>
+        <div id="invSyncStatus" role="status" aria-live="polite"></div>
+      </form>
+      <form id="wishlistSyncForm" class="inv-sync">
+        <h3>Wishlist</h3>
+        <div class="inv-sync-row">
+          <label for="wlCsvFile" class="visually-hidden">Wishlist CSV file</label>
+          <input id="wlCsvFile" type="file" accept=".csv,text/csv">
+          <label for="wlMode" class="visually-hidden">Sync mode</label>
+          <select id="wlMode" title="replace = the export is the whole truth; merge = only update the cards it lists">
+            <option value="replace" selected>replace</option>
+            <option value="merge">merge</option>
+          </select>
+          <button type="submit" id="wlSyncBtn">Import</button>
+          <button type="button" id="wlClearBtn" class="btn btn--danger btn--sm">Clear</button>
+        </div>
+        <details class="inv-paste">
+          <summary class="help">Paste CSV</summary>
+          <label for="wlCsvText" class="visually-hidden">Wishlist CSV text</label>
+          <textarea id="wlCsvText" rows="5" placeholder="Count,Name&#10;1,Mana Crypt"></textarea>
+        </details>
+        <div id="wlSyncStatus" role="status" aria-live="polite"></div>
+      </form>
+    </section>
+
+    <section class="settings-group" aria-labelledby="setRefreshH">
+      <h2 id="setRefreshH">Card data</h2>
+      <div class="settings-row">
+        <div id="refreshStatus" aria-live="polite"></div>
+        <button type="button" id="refreshBtn" class="btn btn--primary" title="Download the latest Scryfall data and rebuild search">Update card data</button>
+      </div>
+      <details class="refresh-advanced">
+        <summary class="help" title="Checking a step also checks the steps it needs; unchecking one unchecks its dependents.">Steps</summary>
+        <div class="refresh-stages" role="group" aria-label="Refresh steps">
+          <label><input type="checkbox" class="refresh-stage" value="ingest" checked> Card data</label>
+          <label title="Needs card data"><input type="checkbox" class="refresh-stage" value="embed" checked> Search embeddings</label>
+          <label title="Needs embeddings"><input type="checkbox" class="refresh-stage" value="hnsw" checked> Embedding index</label>
+          <label title="Needs card data"><input type="checkbox" class="refresh-stage" value="classify" checked> Card role labels</label>
+          <label><input type="checkbox" class="refresh-stage" value="tags" checked> Oracle tags</label>
+          <label title="Needs card data"><input type="checkbox" class="refresh-stage" value="combos" checked> Combos</label>
+          <label title="Needs card data"><input type="checkbox" class="refresh-stage" value="deck_cards" checked> Deck card index</label>
+        </div>
+        <div class="refresh-menu-actions">
+          <button type="button" id="refreshAllBtn" class="btn btn--ghost btn--sm">All</button>
+          <button type="button" id="refreshNoneBtn" class="btn btn--ghost btn--sm">None</button>
+        </div>
+      </details>
+    </section>
+
+    <section class="settings-group" aria-labelledby="setHistH">
+      <h2 id="setHistH" title="Every CSV that was applied, kept verbatim. Download one to re-apply it or diff it against a newer export.">Import history</h2>
+      <div id="uploadsList" aria-live="polite"><p class="empty">Loading…</p></div>
+    </section>
+
+    <footer class="about">
+      Biblioplex <span id="appVersion"></span> · <a href="https://github.com/dgspai/biblioplex" target="_blank" rel="noopener">GitHub</a>
+      · <a href="https://github.com/dgspai/biblioplex/issues/new" target="_blank" rel="noopener">Report a bug</a>
+    </footer>
+  </section>
+  </div>
+
+  <script src="helpers.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

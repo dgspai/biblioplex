@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>helpers self-check</title>
+</head>
+<body>
+<pre id="out"></pre>
+<script src="helpers.js"></script>
+<script>
+  const {
+    appendPredicate, splitTypeLine, bannerStateFromHealth,
+    urlStateFromSearch, urlStateToSearch, clampSplit,
+    cardFaceImages, relatedParts, mergeFaceData,
+    historyPush, landRecommendation, hoverPreviewShouldShow,
+    refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
+    shouldRerunSearch, emptyResultsCopy,
+  } = window.bibliohelpers;
+  const out = document.getElementById("out");
+  let fail = 0;
+
+  function check(name, actual, expected) {
+    const a = JSON.stringify(actual);
+    const e = JSON.stringify(expected);
+    const ok = a === e;
+    if (!ok) fail++;
+    const line = `${ok ? "PASS" : "FAIL"}  ${name}\n` +
+      (ok ? "" : `      expected ${e}\n      actual   ${a}\n`);
+    out.textContent += line;
+    console.log(line.trim());
+  }
+
+  // appendPredicate
+  check("append to empty",
+    appendPredicate("", 'kw:"Flying"'),
+    'kw:"Flying"');
+  check("append to plain term",
+    appendPredicate("lightning", 'kw:"Flying"'),
+    'lightning kw:"Flying"');
+  check("dedup exact match",
+    appendPredicate('kw:"Flying"', 'kw:"Flying"'),
+    'kw:"Flying"');
+  check("dedup mid-query",
+    appendPredicate('lightning kw:"Flying"', 'kw:"Flying"'),
+    'lightning kw:"Flying"');
+  check("quoted token not split (t:Wizard dedup with preceding quoted kw)",
+    appendPredicate('kw:"Living Weapon" t:Wizard', 't:Wizard'),
+    'kw:"Living Weapon" t:Wizard');
+  check("whitespace-only q treated as empty",
+    appendPredicate("   ", 't:Wizard'),
+    't:Wizard');
+  check("trims output",
+    appendPredicate("  lightning  ", 'r:mythic'),
+    'lightning r:mythic');
+
+  // splitTypeLine
+  check("em-dash split",
+    splitTypeLine("Legendary Creature — Human Wizard"),
+    ["Legendary", "Creature", "Human", "Wizard"]);
+  check("ascii-dash split",
+    splitTypeLine("Legendary Creature -- Human Wizard"),
+    ["Legendary", "Creature", "Human", "Wizard"]);
+  check("no dash",
+    splitTypeLine("Instant"),
+    ["Instant"]);
+  check("artifact creature",
+    splitTypeLine("Artifact Creature — Construct"),
+    ["Artifact", "Creature", "Construct"]);
+  check("empty string",
+    splitTypeLine(""),
+    []);
+  check("null",
+    splitTypeLine(null),
+    []);
+  check("undefined",
+    splitTypeLine(undefined),
+    []);
+
+  // bannerStateFromHealth (D10.5)
+  check("tags loaded → hidden",
+    bannerStateFromHealth({oracle_tags_count: 540871, refresh: {running: false}}),
+    {kind: "hidden"});
+  check("tags=0 mid-refresh → ingesting (carries job id)",
+    bannerStateFromHealth({oracle_tags_count: 0, refresh: {running: true, job_id: "abc"}}),
+    {kind: "ingesting", jobId: "abc"});
+  check("tags=0 after refresh ended → missing (bug-fix case)",
+    bannerStateFromHealth({oracle_tags_count: 0, refresh: {running: false}}),
+    {kind: "missing"});
+  check("tags=null (pre-migration deployment) → hidden",
+    bannerStateFromHealth({oracle_tags_count: null, refresh: {running: false}}),
+    {kind: "hidden"});
+  check("degenerate empty body → hidden (defensive default)",
+    bannerStateFromHealth({}),
+    {kind: "hidden"});
+  check("tags=0 mid-refresh without job_id → ingesting (no jobId field)",
+    bannerStateFromHealth({oracle_tags_count: 0, refresh: {running: true}}),
+    {kind: "ingesting"});
+
+  check("tags loaded but refresh running → ingesting (progress banner)",
+    bannerStateFromHealth({cards_count: 5, oracle_tags_count: 9, refresh: {running: true, job_id: "j"}}),
+    {kind: "ingesting", jobId: "j"});
+
+  // Core vs best-effort stages (first-run banner)
+  (function () {
+    const t0 = "2026-01-01T00:00:00Z";
+    const t1 = "2026-01-01T00:00:50Z";
+    const fin = (name) => ({name, started_at: t0, finished_at: t1, rows: 1, error: null});
+    const run = (name) => ({name, started_at: t0, finished_at: null, rows: null, error: null});
+    const planned = ["ingest", "embed", "hnsw", "classify", "tags", "combos", "deck_cards"];
+    const mk = (stages) => ({cards_count: 100, oracle_tags_count: 5,
+      refresh: {running: true, job_id: "j", planned_stages: planned, stages}});
+    const now = Date.parse("2026-01-01T00:02:00Z");
+
+    const early = mk([fin("ingest"), run("embed")]);
+    const p1 = refreshProgress(early.refresh, [], now);
+    check("core: M comes from the run's planned stages, not the checkboxes",
+      [p1.rows.length, p1.coreDone, p1.coreTotal, p1.coreComplete], [7, 1, 4, false]);
+    check("core unfinished → ingesting banner", bannerStateFromHealth(early).kind, "ingesting");
+
+    const late = mk([fin("ingest"), fin("embed"), fin("hnsw"), fin("classify"), fin("tags"), run("combos")]);
+    const p2 = refreshProgress(late.refresh, [], now);
+    check("core done, combos running → coreComplete", [p2.coreDone, p2.coreTotal, p2.coreComplete], [4, 4, true]);
+    check("core done, combos running → background (banner hidden, keep polling)",
+      bannerStateFromHealth(late), {kind: "background", jobId: "j"});
+
+    const noCore = {cards_count: 100, oracle_tags_count: 5,
+      refresh: {running: true, planned_stages: ["combos"], stages: [run("combos")]}};
+    check("combos-only run → background", bannerStateFromHealth(noCore).kind, "background");
+    check("no planned info (older server) → still ingesting",
+      bannerStateFromHealth({cards_count: 5, oracle_tags_count: 9, refresh: {running: true}}).kind, "ingesting");
+    check("empty cards table stays ingesting even if core looks done",
+      bannerStateFromHealth({...late, cards_count: 0}).kind, "ingesting");
+    check("subset run: M counts only selected core stages",
+      refreshProgress({running: true, planned_stages: ["ingest", "embed"], stages: [fin("ingest")]}, [], now).coreTotal, 2);
+  })();
+
+  // shouldRerunSearch: results appear on their own when cards become searchable
+  check("rerun: ingesting → background", shouldRerunSearch("ingesting", "background"), true);
+  check("rerun: ingesting → hidden", shouldRerunSearch("ingesting", "hidden"), true);
+  check("rerun: empty → ingesting does not", shouldRerunSearch("empty", "ingesting"), false);
+  check("rerun: ingesting → ingesting does not", shouldRerunSearch("ingesting", "ingesting"), false);
+  check("rerun: first probe (no prior) does not", shouldRerunSearch(null, "hidden"), false);
+  check("rerun: background → hidden does not", shouldRerunSearch("background", "hidden"), false);
+
+  // emptyResultsCopy: zero-results text depends on whether data is still loading
+  check("empty copy: ingesting says downloading",
+    /still downloading/i.test(emptyResultsCopy("ingesting").title), true);
+  check("empty copy: no-data state says downloading",
+    /still downloading/i.test(emptyResultsCopy("empty").title), true);
+  check("empty copy: normal keeps syntax hint",
+    /search syntax/i.test(emptyResultsCopy("hidden").body), true);
+  check("empty copy: background keeps syntax hint",
+    /search syntax/i.test(emptyResultsCopy("background").body), true);
+  // Ownership/wishlist operators -> explain the filter depends on imported data
+  for (const q of ["owned:0 t:dragon", "in:inventory", "is:owned", "is:unowned is:wanted", "owned>=2", "t:elf -is:unowned"]) {
+    const c = emptyResultsCopy("hidden", q);
+    check("empty copy: inventory filter " + q,
+      [c.title, /inventory/.test(c.body), c.cta.focus], ["No matches", true, "#invCsvFile"]);
+  }
+  for (const q of ["in:wishlist", "is:wanted", "wanted>=2 t:land", "is:unwanted"]) {
+    const c = emptyResultsCopy("hidden", q);
+    check("empty copy: wishlist filter " + q,
+      [c.title, /wishlist/.test(c.body), c.cta.focus], ["No matches", true, "#wlCsvFile"]);
+  }
+  check("empty copy: plain query has no CTA", emptyResultsCopy("hidden", "t:dragon").cta, undefined);
+  check("empty copy: bare word 'unowned' is not an operator", emptyResultsCopy("hidden", "unowned").cta, undefined);
+  check("empty copy: loading wins over ownership", emptyResultsCopy("ingesting", "owned:0").cta, undefined);
+
+  // refreshProgress (F3): per-stage rows from /health.refresh
+  (function () {
+    const t0 = "2026-01-01T00:00:00Z";
+    const t1 = "2026-01-01T00:00:50Z";
+    const now = Date.parse("2026-01-01T00:02:00Z");
+    const p = refreshProgress({running: true, stages: [
+      {name: "ingest", started_at: t0, finished_at: t1, rows: 10, error: null},
+      {name: "embed", started_at: t1, finished_at: null, rows: null, error: null},
+      {name: "tags", started_at: t0, finished_at: t1, rows: null, error: "boom"},
+    ]}, ["ingest", "embed", "tags", "combos"], now);
+    check("refreshProgress: statuses",
+      p.rows.map((r) => [r.name, r.status]),
+      [["ingest", "done"], ["embed", "running"], ["tags", "error"], ["combos", "pending"]]);
+    check("refreshProgress: elapsed uses finish, or now while running",
+      p.rows.map((r) => r.seconds),
+      [50, 70, 50, null]);
+    check("refreshProgress: done count excludes running/pending/error", p.done, 1);
+    check("refreshProgress: total seconds = first start to last finish/now", p.totalSeconds, 120);
+    check("refreshProgress: current names running stages", p.running, ["embed"]);
+    check("refreshProgress: idle with no stages → empty",
+      refreshProgress({running: false, stages: []}, ["ingest"], now).rows.length, 0);
+    check("refreshProgress: degenerate input", refreshProgress(undefined, [], now).done, 0);
+  })();
+
+  // F16: number + plural formatting
+  check("formatInt groups thousands", formatInt(32115, "en-US"), "32,115");
+  check("formatInt non-number → 0", formatInt(undefined, "en-US"), "0");
+  check("formatUsd pads to cents", formatUsd(0.1, "en-US"), "$0.10");
+  check("formatUsd groups thousands", formatUsd("4133.77", "en-US"), "$4,133.77");
+  check("formatUsd null → empty", formatUsd(null, "en-US"), "");
+  check("pagerRange first page", pagerRange(1, 100, 2832, "en-US"), "1–100 of 2,832");
+  check("pagerRange last page clamps", pagerRange(29, 100, 2832, "en-US"), "2,801–2,832 of 2,832");
+  check("formatPct rounds to 0 decimals", formatPct(31.58, "en-US"), "32%");
+  check("formatPct null → empty", formatPct(null, "en-US"), "");
+  check("plural 1", plural(1, "card", undefined, "en-US"), "1 card");
+  check("plural 0", plural(0, "card", undefined, "en-US"), "0 cards");
+  check("plural many with grouping", plural(1500, "card", undefined, "en-US"), "1,500 cards");
+  check("plural irregular", plural(2, "copy", "copies", "en-US"), "2 copies");
+  check("bracket shown for a real deck", bracketLabel(4, 99), "Bracket ≈4 (est.)");
+  check("bracket hidden for a small deck", bracketLabel(1, 12), "");
+  check("bracket hidden when absent", bracketLabel(null, 99), "");
+
+  // F2: empty cards table (0 or null) → "empty" onboarding banner
+  check("cards=0, idle → empty",
+    bannerStateFromHealth({cards_count: 0, oracle_tags_count: null, refresh: {running: false}}),
+    {kind: "empty"});
+  check("cards=null, idle → empty (pre-ANALYZE estimate)",
+    bannerStateFromHealth({cards_count: null, oracle_tags_count: null, refresh: {running: false}}),
+    {kind: "empty"});
+  check("cards=0, refresh running → ingesting (carries job id)",
+    bannerStateFromHealth({cards_count: 0, oracle_tags_count: null, refresh: {running: true, job_id: "j1"}}),
+    {kind: "ingesting", jobId: "j1"});
+  check("cards present, tags null → hidden (estimate not ready is not 'missing')",
+    bannerStateFromHealth({cards_count: 1000, oracle_tags_count: null, refresh: {running: false}}),
+    {kind: "hidden"});
+
+  // urlStateFromSearch / urlStateToSearch (D9.7)
+  check("empty search → defaults",
+    urlStateFromSearch(""),
+    {q: "", order: "name", dir: "auto", page: 1, id: null});
+  check("missing search arg → defaults",
+    urlStateFromSearch(undefined),
+    {q: "", order: "name", dir: "auto", page: 1, id: null});
+  check("parse full state",
+    urlStateFromSearch("?q=t%3Adragon&order=cmc&dir=desc&page=3&id=abc"),
+    {q: "t:dragon", order: "cmc", dir: "desc", page: 3, id: "abc"});
+  check("page non-numeric falls back to 1",
+    urlStateFromSearch("?q=x&page=abc"),
+    {q: "x", order: "name", dir: "auto", page: 1, id: null});
+  check("page below 1 falls back to 1",
+    urlStateFromSearch("?q=x&page=0"),
+    {q: "x", order: "name", dir: "auto", page: 1, id: null});
+  check("serialize empty state → bare URL",
+    urlStateToSearch({}),
+    "");
+  check("serialize defaults only → bare URL",
+    urlStateToSearch({q: "", order: "name", dir: "auto", page: 1, id: null}),
+    "");
+  check("serialize q only",
+    urlStateToSearch({q: "t:dragon"}),
+    "?q=t%3Adragon");
+  check("serialize full state",
+    urlStateToSearch({q: "t:dragon", order: "cmc", dir: "desc", page: 3, id: "abc"}),
+    "?q=t%3Adragon&order=cmc&dir=desc&page=3&id=abc");
+  check("serialize drops default order/dir but keeps page",
+    urlStateToSearch({q: "x", order: "name", dir: "auto", page: 2}),
+    "?q=x&page=2");
+  check("round-trip preserves non-default fields",
+    urlStateFromSearch(urlStateToSearch({q: "c:r", order: "cmc", dir: "asc", page: 5, id: "z"})),
+    {q: "c:r", order: "cmc", dir: "asc", page: 5, id: "z"});
+
+  // clampSplit (D9.9)
+  check("clampSplit in-range pass-through",
+    clampSplit(50), 50);
+  check("clampSplit below default min → 15",
+    clampSplit(5), 15);
+  check("clampSplit above default max → 85",
+    clampSplit(99), 85);
+  check("clampSplit NaN → midpoint of defaults (50)",
+    clampSplit(NaN), 50);
+  check("clampSplit missing → midpoint (50)",
+    clampSplit(undefined), 50);
+  check("clampSplit string parse → 42",
+    clampSplit("42"), 42);
+  check("clampSplit custom bounds",
+    clampSplit(10, 20, 80), 20);
+  check("clampSplit at boundary stays",
+    clampSplit(15), 15);
+
+  // cardFaceImages (D9.10)
+  check("face images: single-face card top-level only",
+    cardFaceImages({name: "Bolt", image_uris: {normal: "u1"}}),
+    [{url: "u1", name: "Bolt"}]);
+  check("face images: DFC two faces (transform)",
+    cardFaceImages({
+      name: "X", card_faces: [
+        {name: "Front", image_uris: {normal: "f"}},
+        {name: "Back", image_uris: {normal: "b"}},
+      ],
+    }),
+    [{url: "f", name: "Front"}, {url: "b", name: "Back"}]);
+  check("face images: split (shared art) falls back to top-level",
+    cardFaceImages({
+      name: "Fire // Ice", image_uris: {normal: "shared"},
+      card_faces: [{name: "Fire"}, {name: "Ice"}],
+    }),
+    [{url: "shared", name: "Fire // Ice"}]);
+  check("face images: no images at all → empty",
+    cardFaceImages({name: "X"}),
+    []);
+  check("face images: dup URL across faces deduped",
+    cardFaceImages({
+      name: "X", card_faces: [
+        {name: "A", image_uris: {normal: "same"}},
+        {name: "B", image_uris: {normal: "same"}},
+      ],
+    }),
+    [{url: "same", name: "A"}]);
+  check("face images: large fallback when normal missing",
+    cardFaceImages({name: "X", image_uris: {large: "L"}}),
+    [{url: "L", name: "X"}]);
+  check("face images: null card → empty",
+    cardFaceImages(null),
+    []);
+
+  // relatedParts (D9.10)
+  check("relatedParts: filters self",
+    relatedParts({id: "a", all_parts: [
+      {id: "a", name: "Self"},
+      {id: "b", name: "Token", component: "token"},
+    ]}),
+    [{id: "b", name: "Token", component: "token"}]);
+  check("relatedParts: no all_parts → empty",
+    relatedParts({id: "a"}),
+    []);
+  check("relatedParts: missing id on entry skipped",
+    relatedParts({id: "a", all_parts: [{name: "Bad"}, {id: "c", name: "OK"}]}),
+    [{id: "c", name: "OK"}]);
+  check("relatedParts: null card → empty",
+    relatedParts(null),
+    []);
+
+  // mergeFaceData (D9.11)
+  check("mergeFaceData: no card_faces → unchanged",
+    mergeFaceData({name: "Bolt", oracle_text: "deal 3"}, 0),
+    {name: "Bolt", oracle_text: "deal 3"});
+  check("mergeFaceData: face 0 overlays oracle + mana",
+    mergeFaceData({
+      name: "Front", oracle_text: "front text", rarity: "rare",
+      card_faces: [
+        {name: "Front", oracle_text: "front text", mana_cost: "{2}{R}"},
+        {name: "Back", oracle_text: "back text", mana_cost: ""},
+      ],
+    }, 1),
+    {
+      name: "Back", oracle_text: "back text", rarity: "rare",
+      card_faces: [
+        {name: "Front", oracle_text: "front text", mana_cost: "{2}{R}"},
+        {name: "Back", oracle_text: "back text", mana_cost: ""},
+      ],
+    });
+  check("mergeFaceData: face fields don't clobber non-face top-level (rarity, legalities)",
+    mergeFaceData({
+      name: "F", rarity: "mythic", legalities: {commander: "legal"},
+      card_faces: [{name: "F"}, {name: "B", oracle_text: "back"}],
+    }, 1).rarity,
+    "mythic");
+  check("mergeFaceData: out-of-range idx → unchanged",
+    mergeFaceData({name: "X", card_faces: [{name: "F"}, {name: "B"}]}, 5),
+    {name: "X", card_faces: [{name: "F"}, {name: "B"}]});
+  check("mergeFaceData: null card → null",
+    mergeFaceData(null, 0),
+    null);
+  check("mergeFaceData: empty-string face field does NOT overlay",
+    mergeFaceData({
+      name: "Top", oracle_text: "top text",
+      card_faces: [{name: "F", oracle_text: ""}, {name: "B"}],
+    }, 0).oracle_text,
+    "top text");
+  check("mergeFaceData: face power/toughness overlay",
+    mergeFaceData({
+      name: "X", power: "1", toughness: "1",
+      card_faces: [{name: "F", power: "2", toughness: "3"}, {name: "B", power: "5", toughness: "5"}],
+    }, 1).power,
+    "5");
+
+  // historyPush (D13.8)
+  check("historyPush: empty list + first query",
+    historyPush([], "t:dragon", 20),
+    ["t:dragon"]);
+  check("historyPush: promotes existing entry to head",
+    historyPush(["a", "b", "c"], "b", 20),
+    ["b", "a", "c"]);
+  check("historyPush: cap enforced (drops tail)",
+    historyPush(["a", "b", "c"], "d", 3),
+    ["d", "a", "b"]);
+  check("historyPush: empty/whitespace query is no-op on data",
+    historyPush(["a", "b"], "   ", 20),
+    ["a", "b"]);
+  check("historyPush: dedup is case-insensitive",
+    historyPush(["Foo Bar"], "foo bar", 20),
+    ["foo bar"]);
+  check("historyPush: non-array list treated as empty",
+    historyPush(null, "hello", 20),
+    ["hello"]);
+  check("historyPush: cap floor is 1 (0/negative clamped)",
+    historyPush(["a", "b"], "x", 0),
+    ["x"]);
+
+  // landRecommendation (D13.9)
+  check("landRecommendation: 37 is baseline ok",
+    landRecommendation(37),
+    {status: "ok", message: "Lands: 37 / ~37 recommended"});
+  check("landRecommendation: below 33 → low",
+    landRecommendation(28).status,
+    "low");
+  check("landRecommendation: above 41 → high",
+    landRecommendation(45).status,
+    "high");
+  check("landRecommendation: 33 is boundary ok",
+    landRecommendation(33).status,
+    "ok");
+  check("landRecommendation: 41 is boundary ok",
+    landRecommendation(41).status,
+    "ok");
+  check("landRecommendation: garbage input → 0 default",
+    landRecommendation("foo"),
+    {status: "ok", message: "Lands: 0 / ~37 recommended"});
+
+  // hoverPreviewShouldShow (D15.4)
+  check("hoverPreview: null target → null",
+    hoverPreviewShouldShow(null),
+    null);
+  check("hoverPreview: element with data-id returns id",
+    hoverPreviewShouldShow({dataset: {id: "abc"}}),
+    {id: "abc"});
+  check("hoverPreview: element with data-related-id returns id",
+    hoverPreviewShouldShow({dataset: {relatedId: "xyz"}}),
+    {id: "xyz"});
+  check("hoverPreview: data-no-hover opts out",
+    hoverPreviewShouldShow({dataset: {id: "abc", noHover: ""}}),
+    null);
+  check("hoverPreview: no data attrs → null",
+    hoverPreviewShouldShow({dataset: {}}),
+    null);
+  check("hoverPreview: closest walks up to ancestor",
+    hoverPreviewShouldShow({
+      dataset: {},
+      closest: (sel) => ({dataset: {id: "walked-up"}}),
+    }),
+    {id: "walked-up"});
+  check("hoverPreview: closest returns null (nothing matched)",
+    hoverPreviewShouldShow({
+      dataset: {},
+      closest: () => null,
+    }),
+    null);
+  check("hoverPreview: empty data-id → null",
+    hoverPreviewShouldShow({dataset: {id: ""}}),
+    null);
+
+  out.textContent += fail === 0 ? "\nPASS" : `\nFAIL (${fail})`;
+</script>
+</body>
+</html>

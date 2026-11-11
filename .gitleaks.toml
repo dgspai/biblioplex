@@ -1,0 +1,22 @@
+# Default gitleaks rules plus tokens this project has actually handled
+# (data/requests/ captures: Moxfield / Cloudflare session material).
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cloudflare-clearance-cookie"
+description = "Cloudflare cf_clearance session cookie"
+regex = '''cf_clearance=[A-Za-z0-9._-]{20,}'''
+keywords = ["cf_clearance"]
+
+[[rules]]
+id = "http-bearer-token"
+description = "Authorization: Bearer header with a real-looking token"
+regex = '''(?i)authorization:\s*bearer\s+[A-Za-z0-9._~+/=-]{20,}'''
+keywords = ["bearer"]
+
+[[rules]]
+id = "refresh-token"
+description = "OAuth refresh_token value"
+regex = '''(?i)["']?refresh_token["']?\s*[:=]\s*["']?[A-Za-z0-9._-]{20,}'''
+keywords = ["refresh_token"]

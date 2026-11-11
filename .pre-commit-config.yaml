@@ -1,0 +1,37 @@
+# Install once per clone: `make hooks`. CI re-runs the secret scan, so
+# `git commit --no-verify` skips the fast feedback, not the gate.
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks  # secrets in the staged diff (rules: .gitleaks.toml)
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files  # accidental collection/DB dumps
+        args: [--maxkb=1024]
+
+  - repo: local
+    hooks:
+      # Belt-and-braces over .gitignore: `git add -f` bypasses ignores.
+      # Personal collection exports, captured HTTP sessions (live tokens),
+      # env files. .env.example is the one allowed env file.
+      - id: forbid-personal-data
+        name: forbid personal data / credential paths
+        language: fail
+        entry: "personal data or credential file; keep it out of git (see .gitignore)"
+        files: '^data/(deckbox|requests)/|(^|/)request\.txt$|(^|/)secrets(/|$)|\.env$'
+
+      # Public history must not carry a personal email. Checks author AND
+      # committer of every commit not yet on any remote.
+      - id: noreply-email
+        name: commit emails are GitHub noreply
+        language: system
+        stages: [pre-push]
+        always_run: true
+        pass_filenames: false
+        entry: >-
+          bash -c 'bad=$(git log --format="%h %ae %ce" "$PRE_COMMIT_TO_REF" --not --remotes
+          | grep -vE "^[0-9a-f]+ \S+@users\.noreply\.github\.com \S+@users\.noreply\.github\.com$");
+          [ -z "$bad" ] || { echo "non-noreply email in unpushed commits:"; echo "$bad"; exit 1; }'

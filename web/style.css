@@ -1,0 +1,1134 @@
+/* Design tokens. Components use ONLY these (no raw colours or font sizes).
+   Light is the base; dark is defined once per trigger (OS preference unless
+   the user forced light, or `data-theme="dark"`), so the two blocks below must
+   stay identical. `data-theme` on <html> overrides the OS preference when the
+   user has clicked the toggle. */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --bg-elev: #f7f7f8;
+  --fg: #1c1c1f;
+  --fg-muted: #6f6f78;
+  --border: #e6e6ea;
+  --accent: #5b5bd6;
+  --accent-fg: #ffffff;
+  --error-bg: #fdeeee;
+  --error-fg: #b42318;
+  --ok: #2ea043;
+  --warn: #c80;
+  --danger: #d1242f;
+  --legal-bg: #d1f4d8; --legal-fg: #0f5132; --legal-bd: #a3d9b1;
+  --banned-bg: #fbd5d5; --banned-fg: #842029; --banned-bd: #f1a7a7;
+  --restricted-bg: #fff3bf; --restricted-fg: #7a5a00; --restricted-bd: #f5d76e;
+  --unknown-bg: #e6e6e6; --unknown-fg: #4a4a4a; --unknown-bd: #c9c9c9;
+  --pred-ramp-bg: #d5ead8; --pred-ramp-fg: #1f4a2a; --pred-ramp-bd: #a7cdaf;
+  --pred-card_advantage-bg: #d6e4f5; --pred-card_advantage-fg: #1d3b66; --pred-card_advantage-bd: #a8c1de;
+  --pred-targeted_disrupt-bg: #f5d9c1; --pred-targeted_disrupt-fg: #6b3a14; --pred-targeted_disrupt-bd: #d9b18a;
+  --pred-mass_disrupt-bg: #f0c8c8; --pred-mass_disrupt-fg: #6b1f1f; --pred-mass_disrupt-bd: #d99898;
+  --pred-plan-bg: #e6e1ee; --pred-plan-fg: #3d2f5c; --pred-plan-bd: #c2b8d6;
+  --diff-add-bg: #e2f4e6; --diff-add-fg: #14532d;
+  --diff-del-bg: #fbe3e3; --diff-del-fg: #7f1d1d;
+  --delta-over: #1f4a2a; --delta-under: #6b1f1f;
+  --shadow-pop: 0 8px 24px rgba(0, 0, 0, 0.14);
+  --bg-hover: color-mix(in srgb, var(--fg) 5%, transparent);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.45);
+  /* Type scale */
+  --fs-xs: 11px; --fs-sm: 12px; --fs-md: 13px; --fs-lg: 15px; --fs-xl: 18px;
+  /* Spacing (4px grid) */
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 24px; --sp-6: 32px;
+  /* Radius */
+  --radius-sm: 6px; --radius-md: 10px; --radius-pill: 999px;
+  /* Brand-independent chart colours (radar) */
+  --radar-need: #7c5cff; --radar-have: #ff8c42;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111113;
+    --bg-elev: #18181b;
+    --fg: #ececef;
+    --fg-muted: #8b8b94;
+    --border: #2a2a30;
+    --accent: #8b8df5;
+    --accent-fg: #111113;
+    --error-bg: #2f1717;
+    --error-fg: #fca5a5;
+    --warn: #e0a030;
+    --legal-bg: #14361f; --legal-fg: #a7e8b6; --legal-bd: #1f5c33;
+    --banned-bg: #3a1414; --banned-fg: #f5a3a3; --banned-bd: #5c1f1f;
+    --restricted-bg: #3a2e0a; --restricted-fg: #f5d76e; --restricted-bd: #5c4a14;
+    --unknown-bg: #2a2a2a; --unknown-fg: #bdbdbd; --unknown-bd: #3a3a3a;
+    --pred-ramp-bg: #17321c; --pred-ramp-fg: #a7cdaf; --pred-ramp-bd: #28543a;
+    --pred-card_advantage-bg: #142a45; --pred-card_advantage-fg: #a8c1de; --pred-card_advantage-bd: #244977;
+    --pred-targeted_disrupt-bg: #3a2510; --pred-targeted_disrupt-fg: #e0b88a; --pred-targeted_disrupt-bd: #6b4524;
+    --pred-mass_disrupt-bg: #3a1414; --pred-mass_disrupt-fg: #f0a8a8; --pred-mass_disrupt-bd: #6b2424;
+    --pred-plan-bg: #251c3a; --pred-plan-fg: #c2b8d6; --pred-plan-bd: #443760;
+    --diff-add-bg: #16301d; --diff-add-fg: #86efac;
+    --diff-del-bg: #341a1a; --diff-del-fg: #fca5a5;
+    --delta-over: #a7cdaf; --delta-under: #f0a8a8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111113;
+  --bg-elev: #18181b;
+  --fg: #ececef;
+  --fg-muted: #8b8b94;
+  --border: #2a2a30;
+  --accent: #8b8df5;
+  --accent-fg: #111113;
+  --error-bg: #2f1717;
+  --error-fg: #fca5a5;
+  --warn: #e0a030;
+  --legal-bg: #14361f; --legal-fg: #a7e8b6; --legal-bd: #1f5c33;
+  --banned-bg: #3a1414; --banned-fg: #f5a3a3; --banned-bd: #5c1f1f;
+  --restricted-bg: #3a2e0a; --restricted-fg: #f5d76e; --restricted-bd: #5c4a14;
+  --unknown-bg: #2a2a2a; --unknown-fg: #bdbdbd; --unknown-bd: #3a3a3a;
+  --pred-ramp-bg: #17321c; --pred-ramp-fg: #a7cdaf; --pred-ramp-bd: #28543a;
+  --pred-card_advantage-bg: #142a45; --pred-card_advantage-fg: #a8c1de; --pred-card_advantage-bd: #244977;
+  --pred-targeted_disrupt-bg: #3a2510; --pred-targeted_disrupt-fg: #e0b88a; --pred-targeted_disrupt-bd: #6b4524;
+  --pred-mass_disrupt-bg: #3a1414; --pred-mass_disrupt-fg: #f0a8a8; --pred-mass_disrupt-bd: #6b2424;
+  --pred-plan-bg: #251c3a; --pred-plan-fg: #c2b8d6; --pred-plan-bd: #443760;
+  --diff-add-bg: #16301d; --diff-add-fg: #86efac;
+  --diff-del-bg: #341a1a; --diff-del-fg: #fca5a5;
+  --delta-over: #a7cdaf; --delta-under: #f0a8a8;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0;
+  font: var(--fs-md)/1.5 -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: var(--bg);
+  color: var(--fg);
+}
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* Shell: sidebar | main column. Panes fill the column (flex: 1) and own
+   their scrolling, so nothing hardcodes a header height. */
+body { display: grid; grid-template-columns: 200px minmax(0, 1fr); height: 100vh; overflow: hidden; }
+.sidebar {
+  display: flex; flex-direction: column; gap: 1px; padding: var(--sp-3) var(--sp-2);
+  background: var(--bg-elev); border-right: 1px solid var(--border);
+}
+.brand {
+  padding: var(--sp-1) var(--sp-2) var(--sp-3); font-weight: 600; font-size: var(--fs-lg);
+  color: inherit; text-decoration: none;
+}
+.nav-item {
+  display: flex; align-items: center; gap: var(--sp-2); width: 100%;
+  padding: 6px var(--sp-2); border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--fg-muted); text-align: left; font-weight: 500;
+}
+.nav-item:hover { background: var(--bg-hover); color: var(--fg); }
+.nav-item.active { background: var(--bg-hover); color: var(--fg); }
+.sidebar-foot { margin-top: auto; display: flex; align-items: center; gap: var(--sp-1); }
+.sidebar-foot .nav-item { flex: 1; }
+#themeToggle { border: 0; background: transparent; color: var(--fg-muted); padding: 6px; }
+#themeToggle:hover { background: var(--bg-hover); color: var(--fg); }
+.sidebar .icon, #themeToggle .icon {
+  width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
+  stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round;
+}
+#sidebarToggle { border: 0; background: transparent; color: var(--fg-muted); padding: 6px; }
+#sidebarToggle:hover { background: var(--bg-hover); color: var(--fg); }
+#sidebarToggle .icon { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+/* Collapsed rail: icons only. Labels are clipped, not display:none, so
+   screen readers still announce them. */
+body.sidebar-collapsed { grid-template-columns: 52px minmax(0, 1fr); }
+.sidebar-collapsed .brand { display: none; }
+.sidebar-collapsed .nav-item { justify-content: center; }
+.sidebar-collapsed .sidebar .nav-label {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+}
+.sidebar-collapsed .sidebar-foot { flex-direction: column; }
+.app-main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
+.app-main > :is(main, section) { flex: 1; min-height: 0; overflow-y: auto; }
+.segments {
+  flex: none; display: flex; gap: 2px; padding: var(--sp-2) var(--sp-4);
+  border-bottom: 1px solid var(--border);
+}
+.segments button { border: 0; background: transparent; color: var(--fg-muted); font-weight: 500; }
+.segments button:hover { color: var(--fg); }
+.segments button.active { background: var(--bg-hover); color: var(--fg); }
+/* One field style for every text-like input and textarea (type=search was the
+   only one themed before, so the rest rendered white in dark mode). */
+.field,
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="button"]):not([type="submit"]):not([type="range"]),
+textarea {
+  padding: 6px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg); font: inherit;
+}
+textarea { resize: vertical; }
+input[type="file"] { color: var(--fg-muted); font: inherit; }
+input[type="file"]::file-selector-button {
+  margin-right: var(--sp-2); padding: 6px 10px; cursor: pointer;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg); font: inherit;
+}
+
+/* Autocomplete dropdown: absolute-positioned under the search box,
+   keyboard-nav-friendly, hidden by default. */
+.ac-dropdown {
+  position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
+  margin: 4px 0 0; padding: 0; list-style: none; max-height: 320px; overflow-y: auto;
+  background: var(--bg-elev); border: 1px solid var(--border); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-pop);
+}
+.ac-dropdown[hidden] { display: none; }
+.ac-item {
+  padding: 6px 10px; cursor: pointer; font-size: var(--fs-sm);
+  border-bottom: 1px solid var(--border);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.active { background: var(--accent); color: var(--accent-fg); }
+/* D13.8 — history dropdown reuses .ac-dropdown but gets a subtle label so
+   users can tell it apart from live autocomplete hits (which fetch server-
+   side). Pseudo-element pill above the first row keeps DOM markup lean. */
+.history-dropdown::before {
+  content: "recent"; display: block; padding: 4px 10px;
+  font-size: var(--fs-xs); color: var(--fg-muted); text-transform: uppercase;
+  letter-spacing: 0.06em; border-bottom: 1px solid var(--border);
+}
+select, button {
+  padding: 5px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg); color: var(--fg); font: inherit; cursor: pointer;
+  transition: background-color .12s, border-color .12s, color .12s;
+}
+select:hover, button:hover { background: var(--bg-hover); }
+button[type="submit"], .btn--primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+button[type="submit"]:hover, .btn--primary:hover { background: color-mix(in srgb, var(--accent) 88%, var(--fg)); }
+/* Page container for the form-like tabs (Decks, Settings, Build, Compare).
+   Split views (Cards, Combos, Inventory, Wishlist) stay full-bleed on purpose. */
+.page { width: 100%; max-width: 1280px; margin: 0 auto; padding: var(--sp-4) var(--sp-5); }
+/* Button system. Plain <button> is the neutral default; .btn variants layer on it.
+   --primary: main action (submit buttons are primary implicitly). --ghost: quiet,
+   borderless. --danger: destructive, outlined red. --sm: compact. */
+.btn--ghost { background: transparent; border-color: transparent; color: var(--fg-muted); }
+.btn--ghost:hover { color: var(--fg); border-color: var(--border); }
+.btn--danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+.btn--danger:hover { background: var(--danger); color: var(--accent-fg); }
+.btn--sm { padding: var(--sp-1) var(--sp-2); font-size: var(--fs-xs); }
+button[disabled], .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+/* Destructive actions sit at the far end of their row, away from Filter. */
+.deck-head .btn--danger { margin-left: auto; }
+button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+.help { color: var(--fg-muted); font-size: var(--fs-xs); text-decoration: none; }
+.help:hover { text-decoration: underline; }
+
+.refresh-progress { list-style: none; margin: 8px 0; padding: 0; font-size: var(--fs-sm); }
+.refresh-progress li { display: flex; gap: 6px; padding: 2px 0; }
+.refresh-progress .rp-mark { width: 1em; text-align: center; }
+.refresh-progress .rp-meta { margin-left: auto; color: var(--fg-muted); }
+.refresh-progress .rp-pending { color: var(--fg-muted); }
+.refresh-progress .rp-error { color: var(--error-fg); }
+.refresh-menu-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+#themeToggle { padding: 6px 10px; }
+
+#banner {
+  margin: 0; padding: 10px 16px;
+  background: var(--error-bg); color: var(--error-fg);
+  border-bottom: 1px solid var(--border);
+}
+#banner:not([hidden]) { display: block; }
+#banner[data-tone="info"] { background: var(--bg-elev); color: var(--fg); border-left: 3px solid var(--accent); }
+#banner code { background: color-mix(in srgb, currentColor 12%, transparent); padding: 1px 4px; border-radius: var(--radius-sm); }
+#banner .banner-action { margin-left: 8px; }
+
+/* Cards tab: filter form on top, split (results | splitter | detail)
+   below, footer pager. Same shape as #combosPane. */
+main {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.cards-split {
+  display: grid;
+  grid-template-columns: minmax(0, var(--split, 33%)) 6px minmax(0, 1fr);
+  flex: 1; min-height: 0;
+}
+#results, .split-pane {
+  overflow-y: auto;
+  padding: 12px 16px;
+  background: var(--bg);
+}
+.splitter {
+  cursor: col-resize;
+  background: linear-gradient(var(--border), var(--border)) center / 1px 100% no-repeat;
+  user-select: none;
+  touch-action: none;
+}
+.splitter:hover, .splitter:focus-visible { background: linear-gradient(var(--accent), var(--accent)) center / 2px 100% no-repeat; }
+.splitter:focus-visible { outline: none; }
+
+.empty, .loading {
+  color: var(--fg-muted);
+  padding: 12px 0;
+}
+.detail-pane > .empty:only-child { text-align: center; padding-top: 30vh; }
+
+.state-empty { text-align: center; padding: var(--sp-6) var(--sp-4); color: var(--fg-muted); }
+.state-empty h3 { margin: 0 0 var(--sp-1); font-size: var(--fs-lg); color: var(--fg); }
+.state-empty p { margin: 0 0 var(--sp-3); }
+.state-error {
+  margin: var(--sp-3) 0; padding: var(--sp-2) var(--sp-3);
+  background: var(--error-bg); color: var(--error-fg);
+  border: 1px solid var(--error-fg); border-left-width: 3px; border-radius: var(--radius-sm);
+}
+.state-error::before { content: "\26A0\FE0E  "; }
+
+ul.cards { list-style: none; margin: 0; padding: 0; }
+ul.cards li {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+ul.cards li:hover { background: var(--bg-hover); }
+ul.cards li.selected { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+ul.cards .name { font-weight: 500; }
+ul.cards .meta { color: var(--fg-muted); font-size: var(--fs-xs); }
+ul.cards .meta span { margin-right: 8px; }
+ul.cards .meta .pt { font-variant-numeric: tabular-nums; }
+ul.cards .sort-info {
+  color: var(--fg-muted); font-size: var(--fs-xs);
+  margin-top: 0.15rem; white-space: nowrap;
+}
+
+.detail-pane h2 { font-size: var(--fs-lg); margin: 0; }
+.detail-pane .detail-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin: 0 0 4px;
+}
+.detail-pane .detail-actions { display: flex; gap: 6px; align-items: center; }
+.detail-pane .copy-id {
+  padding: 2px 8px; font-size: var(--fs-xs); border-radius: var(--radius-sm);
+  background: var(--bg-elev); color: var(--fg-muted);
+  border: 1px solid var(--border); cursor: pointer;
+}
+.detail-pane .copy-id:hover { color: var(--fg); }
+/* D19.15: NOT scoped to a container. It was `.detail-pane .ext-link,
+   #combosDetail .ext-link`, which silently excluded every other user —
+   the Download anchors in `.upload-actions` (import history, deck version
+   list) matched nothing, and since style.css has no generic `a { }` rule
+   they inherited the user-agent's default link blue: unreadable on
+   `--bg: #1a1a1a`. The scoping bought nothing, and the next component to
+   reuse the class would have hit the same wall. */
+.ext-link::after {
+  content: ""; display: inline-block; width: 0.85em; height: 0.85em; margin-left: 4px; vertical-align: -0.1em;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2h5v5M14 2L7 9M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 2h5v5M14 2L7 9M12 9.5V13a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+.ext-link {
+  padding: 2px 8px; font-size: var(--fs-xs); border-radius: var(--radius-sm);
+  background: var(--bg-elev); color: var(--fg-muted);
+  border: 1px solid var(--border); text-decoration: none;
+}
+.ext-link:hover { color: var(--accent); }
+.detail-pane .typeline { color: var(--fg-muted); margin: 0 0 12px; }
+.detail-pane .oracle { white-space: pre-wrap; margin: 12px 0; }
+.art-missing {
+  max-width: 300px; aspect-ratio: 5 / 7; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--sp-2); padding: var(--sp-4); text-align: center;
+  background: var(--bg-elev); color: var(--fg-muted); border: 1px dashed var(--border); border-radius: 12px;
+}
+.art-missing strong { color: var(--fg); }
+.detail-pane img.art { max-width: 300px; width: 100%; border-radius: 12px; display: block; }
+.detail-pane .faces { display: flex; flex-wrap: wrap; gap: 12px; margin: 0; }
+.detail-pane .faces .face {
+  margin: 0; flex: 0 1 240px;
+  background: transparent; border: 2px solid transparent; border-radius: 14px;
+  padding: 4px; cursor: pointer; color: inherit; font: inherit;
+}
+.detail-pane .faces .face:hover { border-color: var(--border); }
+.detail-pane .faces .face.active { border-color: var(--accent); }
+.detail-pane .faces .face:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.detail-pane .faces figcaption { font-size: var(--fs-xs); color: var(--fg-muted); margin-top: 4px; text-align: center; }
+.detail-pane .faces .face.active figcaption { color: var(--fg); font-weight: 600; }
+.related-chip .component { color: var(--fg-muted); font-size: var(--fs-xs); margin-right: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+.mana-sym {
+  height: 1em; width: 1em;
+  vertical-align: -0.15em;
+  margin: 0 1px;
+}
+.oracle .mana-sym { height: 0.95em; width: 0.95em; }
+ul.cards .meta .cost .mana-sym { height: 0.95em; width: 0.95em; }
+.detail-pane dd .mana-sym { height: 1.1em; width: 1.1em; }
+.detail-pane dl { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; font-size: var(--fs-sm); }
+.detail-pane dt { color: var(--fg-muted); }
+.detail-pane .legalities { margin-top: 16px; }
+.detail-pane .legalities h3 { font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); margin: 0 0 6px; }
+.legality-list {
+  display: flex; flex-wrap: wrap; gap: 0.5rem;
+  list-style: none; margin: 0; padding: 0;
+}
+.legality {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 2px 8px; border-radius: 999px;
+  font-size: var(--fs-xs); line-height: 1.6;
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+.legality .fmt { color: var(--fg-muted); text-transform: lowercase; }
+.legality .status { font-weight: 600; text-transform: lowercase; }
+/* Two-tone pills; bg/fg tuned for >=4.5:1 in both themes. */
+.legality-legal      { background: var(--legal-bg); color: var(--legal-fg); border-color: var(--legal-bd); }
+.legality-banned     { background: var(--banned-bg); color: var(--banned-fg); border-color: var(--banned-bd); }
+.legality-restricted { background: var(--restricted-bg); color: var(--restricted-fg); border-color: var(--restricted-bd); }
+.legality-not_legal,
+.legality-unknown    { background: var(--unknown-bg); color: var(--unknown-fg); border-color: var(--unknown-bd); }
+.detail-pane .chips-section { margin-top: 16px; }
+.detail-pane .chips-section h3 { font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); margin: 0 0 6px; }
+
+/* Manual label override editor (predicted-labels section). */
+.label-edit-btn { font-size: var(--fs-xs); text-transform: none; letter-spacing: 0; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--fg-muted); cursor: pointer; }
+.label-edited { font-size: var(--fs-xs); color: var(--fg-muted); text-transform: none; letter-spacing: 0; }
+.label-editor { margin-top: 8px; padding: 8px; border: 1px solid var(--border); border-radius: 8px; }
+.label-opts { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.label-opt { display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); text-transform: none; }
+.label-editor-actions { display: flex; gap: 8px; margin-top: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip {
+  padding: 2px 10px; border-radius: 999px;
+  font-size: var(--fs-xs); line-height: 1.6;
+  border: 1px solid var(--border);
+  background: var(--bg-elev); color: var(--fg);
+  cursor: pointer;
+}
+.chip:hover { background: var(--bg); border-color: var(--accent); }
+.chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Step 5 — predicted-label chips + slot-count bar above the result list.
+   One palette across both surfaces so the same label reads the same in
+   the detail chip strip and the page-level counter. Pastel base + dark
+   text for AA contrast in light theme; dark-tone backgrounds + light
+   text for the dark theme block below. */
+.chip-pred.pred-ramp,             .slot.pred-ramp             { background: var(--pred-ramp-bg); color: var(--pred-ramp-fg); border-color: var(--pred-ramp-bd); }
+.chip-pred.pred-card_advantage,   .slot.pred-card_advantage   { background: var(--pred-card_advantage-bg); color: var(--pred-card_advantage-fg); border-color: var(--pred-card_advantage-bd); }
+.chip-pred.pred-targeted_disrupt, .slot.pred-targeted_disrupt { background: var(--pred-targeted_disrupt-bg); color: var(--pred-targeted_disrupt-fg); border-color: var(--pred-targeted_disrupt-bd); }
+.chip-pred.pred-mass_disrupt,     .slot.pred-mass_disrupt     { background: var(--pred-mass_disrupt-bg); color: var(--pred-mass_disrupt-fg); border-color: var(--pred-mass_disrupt-bd); }
+.chip-pred.pred-plan,             .slot.pred-plan             { background: var(--pred-plan-bg); color: var(--pred-plan-fg); border-color: var(--pred-plan-bd); }
+
+/* Slot-counts bar — compact horizontal strip above the result list.
+   Each slot is a button mirroring the chip styling but a touch wider so
+   the count + label fit comfortably. Clicking appends `pred:<label>` to
+   the active search. */
+.slot-counts {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin: 0 0 10px;
+}
+.slot {
+  display: inline-flex; align-items: baseline; gap: 6px;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: var(--fs-xs); line-height: 1.6;
+  border: 1px solid var(--border);
+  background: var(--bg-elev); color: var(--fg);
+  cursor: pointer;
+}
+.slot:hover { filter: brightness(1.04); border-color: var(--accent); }
+.slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slot .slot-label { text-transform: lowercase; }
+.slot .slot-count { font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.detail-pane .similar { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px; }
+.detail-pane .similar h3 { font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); margin: 0 0 8px; }
+ul.similar-list {
+  display: flex; gap: 10px;
+  overflow-x: auto; overflow-y: hidden;
+  padding-bottom: 8px;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+ul.similar-list li {
+  flex: 0 0 110px;
+  display: flex; flex-direction: column; gap: 6px;
+  scroll-snap-align: start;
+}
+ul.similar-list .thumb { width: 100%; height: 154px; border-radius: 6px; object-fit: cover; background: var(--bg-elev); display: block; }
+ul.similar-list .thumb-empty { width: 100%; height: 154px; border-radius: 6px; background: var(--bg-elev); display: block; }
+ul.similar-list .body { min-width: 0; }
+ul.similar-list .name { font-size: var(--fs-xs); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+ul.similar-list .meta { font-size: var(--fs-xs); }
+ul.similar-list .meta span { display: block; }
+
+.detail-pane .combos { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 12px; }
+.detail-pane .combos h3 { font-size: var(--fs-sm); font-weight: 500; color: var(--fg-muted); margin: 0 0 8px; }
+.combos-list { display: flex; flex-direction: column; gap: 6px; }
+.combo-entry { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; background: var(--bg-elev); }
+.combo-entry > summary { cursor: pointer; font-size: var(--fs-xs); line-height: 1.4; }
+.combo-entry .combo-summary-tail { color: var(--fg-muted); font-size: var(--fs-xs); }
+.combo-entry[open] { background: var(--bg); }
+.combo-body { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; font-size: var(--fs-xs); }
+.combo-body .chips { margin-bottom: 2px; }
+.combo-body p { margin: 0; }
+.combo-body .chip-static { cursor: default; opacity: 0.75; }
+.combos-load-all {
+  margin-top: 8px; padding: 4px 12px; border-radius: 999px;
+  font-size: var(--fs-xs); border: 1px solid var(--border);
+  background: var(--bg-elev); color: var(--fg); cursor: pointer;
+}
+.combos-load-all:hover { border-color: var(--accent); }
+
+/* Combos tab: form on top, split (list | splitter | detail) below, pager under. */
+#combosPane {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.combos-filters, .cards-filters {
+  flex-shrink: 0;
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 8px 16px; border-bottom: 1px solid var(--border);
+}
+.cards-filters input[type="search"] { border-color: transparent; background: transparent; padding-left: 0; font-size: var(--fs-lg); }
+.cards-filters input[type="search"]:focus-visible { outline: none; }
+.cards-filters select { border-color: transparent; background: transparent; color: var(--fg-muted); }
+.cards-filters select:hover { color: var(--fg); background: var(--bg-hover); }
+.icon-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px; border: 0; border-radius: var(--radius-sm);
+  background: transparent; color: var(--fg-muted);
+}
+.icon-btn:hover { background: var(--bg-hover); color: var(--fg); }
+.combos-filters input {
+  flex: 1 1 140px; min-width: 100px;
+  padding: 5px 8px; border: 0; border-radius: var(--radius-sm);
+  background: var(--bg-hover); color: var(--fg); font: inherit;
+}
+.combos-card-chips:empty { display: none; }
+.combos-ci { display: inline-flex; gap: 2px; flex-shrink: 0; }
+.ci-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; padding: 0;
+  border: 1px solid transparent; border-radius: 999px;
+  background: transparent; cursor: pointer;
+}
+.ci-btn img { display: block; opacity: 0.35; filter: grayscale(0.6); transition: opacity 0.1s; }
+.ci-btn:hover img { opacity: 0.7; }
+.ci-btn[aria-pressed="true"] { border-color: var(--accent); }
+.ci-btn[aria-pressed="true"] img { opacity: 1; filter: none; }
+.ci-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cards-filters .q-wrap { flex: 1 1 240px; min-width: 200px; position: relative; }
+.cards-filters .q-wrap input[type="search"] { width: 100%; }
+#combosSplit { --split: 40%; }
+.pager-bar {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 16px; border-top: 1px solid var(--border);
+  font-size: var(--fs-xs);
+}
+.pager-bar > span { margin-right: auto; color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+.pager-bar button[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+/* Combo detail pane header + body, styled like .detail-pane. */
+#combosDetail .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+#combosDetail p { margin: 6px 0; font-size: var(--fs-sm); }
+
+/* Combo card gallery — mirrors .detail-pane .faces so an MDFC face and a combo
+   card read the same visually. Each entry is a <button.combo-card.face>
+   wrapping the image + name caption. */
+.combo-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; }
+.combo-card {
+  margin: 0; flex: 0 1 210px;
+  display: flex; flex-direction: column;
+  background: transparent; border: 2px solid transparent; border-radius: 14px;
+  padding: 4px; cursor: pointer; color: inherit; font: inherit;
+  text-align: center;
+}
+.combo-card:hover { border-color: var(--border); }
+.combo-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.combo-card figcaption { font-size: var(--fs-xs); color: var(--fg-muted); margin-top: 4px; }
+.combo-card:hover figcaption { color: var(--fg); }
+.combo-thumb {
+  width: 100%; height: auto; border-radius: 10px;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  display: block;
+}
+.combo-section { margin: 8px 0; font-size: var(--fs-sm); }
+.combo-section > h3 { margin: 0 0 4px; color: var(--fg-muted); font-size: var(--fs-sm); font-weight: 500; }
+.combo-prose { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }
+.combo-prose li { line-height: 1.4; }
+.combo-prose .mana-sym { vertical-align: -0.12em; }
+
+/* Combo list rows: reuse the card-list look. */
+ul.combos-cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+ul.combos-cards li { padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer; }
+ul.combos-cards li:hover { background: var(--bg-hover); }
+ul.combos-cards li.selected { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+ul.combos-cards .name { font-weight: 500; font-size: var(--fs-sm); }
+ul.combos-cards .meta { color: var(--fg-muted); font-size: var(--fs-xs); margin-top: 2px; }
+
+#cardPreview {
+  position: fixed;
+  width: 244px; height: auto;
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  z-index: 1000;
+  background: var(--bg-elev);
+}
+
+/* Tab switcher between Search (main grid) and Decklist (single-column form). */
+
+.compare-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.compare-inputs label { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-xs); color: var(--fg-muted); }
+.compare-inputs textarea { width: 100%; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-elev); color: var(--fg); font: var(--fs-sm)/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+#compareResult { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
+.compare-section h3 { margin: 0 0 6px; font-size: var(--fs-sm); color: var(--fg-muted); font-weight: 500; }
+.compare-section ul { margin: 0; padding-left: 20px; }
+.compare-section .delta-pos { color: var(--ok); }
+.compare-section .delta-neg { color: var(--danger); }
+.compare-deltas { list-style: none; padding-left: 0; display: flex; flex-wrap: wrap; gap: 6px 16px; }
+:is(#buildScoreboard, #deckScoreboard) .deck-slots { display: flex; flex-wrap: wrap; gap: 6px; }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot {
+  display: inline-flex; flex-direction: column;
+  padding: 6px 12px; border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: var(--fs-xs); line-height: 1.3;
+  min-width: 110px;
+}
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-label { text-transform: lowercase; font-weight: 600; }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-count { font-variant-numeric: tabular-nums; }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-delta { font-weight: 700; font-variant-numeric: tabular-nums; }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-delta.over { color: var(--delta-over); }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-delta.under { color: var(--delta-under); }
+:is(#buildScoreboard, #deckScoreboard) .deck-slot .deck-slot-delta.zero { color: var(--fg-muted); }
+
+/* Step 8 review: scoreboard slots become clickable buttons; clicking one
+   lights its cards in the decklist sidebar and dims the rest. */
+.build-slot-btn { cursor: pointer; text-align: left; background: var(--bg); color: inherit; font: inherit; align-items: flex-start; }
+.build-slot-btn:hover { border-color: var(--fg-muted); }
+.build-slot-btn.active { border-color: var(--accent, var(--fg)); box-shadow: 0 0 0 1px var(--accent, var(--fg)) inset; }
+.build-dl-row.dim { opacity: 0.3; }
+.build-dl-row.slot-hit { background: var(--bg-elev); }
+.build-review-block { margin-top: 16px; }
+.build-unresolved { margin: 4px 0 0; }
+
+/* Review step — drag a decklist card onto a slot chip to recategorise it. */
+.build-dl-draggable { cursor: grab; }
+.build-dl-draggable:active { cursor: grabbing; }
+.build-slot-btn.drag-over { border-color: var(--accent, var(--fg)); box-shadow: 0 0 0 2px var(--accent, var(--fg)) inset; }
+
+/* Review step — decklist split into the active slot's cards vs the rest. */
+.build-dl-section-title { font-weight: 700; text-transform: lowercase; padding: 6px 4px 2px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--bg); }
+.build-dl-section-rest { opacity: 0.7; }
+
+/* Mana curve: 8 columns, bars grow from a fixed-height track so short
+   bars stay visible. */
+:is(#buildScoreboard, #deckScoreboard) .deck-curve {
+  display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px;
+  align-items: end;
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg-elev);
+  height: 96px;
+}
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-col {
+  display: flex; flex-direction: column; align-items: center;
+  height: 100%; gap: 2px; font-size: var(--fs-xs);
+}
+/* The middle band both the bar and the target line scale within, so
+   neither can overflow the chart. */
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-track {
+  position: relative; flex: 1 1 auto; width: 100%; min-height: 0;
+}
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; min-height: 2px;
+  background: var(--accent); border-radius: 3px 3px 0 0;
+}
+/* Dashed guide-target line, positioned AT the recommended count. A 7px
+   hit area (dashed edge on top) makes it hoverable — so its tooltip (the
+   recommended qty) shows — and z-index lifts it above the bar. */
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-target {
+  position: absolute; left: 6%; right: 6%;
+  height: 7px; margin-bottom: -3px; box-sizing: border-box;
+  border-top: 2px dashed var(--warn);
+  z-index: 2; cursor: help;
+}
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-count { font-variant-numeric: tabular-nums; color: var(--fg-muted); }
+:is(#buildScoreboard, #deckScoreboard) .deck-curve-label { color: var(--fg-muted); font-variant-numeric: tabular-nums; }
+
+/* D18.6 — Inventory tab, owned badges, deck coverage bar. */
+#inventoryPane, #wishlistPane {
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.inv-qty-badge {
+  display: inline-block; min-width: 1.6em; text-align: center;
+  font-variant-numeric: tabular-nums; font-weight: 600;
+  color: var(--fg-muted); margin-right: 6px;
+}
+.inv-sync { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.inv-sync-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.inv-sync-row input[type="text"] { flex: 1 1 320px; min-width: 200px; }
+.inv-search:not(.cards-filters) { display: flex; gap: 6px; align-items: center; margin: 10px 0; }
+.inv-search input[type="search"] { flex: 1 1 240px; }
+.inv-ok { color: var(--accent); margin: 6px 0; }
+.inv-paste summary { cursor: pointer; }
+.inv-paste textarea { width: 100%; margin-top: 4px; font-family: monospace; font-size: var(--fs-xs); }
+
+.inv-summary { margin-left: auto; color: var(--fg-muted); font-size: var(--fs-sm); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+
+/* Collection markers on card tiles + detail headers. Owned and wanted are
+   independent — owning a copy while wanting another is a normal state — so
+   both icons can show at once. */
+.coll-icon {
+  font-size: var(--fs-sm); line-height: 1; vertical-align: middle;
+  margin-left: 4px; cursor: default;
+}
+.wanted-icon { color: var(--warn); }
+.owned-icon { color: var(--accent); }
+.icon { width: 1em; height: 1em; vertical-align: -0.15em; }
+#themeToggle .icon, #randomBtn .icon { width: 16px; height: 16px; vertical-align: middle; }
+
+/* Legacy text badge, still used for the wishlist "already own N" marker. */
+.owned-badge {
+  font-size: var(--fs-xs); font-weight: 600; padding: 1px 5px; border-radius: 3px;
+  background: var(--accent); color: var(--accent-fg); vertical-align: middle;
+  white-space: nowrap;
+}
+
+.wanted-badge {
+  font-size: var(--fs-xs); font-weight: 600; padding: 1px 5px; border-radius: 3px;
+  background: var(--bg-elev); color: var(--fg-muted);
+  border: 1px solid var(--border); vertical-align: middle; white-space: nowrap;
+}
+ul.cards li.wl-have .name { opacity: 0.65; }
+ul.cards .meta .wl-owned { color: var(--accent); }
+ul.cards .meta .foil { color: var(--accent); }
+
+.inv-coverage { margin: 10px 0; }
+.inv-coverage h3 { margin: 0 0 6px; font-size: var(--fs-sm); }
+.inv-bar {
+  height: 10px; border-radius: 5px; overflow: hidden;
+  background: var(--bg-elev); border: 1px solid var(--border);
+}
+.inv-bar-fill { height: 100%; background: var(--accent); transition: width 0.2s; }
+.inv-coverage-line { margin: 4px 0; font-size: var(--fs-sm); }
+.inv-missing summary, .inv-unmatched summary { cursor: pointer; font-size: var(--fs-sm); }
+.inv-missing ul, .inv-unmatched ul {
+  list-style: none; margin: 6px 0 0 8px; padding: 0;
+  max-height: 240px; overflow: auto;
+}
+.inv-missing li, .inv-unmatched li { padding: 2px 0; font-size: var(--fs-sm); }
+.inv-missing-qty { font-variant-numeric: tabular-nums; color: var(--fg-muted); }
+.inv-missing-name { font-weight: 500; }
+
+/* Mobile: stack panes vertically; results becomes a scrollable header. */
+@media (max-width: 768px) {
+  .cards-split {
+    grid-template-columns: 1fr;
+    grid-template-rows: 40vh 0 auto;
+  }
+  .cards-split > .split-pane:first-child { border-right: none; border-bottom: 1px solid var(--border); }
+  .splitter { display: none; }
+  body { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
+  .sidebar { flex-direction: row; align-items: center; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: var(--sp-1) var(--sp-2); }
+  .brand { display: none; }
+  .nav-item { width: auto; }
+  .sidebar-foot { margin: 0 0 0 auto; }
+  #sidebarToggle { display: none; }
+  body.sidebar-collapsed { grid-template-columns: 1fr; }
+  .app-main { height: auto; min-height: 0; }
+}
+
+
+/* D18.18 — Settings tab: import, refresh, and import history. */
+#settingsPane { overflow-y: auto; max-width: 760px; }
+.settings-group { margin-bottom: var(--sp-5); }
+.settings-group > h2 { font-size: var(--fs-md); font-weight: 600; margin: 0 0 var(--sp-2); }
+/* Grouped list: rows inside one hairline box, Apple Settings style. */
+.settings-group > :is(form, .settings-row, details) {
+  padding: 10px 14px; border: 1px solid var(--border); border-top-width: 0;
+}
+.settings-group > h2 + * { border-top-width: 1px; border-radius: var(--radius-md) var(--radius-md) 0 0; }
+.settings-group > :last-child:not(h2) { border-radius: 0 0 var(--radius-md) var(--radius-md); }
+.settings-group > h2 + :last-child { border-radius: var(--radius-md); }
+#settingsPane .inv-sync { display: grid; grid-template-columns: 6rem 1fr; gap: 6px 12px; align-items: center; margin: 0; }
+#settingsPane .inv-sync > h3 { margin: 0; font-size: var(--fs-sm); font-weight: 500; }
+#settingsPane .inv-sync > :not(h3) { grid-column: 2; }
+#settingsPane .inv-sync > [role="status"]:empty { display: none; }
+.settings-row { display: flex; align-items: center; gap: 12px; }
+.settings-row > :first-child { flex: 1; }
+.refresh-advanced > summary { cursor: pointer; }
+.refresh-menu-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+.refresh-stages { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; }
+.refresh-stages label { font-size: var(--fs-sm); }
+#uploadsList { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 0 14px; }
+
+.upload-list { list-style: none; margin: 0; padding: 0; }
+.upload-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas: "main actions" "meta actions";
+  gap: 2px 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.upload-row:last-child { border-bottom: 0; }
+.upload-main { grid-area: main; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.upload-meta { grid-area: meta; font-size: var(--fs-xs); }
+.upload-actions { grid-area: actions; display: flex; gap: 6px; align-items: center; }
+.upload-name { font-weight: 600; word-break: break-all; }
+.upload-kind {
+  font-size: var(--fs-xs); color: var(--fg-muted);
+  padding: 0 6px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.upload-warn { color: var(--error-fg); }
+
+/* -------- Decks tab (D19.6) -------- */
+/* Reuses .inv-sync / .inv-paste / .inv-search for the import form and
+   .upload-list / .upload-row for the version timeline — only the
+   deck-specific pieces are defined here. */
+.deck-import-diff:empty, #deckImportStatus:empty, .deck-lib-status:empty { display: none; }
+.deck-cost-note { margin: 12px 10px 4px; font-size: var(--fs-xs); color: var(--fg-muted); }
+.deck-lib-status { padding: 6px 16px; font-size: var(--fs-sm); border-bottom: 1px solid var(--border); }
+#decksPane { display: flex; flex-direction: column; overflow: hidden; }
+.decks-split {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: minmax(240px, 320px) minmax(0, 1fr);
+}
+.decks-list-col, .decks-detail-col { overflow-y: auto; min-width: 0; padding: 12px 16px; }
+.decks-list-col { border-right: 1px solid var(--border); padding: 8px; }
+#deckDetail { max-width: 1100px; }
+#deckDetail > .empty:only-child { text-align: center; padding-top: 30vh; }
+/* One column on narrow screens — the detail pane needs the width more
+   than the list does. */
+@media (max-width: 800px) {
+  .decks-split { grid-template-columns: 1fr; grid-template-rows: 40vh auto; }
+  .decks-list-col { border-right: 0; border-bottom: 1px solid var(--border); }
+}
+.decks-detail-col h2 { font-size: var(--fs-xl); margin: 0; }
+.decks-detail-col h3 { font-size: var(--fs-sm); font-weight: 500; margin: 20px 0 6px; color: var(--fg-muted); }
+.deck-list { list-style: none; margin: 0; padding: 0; }
+.deck-row {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  margin-bottom: 1px;
+  cursor: pointer;
+  color: inherit;
+}
+.deck-row:hover { background: var(--bg-hover); }
+.deck-row.selected { background: color-mix(in srgb, var(--accent) 14%, transparent); }
+.deck-name { display: block; font-weight: 500; font-size: var(--fs-md); }
+.deck-cmd { display: block; font-size: var(--fs-xs); color: var(--fg-muted); }
+.deck-meta { display: block; font-size: var(--fs-xs); color: var(--fg-muted); }
+.deck-head { display: flex; align-items: center; gap: 4px; }
+.deck-head h2 { margin-right: 8px; }
+.deck-head .btn--danger { border-color: transparent; color: var(--fg-muted); }
+.deck-head .btn--danger:hover { background: transparent; color: var(--danger); }
+.deck-sub { margin: 2px 0 12px; color: var(--fg-muted); font-size: var(--fs-sm); }
+.deck-head-pinned { font-size: var(--fs-sm); color: var(--fg-muted); }
+.deck-links { display: flex; gap: 10px; margin: 8px 0 0; }
+.deck-current {
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.04em;
+  background: var(--accent); color: var(--accent-fg);
+  border-radius: 3px; padding: 1px 5px;
+}
+.deck-diff-form { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+/* D19.18 folder tree. Indentation is driven by `--depth` set per row from
+   the server-supplied `depth`, so nesting never depends on this file
+   re-parsing the path. All colours are theme tokens — a hardcoded value
+   here breaks the dark palette. */
+.deck-folders { margin-bottom: 10px; }
+.deck-folder-tree { list-style: none; margin: 0 0 6px; padding: 0; }
+.deck-folder-tree li { margin: 0; }
+.deck-folder-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
+  padding-left: calc(6px + var(--depth, 0) * 14px);
+  cursor: pointer;
+  color: inherit;
+  font-size: var(--fs-sm);
+}
+.deck-folder-row:hover { background: var(--bg-hover); }
+.deck-folder-row.selected { background: var(--bg-hover); font-weight: 500; }
+.deck-folder-count { color: var(--fg-muted); }
+.deck-folder-toggle { width: 12px; flex: none; color: var(--fg-muted); font-size: var(--fs-xs); }
+.deck-folder-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.deck-folder-count { flex: none; font-variant-numeric: tabular-nums; font-size: var(--fs-xs); }
+.deck-folder-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+
+/* D19.22 deck card table. Theme tokens only — a hardcoded colour here
+   breaks the dark palette. Ownership reuses the Inventory/Wishlist icon
+   vocabulary (.coll-icon), with the partial state dimmed the same way
+   .wanted-icon already is. */
+.deck-card-summary { margin: 0 0 6px; }
+.deck-card-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.deck-card-table th, .deck-card-table td {
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.deck-card-table .qty { text-align: right; font-variant-numeric: tabular-nums; width: 3em; }
+.deck-card-table thead th { background: var(--bg-elev); font-weight: 600; padding: 0; }
+.deck-card-table tr.deck-card-section th {
+  background: var(--bg);
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  padding-top: 10px;
+}
+.deck-card-table tr.deck-card-row[data-id] { cursor: pointer; }
+.deck-card-table tr.deck-card-row[data-id]:hover { background: var(--bg-elev); }
+.deck-card-table tr.deck-card-unresolved { color: var(--fg-muted); }
+.deck-sort {
+  background: none; border: 0; padding: 4px 6px; margin: 0;
+  color: inherit; font: inherit; font-weight: 600; cursor: pointer; width: 100%;
+  text-align: left;
+}
+.deck-sort:hover { color: var(--accent); }
+.deck-own-count { font-variant-numeric: tabular-nums; margin-left: 4px; font-size: var(--fs-xs); }
+/* Partial ownership dimmed, following .wanted-icon's precedent. */
+.deck-own-partial { filter: saturate(0.35) opacity(0.75); }
+.deck-own-none { color: var(--fg-muted); }
+
+/* D19.23 PR-style diff. Colour reinforces the +/− sign, it never carries
+   the meaning alone. Both themes get their own pair — one hardcoded set
+   would be unreadable in the other. */
+.deck-diff-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin-top: 6px; }
+.deck-diff-table td { padding: 2px 6px; border: 0; }
+.deck-diff-table .qty { text-align: right; font-variant-numeric: tabular-nums; width: 3em; }
+.deck-diff-sign {
+  width: 1.4em; text-align: center; font-weight: 700;
+  font-family: ui-monospace, monospace;
+}
+.deck-diff-add { background: var(--diff-add-bg); color: var(--diff-add-fg); }
+.deck-diff-del { background: var(--diff-del-bg); color: var(--diff-del-fg); }
+
+
+/* D19.26: import-form metadata grid. Two columns on desktop, stacked on
+   narrow screens — the URL inputs are long and wrap badly beside a label. */
+.deck-meta-grid {
+  display: grid; grid-template-columns: max-content 1fr;
+  gap: 8px 12px; align-items: center; margin-top: 8px;
+}
+.deck-meta-grid label { color: var(--fg-muted); font-size: var(--fs-sm); }
+.deck-meta-grid input, .deck-meta-grid textarea { width: 100%; }
+.deck-meta-grid textarea { align-self: start; }
+@media (max-width: 640px) {
+  .deck-meta-grid { grid-template-columns: 1fr; gap: 4px; }
+}
+
+/* D19.27: metadata editor panel on the deck detail. Reuses .deck-meta-grid
+   from D19.26 so the import form and the editor stay visually one thing. */
+.deck-meta-panel { margin: 12px 0; }
+.deck-meta-panel > summary { cursor: pointer; }
+.deck-meta-actions {
+  display: flex; align-items: center; gap: 10px; margin-top: 10px;
+}
+
+/* D19.29: missing-card cost. Rough figure from `cards.price_usd` (cheapest
+   printing across the oracle), refreshed with the card data — not live. */
+.deck-cost { white-space: nowrap; }
+
+/* D19.31: price column. Distinct from `.deck-card-cost`, which is MANA cost. */
+.deck-card-price { text-align: right; white-space: nowrap; }
+
+/* D19.35: branch chips, shared visual vocabulary across three surfaces —
+   the version timeline's filter bar, the per-row branch badge, and the
+   branch-head navigator above the card table. A pill button, following
+   .deck-current's shape rather than .deck-folder-row's (that one needs
+   indentation for tree depth; a chip does not). */
+.deck-branch-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.deck-branch-chip {
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.03em;
+  background: var(--bg-elev); color: inherit; border: 1px solid var(--border);
+  border-radius: 12px; padding: 2px 9px; cursor: pointer;
+}
+.deck-branch-chip:hover:not(:disabled) { border-color: var(--accent); }
+.deck-branch-chip.selected {
+  background: var(--accent); color: var(--accent-fg); border-color: var(--accent);
+}
+.deck-branch-chip:disabled, .deck-branch-chip-empty {
+  cursor: default; opacity: 0.45;
+}
+/* The per-row badge in the timeline is read-only, not a button — smaller
+   and non-interactive so it never looks clickable next to the filter
+   chips above it, which are. */
+.deck-branch-chip-sm {
+  font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.03em;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 0 6px; cursor: default;
+}
+/* The message shares `.upload-meta` (grid-area: meta) with the stats line, so
+   without its own area the two paint on top of each other. */
+.upload-row:has(> .deck-version-msg) {
+  grid-template-areas: "main actions" "msg actions" "meta actions";
+}
+.deck-version-msg { font-style: italic; grid-area: msg; }
+.deck-branch-viewing, .deck-head-pinned { margin: 4px 0; }
+.deck-branch-nav { margin-bottom: 8px; }
+
+/* D19.40: sync strip. Reuses .deck-branch-chip-sm's read-only pill —
+   this is a status readout, not a control, same as the per-row branch
+   badge in the timeline. */
+.deck-sync-strip { margin: 4px 0; }
+.deck-sync-ok { color: var(--ok); }
+.deck-sync-diff { color: var(--danger); }
+
+/* D19.36: post-import diff. Reuses .deck-branch-chip for the two subtabs
+   (main / previous head) and .deck-diff-table for the result — visual
+   vocabulary already established, nothing new to learn. */
+.deck-import-diff { margin-top: 10px; }
+
+/* D19.46 — completion plan. Two columns so the cost/cards trade-off is
+   visible side by side; stacks under 720px where a two-column diff of
+   shopping lists stops being readable. */
+/* Native <dialog>: Esc and backdrop close it (25-layout.js). */
+dialog {
+  width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 64px);
+  padding: var(--sp-4) var(--sp-5); border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--bg); color: var(--fg); box-shadow: var(--shadow-lg);
+}
+dialog.deck-plan-card { width: min(920px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0, 0, 0, 0.4); }
+.dialog-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-3); }
+.dialog-head h2 { margin: 0; font-size: var(--fs-lg); font-weight: 600; }
+.dialog-actions { display: flex; justify-content: flex-end; margin-top: var(--sp-2); }
+dialog .inv-sync input[type="text"], dialog .inv-sync input[type="number"] { width: 100%; }
+dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
+.plan-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.6rem; }
+@media (max-width: 720px) { .plan-cols { grid-template-columns: 1fr; } }
+.plan-col h4 { margin: 0 0 0.15rem; }
+.plan-total { font-weight: 600; margin: 0.3rem 0 0.5rem; }
+.plan-steps { margin: 0; padding-left: 1.1rem; }
+.plan-step { margin-bottom: 0.6rem; }
+.plan-step-head { line-height: 1.3; }
+.plan-cards { list-style: none; margin: 0.25rem 0 0; padding: 0; font-size: 0.9em; }
+.plan-cards li { display: flex; gap: 0.4rem; align-items: baseline; }
+.plan-qty { color: var(--muted); min-width: 2.2em; }
+.plan-price { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* Not a colour-only signal: the words carry it and the tint reinforces. */
+.plan-free { color: var(--muted); font-size: 0.85em; }
+.plan-skipped { margin-top: 0.4rem; }
+
+/* D19.47 — unresolved names above the card table. Warning-toned but the
+   heading carries the meaning; colour only reinforces it. */
+.deck-unresolved { border: 1px solid var(--border); border-left: 3px solid var(--warn); border-radius: 6px; padding: 0.5rem 0.7rem; margin-bottom: 0.8rem; }
+.deck-unresolved-list { list-style: none; margin: 0.4rem 0 0; padding: 0; }
+.deck-unresolved-list li { display: flex; gap: 0.4rem; align-items: baseline; }
+.deck-unresolved-list code { word-break: break-all; }
+
+/* Deck evaluation panel — summary table + guide tips. */
+.deck-scoreboard { margin: 0.4rem 0 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.deck-eval-head { margin: 0.3rem 0 0.6rem; }
+.deck-eval-slots { border-collapse: collapse; margin: 0.4rem 0 0.8rem; }
+.deck-eval-slots th, .deck-eval-slots td { padding: 2px 10px 2px 0; text-align: left; }
+.deck-eval-slots th { color: var(--fg-muted); font-weight: 600; }
+.deck-eval-slots td.qty { text-align: right; font-variant-numeric: tabular-nums; }
+/* A slot under target: the number carries the meaning, colour reinforces. */
+.deck-eval-slots td.deck-eval-under { color: var(--error-fg); font-weight: 600; }
+.deck-eval-tips { list-style: none; margin: 0; padding: 0; }
+.deck-eval-tip { border-left: 3px solid var(--border); padding: 0.35rem 0.6rem; margin-bottom: 0.35rem; border-radius: var(--radius-sm); }
+/* warn = a template gap; info = a shaping note. Left-bar + text weight, not
+   colour alone, so the distinction survives colour-blind viewing. */
+.deck-eval-warn { border-left-color: var(--warn); font-weight: 600; }
+.deck-eval-info { border-left-color: var(--border); color: var(--fg-muted); }
+
+/* Build wizard. */
+.build-layout { display: flex; gap: 1.2rem; align-items: flex-start; }
+.build-main { flex: 1 1 auto; min-width: 0; }
+/* Right decklist sidebar — cards grouped by type, CMC-sorted. */
+.build-decklist { flex: 0 0 auto; width: 230px; position: sticky; top: 0.5rem; max-height: calc(100vh - 1rem); overflow-y: auto; font-size: 0.85em; border-left: 1px solid var(--border); padding-left: 0.8rem; }
+.build-decklist-head { font-weight: 700; margin-bottom: 0.5rem; }
+.build-dl-group { margin-bottom: 0.6rem; }
+.build-dl-title { color: var(--fg-muted); font-weight: 600; font-size: 0.9em; text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 0.15rem; }
+.build-dl-row { display: flex; align-items: baseline; gap: 0.4rem; padding: 1px 0; cursor: default; }
+.build-dl-row:hover { color: var(--accent); }
+.build-dl-qty { color: var(--fg-muted); min-width: 1.1em; text-align: right; font-variant-numeric: tabular-nums; }
+.build-dl-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.build-dl-cost { white-space: nowrap; flex: 0 0 auto; }
+.build-dl-rm { flex: 0 0 auto; border: none; background: none; color: var(--fg-muted); cursor: pointer; padding: 0 2px; opacity: 0; line-height: 1; }
+.build-dl-row:hover .build-dl-rm { opacity: 1; }
+.build-dl-rm:hover { color: var(--error-fg); }
+.build-combos { list-style: none; margin: 0.2rem 0 0.6rem; padding: 0; font-size: 0.9em; }
+.build-combos li { padding: 2px 0; border-bottom: 1px solid var(--border); }
+.build-dl-cost .mana-sym { height: 0.85em; width: 0.85em; margin: 0 0.5px; vertical-align: -0.1em; }
+@media (max-width: 900px) { .build-decklist { display: none; } }
+/* Lateral step menu — click to jump to any step. */
+.build-sidenav { flex: 0 0 auto; width: 170px; display: flex; flex-direction: column; gap: 0.2rem; position: sticky; top: 0.5rem; }
+.build-navstep { display: flex; align-items: center; gap: 0.5rem; text-align: left; padding: 0.4rem 0.6rem; background: none; border: 1px solid transparent; border-radius: 6px; color: var(--fg-muted); cursor: pointer; font-size: 0.9em; }
+.build-navstep:hover { border-color: var(--border); }
+.build-navstep.active { color: var(--fg); font-weight: 600; background: var(--bg-elev); border-color: var(--border); }
+.build-navstep .build-dot { flex: 0 0 auto; display: inline-flex; width: 1.5em; height: 1.5em; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--border); font-size: 0.85em; }
+.build-navstep.active .build-dot { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.build-navstep.done .build-dot { background: var(--ok); color: var(--accent-fg); border-color: transparent; }
+.build-scoreboard { position: sticky; top: 0; background: var(--bg); padding: 0.4rem 0; z-index: 1; border-bottom: 1px solid var(--border); margin-bottom: 0.8rem; }
+.build-step h2 { margin: 0.2rem 0; }
+.build-slot-goals { font-weight: 600; margin: 0.2rem 0 0.6rem; text-transform: capitalize; }
+.build-query-echo { font-family: monospace; font-size: 0.8em; margin-bottom: 0.4rem; word-break: break-word; }
+@media (max-width: 680px) {
+  .build-layout { flex-direction: column; }
+  .build-sidenav { flex-direction: row; flex-wrap: wrap; width: auto; position: static; }
+}
+.build-nav { display: flex; gap: 0.6rem; align-items: center; margin-top: 1.2rem; border-top: 1px solid var(--border); padding-top: 0.8rem; }
+.build-nav #buildReset { margin-left: auto; }
+.build-cmd { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 0.5rem 0; }
+.build-cmd input[type=text] { flex: 1 1 12rem; }
+.build-paste { margin-top: 1rem; }
+.build-paste textarea { width: 100%; font-family: monospace; }
+.build-otags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
+.build-cards { list-style: none; padding: 0; margin: 0.4rem 0; }
+.build-cards li { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+.build-card-name { font-weight: 600; }
+.build-cards .help { flex: 1; }
+.build-add, .build-rm { white-space: nowrap; }
+.build-rm { color: var(--fg-muted); }
+/* Step 6 radar: colour NEED (pips) vs HAVE (sources), overlaid. */
+.build-radar { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; margin: 0.6rem 0 1rem; }
+.radar-grid { fill: none; stroke: var(--border); stroke-width: 1; }
+.radar-need { fill: color-mix(in srgb, var(--radar-need) 16%, transparent); stroke: var(--radar-need); stroke-width: 1.5; }
+.radar-have { fill: color-mix(in srgb, var(--radar-have) 18%, transparent); stroke: var(--radar-have); stroke-width: 1.5; }
+.radar-val { fill: var(--fg-muted); font-size: var(--fs-xs); }
+.radar-lbl { fill: var(--fg-muted); font-size: var(--fs-xs); }
+.radar-legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; align-items: center; font-size: 0.8em; }
+.radar-key::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 4px; border-radius: 2px; vertical-align: -1px; }
+.radar-need-key::before { background: var(--radar-need); }
+.radar-have-key::before { background: var(--radar-have); }
+/* Per-step "find your own card" search panel. */
+.build-search { margin: 0.8rem 0; border: 1px solid var(--border); border-radius: 6px; padding: 0 0.7rem; }
+.build-search summary { cursor: pointer; font-weight: 600; font-size: 0.9em; padding: 0.5rem 0; }
+.build-search-body { padding: 0 0 0.6rem; }
+.build-search-body #bsQ { width: 100%; margin-bottom: 0.5rem; box-sizing: border-box; }
+.build-search-opts { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; font-size: 0.85em; margin-bottom: 0.5rem; }
+.build-search-opts label { display: inline-flex; align-items: center; gap: 0.25rem; }
+/* Commander theme chips inside the search panel (multi-select). */
+.build-themes { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; margin-bottom: 0.5rem; }
+#buildFocusChips { margin-bottom: 0; }
+.build-focus-q { flex: 0 1 180px; min-width: 120px; }
+.build-otag.selected { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+/* A theme just surfaced from an added card — suggested, not yet prioritised. */
+.build-otag .chip-count { opacity: 0.75; font-variant-numeric: tabular-nums; font-size: 0.9em; }
+.build-otag.selected .chip-count { opacity: 0.9; }
+.build-otag.new { border-style: dashed; border-color: var(--warn); color: var(--warn); }
+.build-otag.new.selected { border-style: solid; color: var(--accent-fg); }
+
+/* Buy-next form: inline like .inv-sync-row instead of stretching full width. */
+#deckPlanForm { flex-direction: row; flex-wrap: wrap; align-items: center; gap: var(--sp-2); }
+#deckPlanForm input { width: 8rem; }
+.compare-inputs + .deck-actions { margin-top: var(--sp-3); }
+
+.about { margin-top: var(--sp-5); padding-top: var(--sp-3); border-top: 1px solid var(--border); font-size: var(--fs-xs); color: var(--fg-muted); }
+.about a { color: inherit; }
+.about a:hover { color: var(--accent); }

@@ -1,0 +1,105 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biblioplex"
+version = "0.1.0"
+description = "Scryfall-compatible MTG card search backend with vector similarity."
+readme = "README.md"
+requires-python = ">=3.14"
+license = { text = "MIT" }
+authors = [{ name = "Douglas Nunes" }]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    # >=2.1: the DSL escape tests pin 2.1's literal rendering (backslashes
+    # are not doubled), so 2.0 would fail them.
+    "sqlalchemy[asyncio]>=2.1,<2.2",
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.14.2",
+    "httpx>=0.27",
+    "ijson>=3.3",
+    "sentence-transformers>=3.0",
+    "fastapi-mcp>=0.4",
+    # Required by FastAPI for the multipart CSV upload on
+    # POST /inventory/sync/upload. Present transitively today; declared so a
+    # transitive drop cannot silently 500 the endpoint.
+    "python-multipart>=0.0.9",
+    # Bug.31 — `fastapi-mcp` does not constrain its own `mcp` dependency, so
+    # `pip install .` in the Dockerfile resolved it fresh at build time and
+    # picked up `mcp` 2.0.0, which made every `Server.__init__` argument after
+    # `name` keyword-only. `fastapi_mcp/server.py:144` still calls
+    # `Server(self.name, self.description)` positionally, so the container
+    # died on import with `TypeError: Server.__init__() takes 2 positional
+    # arguments but 3 were given`. 0.4.0 is the latest fastapi-mcp, so there
+    # is no upgrade out — pin the transitive dep until one ships.
+    # 1.x is still positional-compatible: 1.30.0 passes the MCP suite and
+    # boots. 2.3.0 (Oct 2026) still fails the same way, so keep <2 until
+    # fastapi-mcp ships a fix. Lift it only alongside a verified boot.
+    "mcp>=1.30.0,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=0.24",
+    "pytest-xdist>=3.6",
+    "httpx>=0.27",
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "hypothesis>=6.100",
+    "pre-commit>=4.0",
+    "pip-audit>=2.7",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+biblioplex = ["py.typed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP", "SIM", "S"]
+
+# Tests use verbose pytest fixture annotations (`monkeypatch: pytest.MonkeyPatch`);
+# strict line-length here is ceremony noise, not a signal.
+[tool.ruff.lint.per-file-ignores]
+# S101 assert / S105-S106 fake tokens / S311 seeded RNG / S603-S607 node
+# subprocess are what tests are made of, not vulnerabilities.
+"tests/*" = ["E501", "S101", "S105", "S106", "S311", "S603", "S607"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = [
+    "fastapi.Depends", "fastapi.Query", "fastapi.Path", "fastapi.Header",
+    "fastapi.Body", "fastapi.File", "fastapi.Form",
+]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+packages = ["biblioplex"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = "ijson"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "sentence_transformers"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "fastapi_mcp"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

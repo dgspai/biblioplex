@@ -1,0 +1,214 @@
+name,ramp,card_advantage,targeted_disrupt,mass_disrupt,plan,source,note
+Sol Ring,1,0,0,0,0,strawman,rock
+Arcane Signet,1,0,0,0,0,strawman,rock
+Mana Crypt,1,0,0,0,0,strawman,rock
+Mind Stone,1,0,0,0,0,strawman,rock
+Cultivate,1,0,0,0,0,strawman,land fetch
+Kodama's Reach,1,0,0,0,0,strawman,land fetch
+Rampant Growth,1,0,0,0,0,strawman,land fetch
+Nature's Lore,1,0,0,0,0,strawman,land fetch
+Llanowar Elves,1,0,0,0,0,strawman,creature ramp
+Birds of Paradise,1,0,0,0,0,strawman,creature ramp
+Elvish Mystic,1,0,0,0,0,strawman,creature ramp
+Bloom Tender,1,0,0,0,0,strawman,creature ramp
+Smothering Tithe,1,0,0,0,0,strawman,R4 treasure-maker
+Treasure Map // Treasure Cove,1,0,0,0,0,strawman,treasure flip transform
+Wayfarer's Bauble,1,0,0,0,0,strawman,rock-into-land
+Rhystic Study,0,1,0,0,0,strawman,engine R3
+Mystic Remora,0,1,0,0,0,strawman,engine R3
+Esper Sentinel,0,1,0,0,0,strawman,engine R3
+Sylvan Library,0,1,0,0,0,strawman,engine R3
+Phyrexian Arena,0,1,0,0,0,strawman,engine R3
+Necropotence,0,1,0,0,0,strawman,engine R3
+Sign in Blood,0,1,0,0,0,strawman,draw 2 Rule 1
+Read the Bones,0,1,0,0,0,strawman,draw 2+scry Rule 1
+Divination,0,1,0,0,0,strawman,draw 2 Rule 1
+Concentrate,0,1,0,0,0,strawman,draw 3 Rule 1
+Mulldrifter,0,1,0,0,0,strawman,ETB draws 2 R10
+Wheel of Fortune,0,1,0,0,0,strawman,R8 wheel
+Windfall,0,1,0,0,0,strawman,R8 wheel
+Timetwister,0,1,0,0,0,strawman,R8 wheel
+Cathartic Reunion,0,1,0,0,0,strawman,R5' loot net+1
+Reconnaissance Mission,0,1,0,0,0,strawman,combat-trigger engine
+Bident of Thassa,0,1,0,0,0,strawman,combat-trigger engine
+Coastal Piracy,0,1,0,0,0,strawman,combat-trigger engine
+Outpost Siege,0,1,0,0,0,strawman,upkeep engine
+Risen Reef,0,1,0,0,0,strawman,ETB-other engine
+Beast Whisperer,0,1,0,0,0,strawman,ETB-other engine
+Swords to Plowshares,0,0,1,0,0,strawman,exile creature
+Path to Exile,0,0,1,0,0,strawman,exile creature
+Doom Blade,0,0,1,0,0,strawman,destroy creature
+Go for the Throat,0,0,1,0,0,strawman,destroy creature
+Counterspell,0,0,1,0,0,strawman,R11 counter
+Negate,0,0,1,0,0,strawman,R11 counter
+Mana Drain,0,0,1,0,0,strawman,R2 + R11 counter
+Force of Will,0,0,1,0,0,strawman,R11 counter
+Beast Within,0,0,1,0,0,strawman,destroy any permanent
+Generous Gift,0,0,1,0,0,strawman,destroy any permanent
+Anguished Unmaking,0,0,1,0,0,strawman,exile non-land
+Bojuka Bog,0,0,1,0,0,strawman,R12 silver-bullet (also land slot)
+Tormod's Crypt,0,0,1,0,0,strawman,R12 silver-bullet
+Relic of Progenitus,0,0,1,0,0,strawman,R12 silver-bullet
+Diabolic Edict,0,0,1,0,0,strawman,R14 edict
+Liliana's Triumph,0,0,1,0,0,strawman,R14 edict
+Wrath of God,0,0,0,1,0,strawman,creature wipe
+Damnation,0,0,0,1,0,strawman,creature wipe
+Day of Judgment,0,0,0,1,0,strawman,creature wipe
+Supreme Verdict,0,0,0,1,0,strawman,uncounterable wipe
+Toxic Deluge,0,0,0,1,0,strawman,X-cost wipe
+Cyclonic Rift,0,0,0,1,0,strawman,bounce wipe
+Blasphemous Act,0,0,0,1,0,strawman,R16 damage wipe
+Pyroclasm,0,0,0,1,0,strawman,R16 damage wipe
+Vandalblast,0,0,0,1,0,strawman,R19 artifact wipe
+Bane of Progress,0,0,0,1,0,strawman,R19 artifact/ench wipe
+Austere Command,0,0,0,1,0,strawman,modal wipe
+Armageddon,0,0,0,1,0,strawman,R20 land wipe
+Ravages of War,0,0,0,1,0,strawman,R20 land wipe
+Demonic Tutor,0,0,0,0,1,strawman,R7 tutor
+Vampiric Tutor,0,0,0,0,1,strawman,R7 tutor
+Worldly Tutor,0,0,0,0,1,strawman,R7 tutor
+Brainstorm,0,0,0,0,1,strawman,R6 cantrip
+Ponder,0,0,0,0,1,strawman,R6 cantrip
+Preordain,0,0,0,0,1,strawman,R6 cantrip
+Opt,0,0,0,0,1,strawman,R6 cantrip
+Eternal Witness,0,0,0,0,1,strawman,R9 one-shot recursion
+Regrowth,0,0,0,0,1,strawman,R9 one-shot recursion
+Reclaim,0,0,0,0,1,strawman,R9 one-shot recursion
+Elvish Visionary,0,0,0,0,1,strawman,R10 ETB draws 1
+Cloudkin Seer,0,0,0,0,1,strawman,R10 ETB draws 1
+Faithless Looting,0,0,0,0,1,strawman,R5' loot net 0
+Tormenting Voice,0,0,0,0,1,strawman,R5' loot net 0
+Craterhoof Behemoth,0,0,0,0,1,strawman,finisher
+Triumph of the Hordes,0,0,0,0,1,strawman,finisher
+Avenger of Zendikar,0,0,0,0,1,strawman,threat/payoff
+Doubling Season,0,0,0,0,1,strawman,payoff
+Propaganda,0,0,0,0,1,strawman,R13 pillowfort
+Ghostly Prison,0,0,0,0,1,strawman,R13 pillowfort
+Cathars' Crusade,0,0,0,0,1,strawman,payoff engine
+Tangled Florahedron // Tangled Vale,1,0,0,0,0,strawman,R26 MDFC creature/land
+"Sea Gate Restoration // Sea Gate, Reborn",0,1,0,0,0,strawman,R26 MDFC draw/land
+Bonecrusher Giant // Stomp,0,0,1,0,1,strawman,R27 adventure
+Murderous Rider // Swift End,0,0,1,0,1,strawman,R27 adventure
+Brazen Borrower // Petty Theft,0,0,1,0,1,strawman,R27 adventure
+Fire // Ice,0,0,1,0,0,strawman,"R25 split, both halves targeted"
+Wear // Tear,0,0,1,0,0,strawman,"R25 split, both halves targeted"
+Genesis Wave,1,0,0,0,0,otag_sample,otag:ramp
+Reckless Ransacking,1,0,0,0,0,otag_sample,otag:ramp
+Sun Warriors,1,0,0,0,0,otag_sample,otag:ramp
+Overgrowth,1,0,0,0,0,otag_sample,otag:ramp
+Deeproot Wayfinder,1,0,0,0,0,otag_sample,otag:ramp
+Braulios of Pheres Band,1,0,0,0,0,otag_sample,otag:ramp
+Tax Taker,1,0,0,0,0,otag_sample,otag:ramp
+Sand Scout,1,0,0,0,0,otag_sample,otag:ramp
+Trade Caravan,1,0,0,0,0,otag_sample,otag:ramp
+Beanstalk Wurm // Plant Beans,1,0,0,0,0,otag_sample,otag:ramp
+Archdruid's Charm,1,0,0,0,0,otag_sample,otag:ramp
+Thornvault Forager,1,0,0,0,0,otag_sample,otag:ramp
+Abstract Paintmage,1,0,0,0,0,otag_sample,otag:ramp
+Hurkyl's Prodigy,1,0,0,0,0,otag_sample,otag:ramp
+Nissa's Pilgrimage,1,0,0,0,0,otag_sample,otag:ramp
+Nine-Fingers Keene,1,0,0,0,0,otag_sample,otag:ramp
+Generated Horizons,1,0,0,0,0,otag_sample,otag:ramp
+"Rose, Cutthroat Raider",1,0,0,0,0,otag_sample,otag:ramp
+Seismic Spike,1,0,0,0,0,otag_sample,otag:ramp
+Tyvar Kell,1,0,0,0,0,otag_sample,otag:ramp
+Gate to the Aether,1,0,0,0,0,otag_sample,otag:ramp
+Glittering Frost,1,0,0,0,0,otag_sample,otag:ramp
+A-Geology Enthusiast,1,0,0,0,0,otag_sample,otag:ramp
+Hazel of the Rootbloom,1,0,0,0,0,otag_sample,otag:ramp
+Astral Dragon,1,0,0,0,0,otag_sample,otag:ramp
+"Esika, God of the Tree // The Prismatic Bridge",1,0,0,0,0,otag_sample,otag:ramp
+"Malcolm, Keen-Eyed Navigator",1,0,0,0,0,otag_sample,otag:ramp
+Dragon's Hoard,1,0,0,0,0,otag_sample,otag:ramp
+Tempest Trapper,1,0,0,0,0,otag_sample,otag:ramp
+Slimefoot's Survey,1,0,0,0,0,otag_sample,otag:ramp
+"Valgavoth, Harrower of Souls",0,1,0,0,0,otag_sample,otag:card-advantage
+"Ephara, God of the Polis",0,1,0,0,0,otag_sample,otag:card-advantage
+Chromatic Orrery,0,1,0,0,0,otag_sample,otag:card-advantage
+Blinding Spray,0,1,0,0,0,otag_sample,otag:card-advantage
+Scion of Opulence,0,1,0,0,0,otag_sample,otag:card-advantage
+"Narset, Parter of Veils",0,1,0,0,0,otag_sample,otag:card-advantage
+"Faramir, Prince of Ithilien",0,1,0,0,0,otag_sample,otag:card-advantage
+Racers' Ring,0,1,0,0,0,otag_sample,otag:card-advantage
+Curious Inquiry,0,1,0,0,0,otag_sample,otag:card-advantage
+Coercive Portal,0,1,0,0,0,otag_sample,otag:card-advantage
+Advice from the Fae,0,1,0,0,0,otag_sample,otag:card-advantage
+"A-Shessra, Death's Whisper",0,1,0,0,0,otag_sample,otag:card-advantage
+"Ludevic, Necro-Alchemist",0,1,0,0,0,otag_sample,otag:card-advantage
+Ravenous Gigamole,0,1,0,0,0,otag_sample,otag:card-advantage
+Wasteland Scorpion,0,1,0,0,0,otag_sample,otag:card-advantage
+Vodalian Merchant,0,1,0,0,0,otag_sample,otag:card-advantage
+Modify Memory,0,1,0,0,0,otag_sample,otag:card-advantage
+Chandra's Outburst,0,1,0,0,0,otag_sample,otag:card-advantage
+Dazzling Beauty,0,1,0,0,0,otag_sample,otag:card-advantage
+Cosmic Cube,0,1,0,0,0,otag_sample,otag:card-advantage
+Plundering Predator,0,1,0,0,0,otag_sample,otag:card-advantage
+Archivist of Oghma,0,1,0,0,0,otag_sample,otag:card-advantage
+Termagant Swarm,0,1,0,0,0,otag_sample,otag:card-advantage
+Markov Enforcer,0,1,0,0,0,otag_sample,otag:card-advantage
+Trial of Knowledge,0,1,0,0,0,otag_sample,otag:card-advantage
+Everythingamajig,0,1,0,0,0,otag_sample,otag:card-advantage
+Enhanced Awareness,0,1,0,0,0,otag_sample,otag:card-advantage
+"The Gitrog, Ravenous Ride",0,1,0,0,0,otag_sample,otag:card-advantage
+"Padeem, Consul of Innovation",0,1,0,0,0,otag_sample,otag:card-advantage
+Rhet-Tomb Mystic,0,1,0,0,0,otag_sample,otag:card-advantage
+Inspired Ultimatum,0,0,1,0,0,otag_sample,otag:spot-removal
+Boommobile,0,0,1,0,0,otag_sample,otag:spot-removal
+Come Back Wrong,0,0,1,0,0,otag_sample,otag:spot-removal
+Catti-brie of Mithral Hall,0,0,1,0,0,otag_sample,otag:spot-removal
+Repulsor Blast,0,0,1,0,0,otag_sample,otag:spot-removal
+Skirk Commando,0,0,1,0,0,otag_sample,otag:spot-removal
+Snapping Thragg,0,0,1,0,0,otag_sample,otag:spot-removal
+Fiery Justice,0,0,1,0,0,otag_sample,otag:spot-removal
+Scorching Lava,0,0,1,0,0,otag_sample,otag:spot-removal
+Unnatural Hunger,0,0,1,0,0,otag_sample,otag:spot-removal
+"Bjorna, Nightfall Alchemist",0,0,1,0,0,otag_sample,otag:spot-removal
+Cleansing Wildfire,0,0,1,0,0,otag_sample,otag:spot-removal
+Bind the Monster,0,0,1,0,0,otag_sample,otag:spot-removal
+Collar the Culprit,0,0,1,0,0,otag_sample,otag:spot-removal
+Stonefury,0,0,1,0,0,otag_sample,otag:spot-removal
+Crack the Earth,0,0,1,0,0,otag_sample,otag:spot-removal
+Worldsoul's Rage,0,0,1,0,0,otag_sample,otag:spot-removal
+Mystic Melting,0,0,1,0,0,otag_sample,otag:spot-removal
+Molder,0,0,1,0,0,otag_sample,otag:spot-removal
+Ghostly Wings,0,0,1,0,0,otag_sample,otag:spot-removal
+Yuki-Onna,0,0,1,0,0,otag_sample,otag:spot-removal
+Mary O'Kill,0,0,1,0,0,otag_sample,otag:spot-removal
+Nature's Wrath,0,0,1,0,0,otag_sample,otag:spot-removal
+Mishra's Command,0,0,1,0,0,otag_sample,otag:spot-removal
+Serum-Core Chimera,0,0,1,0,0,otag_sample,otag:spot-removal
+Pest Infestation,0,0,1,0,0,otag_sample,otag:spot-removal
+Nova Hellkite,0,0,1,0,0,otag_sample,otag:spot-removal
+Excommunicate,0,0,1,0,0,otag_sample,otag:spot-removal
+Feast of Dreams,0,0,1,0,0,otag_sample,otag:spot-removal
+Silkwrap,0,0,1,0,0,otag_sample,otag:spot-removal
+Tectonic Hazard,0,0,0,1,0,otag_sample,otag:sweeper
+Tremor,0,0,0,1,0,otag_sample,otag:sweeper
+Gaze of Granite,0,0,0,1,0,otag_sample,otag:sweeper
+Kaboom!,0,0,0,1,0,otag_sample,otag:sweeper
+"Omnath, Locus of Creation",0,0,0,1,0,otag_sample,otag:sweeper
+Puresteel Angel,0,0,0,1,0,otag_sample,otag:sweeper
+Splatter Technique,0,0,0,1,0,otag_sample,otag:sweeper
+Martyr's Cry,0,0,0,1,0,otag_sample,otag:sweeper
+Perilous Vault,0,0,0,1,0,otag_sample,otag:sweeper
+Magmasaur,0,0,0,1,0,otag_sample,otag:sweeper
+Martyr of Ashes,0,0,0,1,0,otag_sample,otag:sweeper
+Whiptongue Hydra,0,0,0,1,0,otag_sample,otag:sweeper
+Filter Out,0,0,0,1,0,otag_sample,otag:sweeper
+Death Frenzy,0,0,0,1,0,otag_sample,otag:sweeper
+Hidetsugu Consumes All // Vessel of the All-Consuming,0,0,0,1,0,otag_sample,otag:sweeper
+Night Clubber,0,0,0,1,0,otag_sample,otag:sweeper
+Reckless Blaze,0,0,0,1,0,otag_sample,otag:sweeper
+Avenge,0,0,0,1,0,otag_sample,otag:sweeper
+Victory of the Pyrohammer,0,0,0,1,0,otag_sample,otag:sweeper
+Season of Gathering,0,0,0,1,0,otag_sample,otag:sweeper
+Hurricane,0,0,0,1,0,otag_sample,otag:sweeper
+March of Souls,0,0,0,1,0,otag_sample,otag:sweeper
+Expel the Interlopers,0,0,0,1,0,otag_sample,otag:sweeper
+Nova Flame,0,0,0,1,0,otag_sample,otag:sweeper
+Meltdown,0,0,0,1,0,otag_sample,otag:sweeper
+Boompile,0,0,0,1,0,otag_sample,otag:sweeper
+Cloudthresher,0,0,0,1,0,otag_sample,otag:sweeper
+Forced March,0,0,0,1,0,otag_sample,otag:sweeper
+Dragonback Assault,0,0,0,1,0,otag_sample,otag:sweeper
+Black Sun's Zenith,0,0,0,1,0,otag_sample,otag:sweeper

@@ -1,0 +1,41 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. ...\n2. ..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: true
+  - type: textarea
+    id: health
+    attributes:
+      label: "`/health` output"
+      description: Output of `curl http://localhost:8000/health`.
+      render: json
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      description: Only if the problem is in the web UI.
+  - type: input
+    id: os
+    attributes:
+      label: OS and Docker version
+      description: For example "Ubuntu 24.04, Docker 27.3 (`docker --version`)".
+    validations:
+      required: true
