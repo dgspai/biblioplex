@@ -115,7 +115,6 @@ _TAIL_ANNOTATION_RE = re.compile(
 # idempotence is load-bearing: `/decks/*` responses re-serialize parsed
 # lists and hand them back, so a name that changed on every pass would
 # corrupt decklists exactly the way Bug.33 did.
-_SPLIT_SEPARATOR_RE = re.compile(r"\s*//\s*")
 
 
 def normalize_card_name(raw_name: str) -> str:
@@ -127,7 +126,7 @@ def normalize_card_name(raw_name: str) -> str:
     """
     name = raw_name.strip()
     if "//" in name and " // " not in name:
-        name = _SPLIT_SEPARATOR_RE.sub(" // ", name).strip()
+        name = " // ".join(part.strip() for part in name.split("//")).strip()
     return name
 
 

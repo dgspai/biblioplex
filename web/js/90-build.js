@@ -1051,7 +1051,7 @@ async function _recategoriseCard(cardId, label) {
     ? ["plan"]
     : [...new Set([...cur.filter((l) => l !== "plan"), label])];
   try {
-    const resp = await fetch(`/api/cards/${cardId}/labels`, {
+    const resp = await fetch(`/api/cards/${encodeURIComponent(cardId)}/labels`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ labels }),
