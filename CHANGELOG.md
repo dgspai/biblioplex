@@ -2,6 +2,24 @@
 
 <!-- version list -->
 
+## v0.4.0 (2026-11-11)
+
+### Documentation
+
+- **readme**: Add install and how-to-use sections
+  ([#5](https://github.com/dgspai/biblioplex/pull/5),
+  [`5fd1327`](https://github.com/dgspai/biblioplex/commit/5fd1327533da529b7a478255b2841f1047218ed5))
+
+- **readme**: Refresh screenshots for 0.3.0 and add phone layout shots
+  ([#6](https://github.com/dgspai/biblioplex/pull/6),
+  [`58b5735`](https://github.com/dgspai/biblioplex/commit/58b573547f19136e3dbdb8640b4c2e58981e4345))
+
+### Features
+
+- Card printings with per-printing owned counts ([#7](https://github.com/dgspai/biblioplex/pull/7),
+  [`68a2c77`](https://github.com/dgspai/biblioplex/commit/68a2c7761cbac4d53d6f90e53adc31836b9b6e66))
+
+
 ## v0.3.0 (2026-11-11)
 
 ### Features
