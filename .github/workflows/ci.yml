@@ -97,16 +97,25 @@ jobs:
       group: release
       cancel-in-progress: false
     permissions:
-      contents: write
+      contents: read
     outputs:
       released: ${{ steps.psr.outputs.released }}
       version: ${{ steps.psr.outputs.version }}
       tag: ${{ steps.psr.outputs.tag }}
     steps:
+      # App token: the app is the ruleset bypass actor on main; GITHUB_TOKEN
+      # can't be one on a personal repo.
+      - id: app
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
       - uses: actions/checkout@v7
         with:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
+          token: ${{ steps.app.outputs.token }}
 
       # Release exactly the commit CI tested, even if main moved meanwhile.
       - run: git reset --hard ${{ github.sha }}
@@ -114,12 +123,11 @@ jobs:
       - id: psr
         uses: python-semantic-release/python-semantic-release@v10
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ steps.app.outputs.token }}
           git_committer_name: github-actions[bot]
           git_committer_email: 41898282+github-actions[bot]@users.noreply.github.com
 
-  # Same workflow on purpose: releases made with GITHUB_TOKEN don't trigger
-  # `on: release` workflows.
+  # Same workflow: keeps the image build gated on this run's release output.
   docker:
     needs: release
     if: needs.release.outputs.released == 'true'
