@@ -61,6 +61,23 @@ where = ["src"]
 [tool.setuptools.package-data]
 biblioplex = ["py.typed"]
 
+[tool.semantic_release]
+version_toml = ["pyproject.toml:project.version"]
+tag_format = "v{version}"
+commit_message = "chore(release): {version}"
+commit_author = "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
+allow_zero_version = true
+major_on_zero = false
+
+[tool.semantic_release.branches.main]
+match = "main"
+
+[tool.semantic_release.commit_parser_options]
+parse_squash_commits = false
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
+
 [tool.ruff]
 line-length = 100
 target-version = "py313"
