@@ -86,7 +86,7 @@ function _renderInvList(list) {
     // what the detail pane loads.
     const cardId = (r.card_raw && r.card_raw.id) || "";
     const meta = [];
-    if (r.set_name) meta.push(`<span>${escapeHtml(r.set_name)}</span>`);
+    if (r.set_name) meta.push(`<span>${escapeHtml(r.set_name)}${r.collector_number ? ` #${escapeHtml(r.collector_number)}` : ""}</span>`);
     if (r.type_line) meta.push(`<span>${escapeHtml(r.type_line)}</span>`);
     if (r.price_usd != null) meta.push(`<span>${escapeHtml(formatUsd(r.price_usd))}</span>`);
     if (r.foil_quantity) meta.push(`<span class="foil">${r.foil_quantity} foil</span>`);

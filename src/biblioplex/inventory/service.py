@@ -145,6 +145,8 @@ async def resolve_and_sync_inventory(
                     "card_name": canonical_name,
                     "set_name": item.set_name,
                     "set_code": item.set_code,
+                    "collector_number": item.collector_number,
+                    "scryfall_id": item.scryfall_id,
                     "source": source,
                     "source_price_usd": item.price_usd,
                 }
@@ -181,10 +183,11 @@ async def resolve_and_sync_inventory(
         insert_sql = text(
             "INSERT INTO inventory "
             "(oracle_id, quantity, foil_quantity, card_name, set_code, set_name, "
-            " source, source_price_usd) "
+            " collector_number, scryfall_id, source, source_price_usd) "
             "VALUES "
             "(CAST(:oracle_id AS uuid), :quantity, :foil_quantity, "
-            ":card_name, :set_code, :set_name, :source, :source_price_usd)"
+            ":card_name, :set_code, :set_name, :collector_number, "
+            "CAST(:scryfall_id AS uuid), :source, :source_price_usd)"
         )
         await conn.execute(insert_sql, resolved_records)
 
@@ -279,7 +282,7 @@ async def list_inventory(
 
     select_sql = (
         "SELECT i.id, i.oracle_id, i.card_name, i.quantity, i.foil_quantity, "  # noqa: S608
-        "       i.set_name, i.updated_at, c.raw, c.type_line, "
+        "       i.set_name, i.collector_number, i.updated_at, c.raw, c.type_line, "
         "       COALESCE(i.source_price_usd, c.price_usd) AS price_usd "
         "FROM inventory i "
         "LEFT JOIN cards c ON c.oracle_id = i.oracle_id "
@@ -299,6 +302,7 @@ async def list_inventory(
             "quantity": r["quantity"],
             "foil_quantity": r["foil_quantity"],
             "set_name": r["set_name"],
+            "collector_number": r["collector_number"],
             "price_usd": float(r["price_usd"]) if r["price_usd"] is not None else None,
             "type_line": r["type_line"],
             "card_raw": r["raw"],

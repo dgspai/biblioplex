@@ -368,6 +368,9 @@ CREATE TABLE IF NOT EXISTS inventory (
     card_name          text        NOT NULL,
     set_code           text,
     set_name           text,
+    collector_number   text,
+    -- Exact printing from Deckbox's `Scryfall ID`; joins printings.id.
+    scryfall_id        uuid,
     source             text        NOT NULL DEFAULT 'deckbox',
     -- D18.13: price of the printing the user actually owns, as reported by
     -- the export. `cards.price_usd` is the CHEAPEST printing across the
@@ -377,6 +380,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 );
 
 CREATE INDEX IF NOT EXISTS inventory_oracle_id_idx ON inventory (oracle_id);
+CREATE INDEX IF NOT EXISTS inventory_scryfall_id_idx ON inventory (scryfall_id);
 CREATE INDEX IF NOT EXISTS inventory_card_name_lower_idx ON inventory (lower(card_name));
 
 -- D18.1: Inventory sync settings and audit metadata table.
