@@ -2,6 +2,20 @@
 
 <!-- version list -->
 
+## v0.2.1 (2026-11-11)
+
+### Bug Fixes
+
+- Resolve CodeQL code scanning alerts ([#3](https://github.com/dgspai/biblioplex/pull/3),
+  [`eb1d4ea`](https://github.com/dgspai/biblioplex/commit/eb1d4ea6157fd96213049839a92b4eaa1c3de0bb))
+
+### Continuous Integration
+
+- **release**: Push release commits with a GitHub App token
+  ([#2](https://github.com/dgspai/biblioplex/pull/2),
+  [`6973b92`](https://github.com/dgspai/biblioplex/commit/6973b92cb3af9912e3fe02741a97db17fb5ab544))
+
+
 ## v0.2.0 (2026-11-11)
 
 ### Features
