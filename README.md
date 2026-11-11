@@ -73,16 +73,85 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 | ![Commander Spellbook combo browser](docs/images/combos.png) | |
 | Combo browser | |
 
-## Quickstart
+## Install
+
+### From Docker Hub
+
+```bash
+mkdir biblioplex && cd biblioplex
+curl -fsSLO https://raw.githubusercontent.com/dgspai/biblioplex/main/schema.sql
+echo "DB_PASSWORD=$(openssl rand -hex 16)" > .env
+```
+
+Save this as `docker-compose.yml`:
+
+```yaml
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_DB: biblioplex
+      POSTGRES_USER: biblioplex
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "biblioplex"]
+      interval: 5s
+  api:
+    image: dgspai/biblioplex-api:latest
+    environment:
+      DATABASE_URL: postgresql+psycopg://biblioplex:${DB_PASSWORD}@db:5432/biblioplex
+      SEARCH_DEFAULT_FILTER: game:paper f:commander
+      MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+      HF_HOME: /models
+    volumes:
+      - hfcache:/models
+    ports: ["${BIND_ADDR:-127.0.0.1}:8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+  web:
+    image: dgspai/biblioplex-web:latest
+    environment:
+      DEFAULT_Q: game:paper f:commander
+    ports: ["${BIND_ADDR:-127.0.0.1}:8080:80"]
+    depends_on:
+      - api
+volumes:
+  pgdata:
+  hfcache:
+```
+
+```bash
+docker compose up -d
+# open http://localhost:8080
+```
+
+To pin a release, replace `latest` with a version such as `0.3.0` and fetch `schema.sql` from the matching tag (`.../biblioplex/v0.3.0/schema.sql`). To update, run `docker compose pull && docker compose up -d`. Every other setting is in [docs/configuration.md](docs/configuration.md).
+
+### From source
 
 ```bash
 git clone https://github.com/dgspai/biblioplex && cd biblioplex
 cp .env.example .env          # set DB_PASSWORD
 docker compose up -d --build
-# open http://localhost:8080 — card data downloads automatically on first boot
+# open http://localhost:8080
 ```
 
-On a Ryzen 9 3900XT (12 cores, measured 2026-10-03) the first boot took about 5.5 minutes from `docker compose up` to a searchable instance: a little over 2 minutes to build the images and 3 minutes to download, embed and classify the cards. That run had the base images cached; a fresh machine also pulls about 0.5 GB of them. Combos keep importing in the background after that. A full Commander Spellbook pull takes about 1 h 20 min (documented, not measured here), and combos become searchable as they arrive. While cards load, the UI re-runs your search once cards are ready, and a banner shows "N of M steps" until cards are searchable; combos keep importing, with progress in **Settings → Card data** and on `http://localhost:8000/health`. An interrupted combo import (a restart mid-pull) doesn't resume: re-run it from **Settings → Card data → Advanced: choose which steps to run**, ticking only **Combos**.
+### First boot
+
+On a Ryzen 9 3900XT (12 cores, measured 2026-10-03) the first boot took about 5.5 minutes from `docker compose up --build` to a searchable instance: a little over 2 minutes to build the images and 3 minutes to download, embed and classify the cards. That run had the base images cached; a fresh machine also pulls about 0.5 GB of them. Combos keep importing in the background after that. A full Commander Spellbook pull takes about 1 h 20 min (documented, not measured here), and combos become searchable as they arrive. While cards load, the UI re-runs your search once cards are ready, and a banner shows "N of M steps" until cards are searchable; combos keep importing, with progress in **Settings → Card data** and on `http://localhost:8000/health`. An interrupted combo import (a restart mid-pull) doesn't resume: re-run it from **Settings → Card data → Advanced: choose which steps to run**, ticking only **Combos**.
+
+## How to use
+
+1. **Cards**: search with [Scryfall syntax](docs/search-syntax.md) and open a card for its details, roles, similar cards and combos.
+2. **Settings → Import from Deckbox**: upload your inventory and wishlist CSVs.
+3. **Decks → Import**: upload or paste a Moxfield, Archidekt or Deckbox export. Open a deck for its evaluation, bracket, combos and cost to finish; **Buy next** plans purchases across all decks.
+4. **Decks → Build**: build a Commander deck step by step, from commander to lands.
+5. **Combos**: browse Commander Spellbook combos by card, colour or result.
+
+Every tab is described in [docs/web-ui.md](docs/web-ui.md). To use it from an AI agent, see below.
 
 ## Use it from Claude or any MCP client
 
