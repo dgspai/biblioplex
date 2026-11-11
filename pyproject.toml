@@ -64,7 +64,7 @@ biblioplex = ["py.typed"]
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
 tag_format = "v{version}"
-commit_message = "chore(release): {version}"
+commit_message = "chore(release): {version} [skip ci]"
 commit_author = "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>"
 allow_zero_version = true
 major_on_zero = false
