@@ -139,7 +139,7 @@ async def test_create_deck_rejects_a_url_on_the_wrong_service(app: FastAPI) -> N
         "archidekt_url": "https://moxfield.com/decks/abc",
     })
     assert resp.status_code == 422
-    assert "archidekt.com" in resp.json()["details"]
+    assert resp.json()["details"] == "archidekt_url must point at archidekt.com"
 
 
 @pytest.mark.asyncio
