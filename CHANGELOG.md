@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.3.0 (2026-11-11)
+
+### Features
+
+- **web**: Phone layout with bottom tab bar and list/detail navigation
+  ([#4](https://github.com/dgspai/biblioplex/pull/4),
+  [`74bdb14`](https://github.com/dgspai/biblioplex/commit/74bdb1449c83d1702b6126efd3366abf68850da0))
+
+
 ## v0.2.1 (2026-11-11)
 
 ### Bug Fixes
