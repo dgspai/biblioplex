@@ -73,6 +73,13 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 | ![Commander Spellbook combo browser](docs/images/combos.png) | |
 | Combo browser | |
 
+On a phone, the sidebar becomes a bottom tab bar and each list opens its detail on top, with a Back button:
+
+| | | | |
+|---|---|---|---|
+| <img src="docs/images/mobile-search.png" alt="Phone: search results with the bottom tab bar" width="200"> | <img src="docs/images/mobile-card.png" alt="Phone: card detail over the result list" width="200"> | <img src="docs/images/mobile-deck.png" alt="Phone: deck scoreboard and mana curve" width="200"> | <img src="docs/images/mobile-inventory-light.png" alt="Phone: inventory card detail in the light theme" width="200"> |
+| Search | Card detail | Deck | Inventory (light theme) |
+
 ## Install
 
 ### From Docker Hub
