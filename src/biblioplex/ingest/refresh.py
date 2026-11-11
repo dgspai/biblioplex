@@ -49,7 +49,12 @@ from biblioplex import SCRYFALL_BULK_TIMEOUT, SCRYFALL_HEADERS
 from biblioplex.classify.rules import LABELS, classify_by_rules_ex
 from biblioplex.decks.service import rebuild_all_deck_cards
 from biblioplex.ingest.bulk import discover_bulk_uri
-from biblioplex.ingest.collapse import COLLAPSE_SQL, STAGING_COLUMNS, TRUNCATE_STAGING_SQL
+from biblioplex.ingest.collapse import (
+    COLLAPSE_SQL,
+    PRINTINGS_SQL,
+    STAGING_COLUMNS,
+    TRUNCATE_STAGING_SQL,
+)
 from biblioplex.ingest.color_sort import color_sort_key
 from biblioplex.ingest.flatten import flatten_card
 from biblioplex.ingest.reversible import REVERSIBLE_LAYOUT, split_reversible
@@ -770,6 +775,7 @@ class RefreshRunner:
                 # fight the lock-holding outer conn.
                 async with self._engine.begin() as c:
                     await c.execute(text(COLLAPSE_SQL))
+                    await c.execute(text(PRINTINGS_SQL))
             return staged_local
 
         async def _run_embed_hnsw() -> None:

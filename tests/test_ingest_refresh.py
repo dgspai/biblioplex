@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from biblioplex.ingest.collapse import COLLAPSE_SQL, TRUNCATE_STAGING_SQL
+from biblioplex.ingest.collapse import COLLAPSE_SQL, PRINTINGS_SQL, TRUNCATE_STAGING_SQL
 from biblioplex.ingest.refresh import (
     ADVISORY_LOCK_KEY,
     AlreadyRunning,
@@ -291,12 +291,13 @@ async def test_runner_emits_collapse_between_ingest_and_truncate() -> None:
     # Locate each landmark in the executed-SQL log.
     idx_sentinel = next(i for i, s in enumerate(conn.executed) if sentinel in s)
     idx_collapse = next(i for i, s in enumerate(conn.executed) if COLLAPSE_SQL in s)
+    idx_printings = next(i for i, s in enumerate(conn.executed) if PRINTINGS_SQL in s)
     idx_truncate = max(
         i for i, s in enumerate(conn.executed) if TRUNCATE_STAGING_SQL in s
     )
 
-    assert idx_sentinel < idx_collapse < idx_truncate, (
-        "expected order: ingest body → COLLAPSE_SQL → TRUNCATE_STAGING_SQL; "
+    assert idx_sentinel < idx_collapse < idx_printings < idx_truncate, (
+        "expected order: ingest body → COLLAPSE_SQL → PRINTINGS_SQL → TRUNCATE_STAGING_SQL; "
         f"got executed={conn.executed!r}"
     )
 

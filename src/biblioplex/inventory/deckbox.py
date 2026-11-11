@@ -38,6 +38,8 @@ class ParsedDeckboxItem:
 
     set_name: str | None = None
     set_code: str | None = None
+    collector_number: str | None = None
+    scryfall_id: str | None = None
 
     price_usd: float | None = None
     """Deckbox's price for THIS printing, in USD. Preferred over
@@ -176,13 +178,15 @@ def parse_deckbox_csv(csv_text: str) -> tuple[list[ParsedDeckboxItem], list[str]
         or header_map.get("set code")
         or header_map.get("edition_code")
     )
+    number_key = header_map.get("card number")
+    scryfall_key = header_map.get("scryfall id")
     foil_key = header_map.get("foil")
     price_key = header_map.get("price")
 
     if not name_key:
         return [], [_FATAL + "CSV missing required 'Name' column"]
 
-    items_map: dict[tuple[str, str | None], ParsedDeckboxItem] = {}
+    items_map: dict[tuple[str, str | None, str | None], ParsedDeckboxItem] = {}
 
     for row_idx, row in enumerate(reader, start=2):
         raw_name = row.get(name_key, "") if name_key else ""
@@ -219,7 +223,12 @@ def parse_deckbox_csv(csv_text: str) -> tuple[list[ParsedDeckboxItem], list[str]
         # Deckbox lower-cases these; store them the way Scryfall does.
         set_code = raw_code.lower() or None if raw_code else None
 
-        key = (card_name.lower(), set_name.lower() if set_name else None)
+        collector_number = (row.get(number_key) or "").strip() or None if number_key else None
+        scryfall_id = (row.get(scryfall_key) or "").strip() or None if scryfall_key else None
+
+        # Scryfall ID tells same-set variants apart; condition/language/foil
+        # rows of one printing still share it and fold.
+        key = (card_name.lower(), set_name.lower() if set_name else None, scryfall_id)
         if key in items_map:
             existing = items_map[key]
             existing.quantity += qty
@@ -235,6 +244,8 @@ def parse_deckbox_csv(csv_text: str) -> tuple[list[ParsedDeckboxItem], list[str]
                 foil_quantity=foil_qty,
                 set_name=set_name,
                 set_code=set_code,
+                collector_number=collector_number,
+                scryfall_id=scryfall_id,
                 price_usd=price,
             )
 

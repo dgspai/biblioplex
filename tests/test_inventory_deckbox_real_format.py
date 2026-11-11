@@ -178,3 +178,28 @@ def test_folded_duplicate_keeps_unit_price_not_a_sum(
     folded = _by_name(inventory_items, "Astral Cornucopia")
     assert folded.price_usd == max(unit_prices)
     assert folded.price_usd < sum(unit_prices)
+
+
+def test_scryfall_id_and_card_number_identify_the_printing(
+    inventory_items: list[ParsedDeckboxItem],
+) -> None:
+    armed = _by_name(inventory_items, "Armed // Dangerous")
+    assert armed.scryfall_id == "ff7f4fc2-6f76-44e7-a30b-7166a0d10d2a"
+    assert armed.collector_number == "122"
+
+
+def test_two_printings_in_one_set_stay_separate() -> None:
+    """Showcase/borderless variants share an edition; only the Scryfall ID
+    tells them apart, so they must not fold."""
+    csv_text = (
+        "Count,Name,Edition,Edition Code,Card Number,Foil,Scryfall ID\n"
+        "1,Sol Ring,Commander Masters,cmm,400,,aaaaaaaa-0000-0000-0000-000000000001\n"
+        "2,Sol Ring,Commander Masters,cmm,647,,aaaaaaaa-0000-0000-0000-000000000002\n"
+        "1,Sol Ring,Commander Masters,cmm,647,foil,aaaaaaaa-0000-0000-0000-000000000002\n"
+    )
+    items, warnings = parse_deckbox_csv(csv_text)
+    assert warnings == []
+    by_cn = {i.collector_number: i for i in items}
+    assert set(by_cn) == {"400", "647"}
+    assert (by_cn["400"].quantity, by_cn["400"].foil_quantity) == (1, 0)
+    assert (by_cn["647"].quantity, by_cn["647"].foil_quantity) == (3, 1)

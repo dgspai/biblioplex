@@ -1330,6 +1330,72 @@ async def get_card_explain(
     return _cached_json({"object": "explain", "labels": labels})
 
 
+_PRINTINGS_SQL = text(
+    "WITH c AS (SELECT oracle_id FROM cards WHERE id = :id), "
+    "p AS (SELECT p.* FROM printings p JOIN c USING (oracle_id)), "
+    "owned AS ("
+    "  SELECT COALESCE(i.scryfall_id, solo.id) AS printing_id, "
+    "         SUM(i.quantity) AS quantity, SUM(i.foil_quantity) AS foil_quantity "
+    "  FROM inventory i JOIN c USING (oracle_id) "
+    # Pre-Scryfall-ID rows: credit the set only when it holds one printing.
+    "  LEFT JOIN LATERAL ("
+    "    SELECT (array_agg(p.id))[1] AS id FROM p WHERE p.set_code = i.set_code "
+    "    HAVING count(*) = 1"
+    "  ) solo ON i.scryfall_id IS NULL "
+    "  GROUP BY 1"
+    ") "
+    "SELECT c.oracle_id, p.id, p.set_code, p.set_name, p.collector_number, "
+    "       p.released_at, p.rarity, p.finishes, p.image_small, p.image_normal, "
+    "       p.usd, p.usd_foil, owned.quantity, owned.foil_quantity "
+    "FROM c LEFT JOIN p ON true "
+    "LEFT JOIN owned ON owned.printing_id = p.id "
+    "ORDER BY owned.quantity IS NULL, p.released_at DESC NULLS LAST, p.collector_number"
+)
+
+
+def _price(v: Any) -> str | None:
+    return None if v is None else str(v)
+
+
+@router.get(
+    "/{card_id}/printings",
+    summary="Every printing of a card, with owned counts",
+    description=(
+        "All printings sharing the card's oracle, owned first then newest. "
+        "`owned` is `{quantity, foil_quantity}` from inventory, matched by "
+        "Scryfall ID, or null. Empty until the first refresh after upgrade. "
+        "404 when the card is unknown."
+    ),
+    responses={404: _ERROR_RESPONSE, 422: _ERROR_RESPONSE},
+)
+async def get_card_printings(
+    card_id: UUID,
+    engine: _Engine = Depends(get_read_engine),
+) -> Any:
+    async with engine.connect() as conn:  # type: ignore[attr-defined]
+        rows = (await conn.execute(_PRINTINGS_SQL, {"id": str(card_id)})).all()
+    if not rows:
+        return _not_found(f"No card found with id '{card_id}'")
+    data = [
+        {
+            "id": str(r.id),
+            "set": r.set_code,
+            "set_name": r.set_name,
+            "collector_number": r.collector_number,
+            "released_at": None if r.released_at is None else str(r.released_at),
+            "rarity": r.rarity,
+            "finishes": r.finishes,
+            "image_uris": {"small": r.image_small, "normal": r.image_normal},
+            "prices": {"usd": _price(r.usd), "usd_foil": _price(r.usd_foil)},
+            "owned": None if r.quantity is None
+            else {"quantity": int(r.quantity), "foil_quantity": int(r.foil_quantity)},
+        }
+        for r in rows
+        if r.id is not None
+    ]
+    return _cached_json({"object": "list", "data": data})
+
+
 @router.get(
     "/{card_id}/related",
     summary="Related cards (tokens, meld halves, combo pieces) — D14.8",

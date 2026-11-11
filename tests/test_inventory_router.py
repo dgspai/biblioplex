@@ -266,6 +266,7 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
                 "quantity": 2,
                 "foil_quantity": 0,
                 "set_name": "Commander 2021",
+                "collector_number": "263",
                 "price_usd": "1.50",
                 "type_line": "Artifact",
                 "raw": {"name": "Sol Ring"},

@@ -155,5 +155,22 @@ def _render_collapse_sql(columns: tuple[str, ...]) -> str:
 
 COLLAPSE_SQL: str = _render_collapse_sql(STAGING_COLUMNS)
 
+# Every printing staging saw, for the card-detail printings strip. DELETE,
+# not TRUNCATE: TRUNCATE's ACCESS EXCLUSIVE lock blocks readers (see tags.py).
+PRINTINGS_SQL: str = """
+DELETE FROM printings;
+INSERT INTO printings (id, oracle_id, set_code, set_name, collector_number,
+    released_at, rarity, finishes, image_small, image_normal, usd, usd_foil)
+SELECT DISTINCT ON (id)
+    id, oracle_id, raw->>'set', raw->>'set_name', raw->>'collector_number',
+    released_at, rarity,
+    ARRAY(SELECT jsonb_array_elements_text(COALESCE(raw->'finishes', '[]'))),
+    img->>'small', img->>'normal',
+    (raw->'prices'->>'usd')::numeric, (raw->'prices'->>'usd_foil')::numeric
+FROM cards_staging,
+    LATERAL (SELECT COALESCE(raw->'image_uris', card_faces->0->'image_uris') AS img) i
+ORDER BY id;
+"""
+
 # §4.2 step 7. Plain TRUNCATE — no CASCADE needed (nothing FKs into staging).
 TRUNCATE_STAGING_SQL: str = "TRUNCATE TABLE cards_staging;"

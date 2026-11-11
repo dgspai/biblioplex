@@ -14,7 +14,7 @@ smoke step exercises real SQL).
 
 from __future__ import annotations
 
-from biblioplex.ingest.collapse import COLLAPSE_SQL, STAGING_COLUMNS
+from biblioplex.ingest.collapse import COLLAPSE_SQL, PRINTINGS_SQL, STAGING_COLUMNS
 
 
 def test_staging_columns_includes_new_d1_9_columns() -> None:
@@ -124,3 +124,16 @@ def test_collapse_sql_projects_games_eff_from_cte() -> None:
     # ON CONFLICT refreshes games_eff on a same-id reprint.
     update_clause = sql.split("ON CONFLICT (oracle_id) DO UPDATE SET", 1)[1]
     assert "games_eff = EXCLUDED.games_eff" in update_clause
+
+
+def test_printings_sql_keeps_every_printing() -> None:
+    """One row per printing id, refilled without TRUNCATE's exclusive lock."""
+    assert PRINTINGS_SQL.lstrip().startswith("DELETE FROM printings;")
+    assert "DISTINCT ON (id)" in PRINTINGS_SQL
+    assert "FROM cards_staging" in PRINTINGS_SQL
+    assert "TRUNCATE" not in PRINTINGS_SQL
+
+
+def test_printings_sql_falls_back_to_first_face_image() -> None:
+    """DFCs have no top-level image_uris; the first face's are used."""
+    assert "COALESCE(raw->'image_uris', card_faces->0->'image_uris')" in PRINTINGS_SQL

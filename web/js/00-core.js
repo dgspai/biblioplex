@@ -657,7 +657,7 @@ function renderDetail(card, faceIdx, target) {
   const sim = card.similarity != null
     ? `<dt>similarity</dt><dd>${card.similarity.toFixed(3)}</dd>` : "";
   const setLine = card.set_name
-    ? `<dt>set</dt><dd>${escapeHtml(card.set_name)}${card.collector_number ? ` #${escapeHtml(card.collector_number)}` : ""}</dd>`
+    ? `<dt>set</dt><dd data-field="set">${escapeHtml(card.set_name)}${card.collector_number ? ` #${escapeHtml(card.collector_number)}` : ""}</dd>`
     : "";
   const legalities = card.legalities
     ? `<section class="legalities" aria-label="Format legality">
@@ -684,6 +684,10 @@ function renderDetail(card, faceIdx, target) {
     </div>
     <p class="typeline">${escapeHtml(view.type_line || "")}</p>
     ${_renderFaceImages(card, _detailFaceIdx)}
+    <section class="printings" aria-label="Printings" hidden>
+      <h3>Printings</h3>
+      <div class="printings-strip"></div>
+    </section>
     <p class="oracle">${renderSymbols(view.oracle_text || "")}</p>
     <dl>
       ${view.mana_cost ? `<dt>mana</dt><dd>${renderSymbols(view.mana_cost)}</dd>` : ""}
@@ -694,7 +698,7 @@ function renderDetail(card, faceIdx, target) {
       ${setLine}
       ${card.artist ? `<dt>artist</dt><dd>${escapeHtml(card.artist)}</dd>` : ""}
       ${card.edhrec_rank ? `<dt>edhrec</dt><dd>#${escapeHtml(String(card.edhrec_rank))}</dd>` : ""}
-      ${card.prices?.usd ? `<dt>usd</dt><dd>${escapeHtml(formatUsd(card.prices.usd))}</dd>` : ""}
+      ${card.prices?.usd ? `<dt>usd</dt><dd data-field="usd">${escapeHtml(formatUsd(card.prices.usd))}</dd>` : ""}
       ${sim}
     </dl>
     ${_renderKeywordsSection(card)}
@@ -718,6 +722,43 @@ function renderDetail(card, faceIdx, target) {
   loadExplainInto(card.id, pane.querySelector(".chips-predicted"));
   loadCombosInto(card.id, pane.querySelector(".combos-body"));
   loadRelatedInto(card.id, pane.querySelector(".chips-related .chips"));
+  loadPrintingsInto(card.id, pane);
+}
+
+function _printingThumb(p, selected) {
+  const o = p.owned;
+  const label = `${p.set_name || p.set} #${p.collector_number}`
+    + (o ? `, ${o.quantity} owned${o.foil_quantity ? ` (${o.foil_quantity} foil)` : ""}` : "");
+  return `<button type="button" class="printing" aria-pressed="${selected}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
+    <img src="${escapeHtml(p.image_uris.small || "")}" alt="" loading="lazy">
+    <span>${escapeHtml((p.set || "").toUpperCase())}${o ? ` <b>×${o.quantity}${o.foil_quantity ? "★" : ""}</b>` : ""}</span>
+  </button>`;
+}
+
+// ponytail: swaps the front image only; a DFC's back face keeps the canonical printing's art.
+async function loadPrintingsInto(id, pane) {
+  const section = pane.querySelector(".printings");
+  try {
+    const list = (await api(`/cards/${id}/printings`)).data || [];
+    if (!section.isConnected || list.length < 2) return;
+    const strip = section.querySelector(".printings-strip");
+    strip.innerHTML = list.map((p) => _printingThumb(p, p.id === id)).join("");
+    strip.addEventListener("click", (e) => {
+      const btn = e.target.closest(".printing");
+      if (!btn) return;
+      const p = list[[...strip.children].indexOf(btn)];
+      for (const b of strip.children) b.setAttribute("aria-pressed", String(b === btn));
+      const art = pane.querySelector(".art");
+      if (art && p.image_uris.normal) art.src = p.image_uris.normal;
+      const set = pane.querySelector('[data-field="set"]');
+      if (set) set.textContent = `${p.set_name || p.set} #${p.collector_number}`;
+      const usd = pane.querySelector('[data-field="usd"]');
+      if (usd) usd.textContent = p.prices.usd ? formatUsd(p.prices.usd) : "—";
+    });
+    section.hidden = false;
+  } catch (_err) {
+    // 404 stale id / 5xx — the strip stays hidden.
+  }
 }
 
 // D14.8 — fetch /cards/:id/related and swap the sync-rendered chips (which

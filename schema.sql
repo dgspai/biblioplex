@@ -339,6 +339,25 @@ CREATE TABLE IF NOT EXISTS cards_staging (
     raw                jsonb       NOT NULL
 );
 
+-- Every printing of every card (cards keeps one per oracle), refilled by
+-- PRINTINGS_SQL in the collapse transaction. Backs GET /cards/{id}/printings.
+CREATE TABLE IF NOT EXISTS printings (
+    id                 uuid        PRIMARY KEY,
+    oracle_id          uuid        NOT NULL,
+    set_code           text,
+    set_name           text,
+    collector_number   text,
+    released_at        date,
+    rarity             text,
+    finishes           text[],
+    image_small        text,
+    image_normal       text,
+    usd                numeric,
+    usd_foil           numeric
+);
+
+CREATE INDEX IF NOT EXISTS printings_oracle_id_idx ON printings (oracle_id);
+
 -- D18.1: Inventory tracking table. Stores user owned card quantities,
 -- linked to `cards.oracle_id`. Includes optional set_code/set_name from export.
 CREATE TABLE IF NOT EXISTS inventory (
@@ -349,6 +368,9 @@ CREATE TABLE IF NOT EXISTS inventory (
     card_name          text        NOT NULL,
     set_code           text,
     set_name           text,
+    collector_number   text,
+    -- Exact printing from Deckbox's `Scryfall ID`; joins printings.id.
+    scryfall_id        uuid,
     source             text        NOT NULL DEFAULT 'deckbox',
     -- D18.13: price of the printing the user actually owns, as reported by
     -- the export. `cards.price_usd` is the CHEAPEST printing across the
@@ -358,6 +380,7 @@ CREATE TABLE IF NOT EXISTS inventory (
 );
 
 CREATE INDEX IF NOT EXISTS inventory_oracle_id_idx ON inventory (oracle_id);
+CREATE INDEX IF NOT EXISTS inventory_scryfall_id_idx ON inventory (scryfall_id);
 CREATE INDEX IF NOT EXISTS inventory_card_name_lower_idx ON inventory (lower(card_name));
 
 -- D18.1: Inventory sync settings and audit metadata table.
