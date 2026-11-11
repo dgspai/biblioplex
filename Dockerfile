@@ -15,7 +15,9 @@ COPY pyproject.toml ./
 COPY src ./src
 COPY scripts ./scripts
 
-RUN pip install .
+# CPU-only torch first so `pip install .` doesn't pull the multi-GB CUDA build.
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch \
+    && pip install .
 
 EXPOSE 8000
 
