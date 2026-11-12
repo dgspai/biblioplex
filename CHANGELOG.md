@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.5.1 (2026-11-12)
+
+### Bug Fixes
+
+- **decks**: Bound near-combo suggestions by commander color identity
+  ([#14](https://github.com/dgspai/biblioplex/pull/14),
+  [`89a8852`](https://github.com/dgspai/biblioplex/commit/89a88526b3e02aec70b3259a27e701ce3996ee33))
+
+
 ## v0.5.0 (2026-11-12)
 
 ### Build System
