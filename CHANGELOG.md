@@ -2,6 +2,36 @@
 
 <!-- version list -->
 
+## v0.5.0 (2026-11-12)
+
+### Build System
+
+- **deps**: Bump actions/create-github-app-token from 2 to 3
+  ([#12](https://github.com/dgspai/biblioplex/pull/12),
+  [`2f8a8f0`](https://github.com/dgspai/biblioplex/commit/2f8a8f0e1234e8686e75d672f4770f53887dbf21))
+
+- **deps**: Bump docker/build-push-action from 6 to 7
+  ([#11](https://github.com/dgspai/biblioplex/pull/11),
+  [`6d23670`](https://github.com/dgspai/biblioplex/commit/6d236701a6b12b6af6b8cd9570cf7d322419419e))
+
+- **deps**: Bump docker/login-action from 3 to 4 ([#9](https://github.com/dgspai/biblioplex/pull/9),
+  [`5618d4a`](https://github.com/dgspai/biblioplex/commit/5618d4a737c5cacef554c5d08dde39e4e8bb3eec))
+
+- **deps**: Bump docker/metadata-action from 5 to 6
+  ([#8](https://github.com/dgspai/biblioplex/pull/8),
+  [`bd6cb95`](https://github.com/dgspai/biblioplex/commit/bd6cb956ef224e3343909ed22b29d2c63ce4bf9e))
+
+- **deps**: Bump docker/setup-buildx-action from 3 to 4
+  ([#10](https://github.com/dgspai/biblioplex/pull/10),
+  [`6950de3`](https://github.com/dgspai/biblioplex/commit/6950de3a9b7e481c418def42667ff711f8c4787a))
+
+### Features
+
+- **inventory**: Hover and detail show the exact printing owned
+  ([#13](https://github.com/dgspai/biblioplex/pull/13),
+  [`93f5ba2`](https://github.com/dgspai/biblioplex/commit/93f5ba2a7890947f66ac40c33f0e9c8d66ff70ce))
+
+
 ## v0.4.0 (2026-11-11)
 
 ### Documentation
