@@ -14,10 +14,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 
 from biblioplex.decklist.resolve import resolve_and_fetch_deck_rows
+from biblioplex.decklist.sections import parse_sections
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.routers.cards import _Engine, get_read_engine
 
-from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN, _maindeck_entries
+from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN
 
 
 class NearCombosRequest(BaseModel):
@@ -59,6 +60,7 @@ _NEAR_COMBOS_SQL = (
     ") in_deck ON true "
     "WHERE co.oracle_ids && CAST(:deck_oids AS uuid[]) "
     "  AND gap.gap_count BETWEEN 1 AND :missing "
+    "  AND (CAST(:ci AS text[]) IS NULL OR co.color_identity <@ CAST(:ci AS text[])) "
     "ORDER BY gap.gap_count ASC, co.id ASC "
     "LIMIT :limit"
 )
@@ -106,17 +108,25 @@ async def decklist_near_combos(
     if len(decklist) > DECKLIST_MAX_LEN:
         return _scryfall_error(422, "bad_request", "decklist too long")
 
-    entries = _maindeck_entries(decklist)
-    names = [e.name for e in entries]
+    sections = parse_sections(decklist)
+    names = [e.name for e in sections.main]
+    commanders = {e.name.lower() for e in sections.commander}
 
     async with engine.connect() as conn:  # type: ignore[attr-defined]
         resolved_rows, unresolved = await resolve_and_fetch_deck_rows(conn, names)
         combos_out: list[dict[str, Any]] = []
         if resolved_rows:
             deck_oids = sorted({str(r.row.oracle_id) for r in resolved_rows})
+            # A suggestion outside the commander's identity is unplayable.
+            cmd_rows = [r for r in resolved_rows if r.input_name.lower() in commanders]
+            ci = (
+                sorted({c for r in cmd_rows for c in r.row.color_identity or []})
+                if cmd_rows
+                else None
+            )
             result = await conn.execute(
                 text(_NEAR_COMBOS_SQL),
-                {"deck_oids": deck_oids, "missing": missing, "limit": limit},
+                {"deck_oids": deck_oids, "missing": missing, "limit": limit, "ci": ci},
             )
             for row in result.all():
                 gap_names = list(row.gap_names or [])
