@@ -270,7 +270,23 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
                 "price_usd": "1.50",
                 "type_line": "Artifact",
                 "raw": {"name": "Sol Ring"},
-            }
+                "printing_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+                "printing_image": "https://img/normal.jpg",
+            },
+            {
+                "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
+                "oracle_id": "11111111-1111-1111-1111-111111111111",
+                "card_name": "Sol Ring",
+                "quantity": 1,
+                "foil_quantity": 0,
+                "set_name": None,
+                "collector_number": None,
+                "price_usd": None,
+                "type_line": "Artifact",
+                "raw": {"name": "Sol Ring"},
+                "printing_id": None,
+                "printing_image": None,
+            },
         ])),
     )
     app.state.read_engine = _make_mock_engine(fake_conn)
@@ -283,6 +299,12 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
     assert body["object"] == "list"
     assert body["total_cards"] == 1
     assert body["data"][0]["card_name"] == "Sol Ring"
+    # The exact printing owned, so hover and detail show that version.
+    assert body["data"][0]["printing"] == {
+        "id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
+        "image_uris": {"normal": "https://img/normal.jpg"},
+    }
+    assert body["data"][1]["printing"] is None
     assert body["has_more"] is False
 
 

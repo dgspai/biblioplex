@@ -90,7 +90,10 @@ function _renderInvList(list) {
     if (r.type_line) meta.push(`<span>${escapeHtml(r.type_line)}</span>`);
     if (r.price_usd != null) meta.push(`<span>${escapeHtml(formatUsd(r.price_usd))}</span>`);
     if (r.foil_quantity) meta.push(`<span class="foil">${r.foil_quantity} foil</span>`);
-    return `<li data-id="${escapeHtml(cardId)}" data-oracle="${escapeHtml(r.oracle_id || "")}" tabindex="0">
+    const p = r.printing;
+    const printingAttrs = p
+      ? ` data-printing="${escapeHtml(p.id)}" data-preview="${escapeHtml(p.image_uris.normal || "")}"` : "";
+    return `<li data-id="${escapeHtml(cardId)}" data-oracle="${escapeHtml(r.oracle_id || "")}"${printingAttrs} tabindex="0">
       <div class="name"><span class="inv-qty-badge">${r.quantity}×</span>${escapeHtml(r.card_name || "?")}${_ownedBadge(r.oracle_id)}</div>
       <div class="meta">${meta.join("")}</div>
     </li>`;
