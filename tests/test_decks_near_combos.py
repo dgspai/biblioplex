@@ -93,7 +93,9 @@ def app() -> FastAPI:
     return create_app(settings=_settings())
 
 
-def _resolve_row(name: str, oracle_id: str) -> Any:
+def _resolve_row(
+    name: str, oracle_id: str, color_identity: list[str] | None = None
+) -> Any:
     return SimpleNamespace(
         ord=0,
         input_name=name,
@@ -106,7 +108,7 @@ def _resolve_row(name: str, oracle_id: str) -> Any:
         predicted_labels=[],
         cmc=2,
         mana_cost="{2}",
-        color_identity=[],
+        color_identity=color_identity or [],
     )
 
 
@@ -340,3 +342,48 @@ async def test_unresolved_names_surface(app: FastAPI) -> None:
         )
     assert r.status_code == 200
     assert "Bogus Card" in r.json()["unresolved"]
+
+
+async def _combos_params(app: FastAPI, resolve_rows: list[Any], decklist: str) -> Any:
+    conn = _FakeConn(resolve_rows=resolve_rows, combo_rows=[])
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(conn)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        r = await ac.post("/decks/near-combos", json={"decklist": decklist})
+    assert r.status_code == 200
+    return next(params for sql, params in conn.executed if "FROM combos" in sql)
+
+
+@pytest.mark.asyncio
+async def test_commander_section_bounds_combo_color_identity(app: FastAPI) -> None:
+    """Combos must fit the commander's CI (union across partners)."""
+    resolve_rows = [
+        _resolve_row("Tymna the Weaver", "aaaaaaaa-0000-0000-0000-000000000001", ["W", "B"]),
+        _resolve_row("Kraum, Ludevic's Opus", "aaaaaaaa-0000-0000-0000-000000000002", ["U", "R"]),
+        _resolve_row("Dark Ritual", "aaaaaaaa-0000-0000-0000-000000000003", ["B"]),
+    ]
+    decklist = (
+        "Commander\n1 Tymna the Weaver\n1 Kraum, Ludevic's Opus\n\n"
+        "Deck\n1 Dark Ritual"
+    )
+    params = await _combos_params(app, resolve_rows, decklist)
+    assert sorted(params["ci"]) == ["B", "R", "U", "W"]
+
+
+@pytest.mark.asyncio
+async def test_no_commander_section_leaves_ci_unbounded(app: FastAPI) -> None:
+    resolve_rows = [
+        _resolve_row("Dark Ritual", "aaaaaaaa-0000-0000-0000-000000000003", ["B"]),
+    ]
+    params = await _combos_params(app, resolve_rows, "1 Dark Ritual")
+    assert params["ci"] is None
+
+
+@pytest.mark.asyncio
+async def test_colorless_commander_bounds_to_colorless(app: FastAPI) -> None:
+    resolve_rows = [
+        _resolve_row("Kozilek, the Great Distortion", "aaaaaaaa-0000-0000-0000-000000000004"),
+    ]
+    decklist = "Commander\n1 Kozilek, the Great Distortion"
+    params = await _combos_params(app, resolve_rows, decklist)
+    assert params["ci"] == []
