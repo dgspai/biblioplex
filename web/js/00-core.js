@@ -742,11 +742,10 @@ async function loadPrintingsInto(id, pane) {
     const list = (await api(`/cards/${id}/printings`)).data || [];
     if (!section.isConnected || list.length < 2) return;
     const strip = section.querySelector(".printings-strip");
-    strip.innerHTML = list.map((p) => _printingThumb(p, p.id === id)).join("");
-    strip.addEventListener("click", (e) => {
-      const btn = e.target.closest(".printing");
-      if (!btn) return;
+    strip.innerHTML = list.map((p) => _printingThumb(p, false)).join("");
+    const show = (btn) => {
       const p = list[[...strip.children].indexOf(btn)];
+      pane.dataset.printing = p.id;  // survives a face-flip re-render
       for (const b of strip.children) b.setAttribute("aria-pressed", String(b === btn));
       const art = pane.querySelector(".art");
       if (art && p.image_uris.normal) art.src = p.image_uris.normal;
@@ -754,7 +753,14 @@ async function loadPrintingsInto(id, pane) {
       if (set) set.textContent = `${p.set_name || p.set} #${p.collector_number}`;
       const usd = pane.querySelector('[data-field="usd"]');
       if (usd) usd.textContent = p.prices.usd ? formatUsd(p.prices.usd) : "—";
+    };
+    strip.addEventListener("click", (e) => {
+      const btn = e.target.closest(".printing");
+      if (btn) show(btn);
     });
+    const want = list.findIndex((p) => p.id === (pane.dataset.printing || id));
+    if (want >= 0 && pane.dataset.printing) show(strip.children[want]);
+    else if (want >= 0) strip.children[want].setAttribute("aria-pressed", "true");
     section.hidden = false;
   } catch (_err) {
     // 404 stale id / 5xx — the strip stays hidden.
@@ -1040,9 +1046,10 @@ qInput.addEventListener("blur", () => {
   setTimeout(hideHistory, 150);
 });
 
-async function selectCard(id, target) {
+async function selectCard(id, target, printingId) {
   const pane = target || detailEl;
   _detailTarget = pane;
+  pane.dataset.printing = printingId || "";
   // Only the cards tab drives `selectedId` / the URL — the inventory and
   // wishlist panes are their own browsing context and must not rewrite the
   // card-search deep link.
@@ -1055,7 +1062,8 @@ async function selectCard(id, target) {
   // Scope the selected-row highlight to the list that owns this pane.
   const list = pane.closest(".cards-split") || document;
   list.querySelectorAll("ul.cards li").forEach((li) => {
-    li.classList.toggle("selected", li.dataset.id === id);
+    li.classList.toggle("selected", li.dataset.id === id
+      && (!printingId || li.dataset.printing === printingId));
   });
   pane.innerHTML = `<p class="loading">Loading…</p>`;
   try {

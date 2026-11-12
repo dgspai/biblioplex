@@ -113,7 +113,7 @@ acDropdownEl.addEventListener("mousedown", (e) => {
 // `target` is the detail pane this list feeds. Omitted for the cards tab,
 // which keeps the historical default of #detail.
 function wireListNavigation(root, target) {
-  const pick = (li) => selectCard(li.dataset.id, target);
+  const pick = (li) => selectCard(li.dataset.id, target, li.dataset.printing);
   root.addEventListener("click", (e) => {
     const li = e.target.closest("li[data-id]");
     if (li) pick(li);

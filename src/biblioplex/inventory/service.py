@@ -283,9 +283,11 @@ async def list_inventory(
     select_sql = (
         "SELECT i.id, i.oracle_id, i.card_name, i.quantity, i.foil_quantity, "  # noqa: S608
         "       i.set_name, i.collector_number, i.updated_at, c.raw, c.type_line, "
-        "       COALESCE(i.source_price_usd, c.price_usd) AS price_usd "
+        "       COALESCE(i.source_price_usd, c.price_usd) AS price_usd, "
+        "       p.id AS printing_id, p.image_normal AS printing_image "
         "FROM inventory i "
         "LEFT JOIN cards c ON c.oracle_id = i.oracle_id "
+        "LEFT JOIN printings p ON p.id = i.scryfall_id "
         f"{where_clause}"
         "ORDER BY i.card_name ASC "
         "LIMIT :limit OFFSET :offset"
@@ -306,6 +308,10 @@ async def list_inventory(
             "price_usd": float(r["price_usd"]) if r["price_usd"] is not None else None,
             "type_line": r["type_line"],
             "card_raw": r["raw"],
+            "printing": None if r["printing_id"] is None else {
+                "id": str(r["printing_id"]),
+                "image_uris": {"normal": r["printing_image"]},
+            },
         }
         data.append(item)
 
