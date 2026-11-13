@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.6.2 (2026-11-13)
+
+### Bug Fixes
+
+- **build**: Stop phone layout stretching past the screen
+  ([#18](https://github.com/dgspai/biblioplex/pull/18),
+  [`292de41`](https://github.com/dgspai/biblioplex/commit/292de418752f99abfa0851c73158cc9b736b250a))
+
+
 ## v0.6.1 (2026-11-13)
 
 ### Bug Fixes
