@@ -61,3 +61,11 @@ def test_phone_shows_one_pile_per_row() -> None:
     phone = phone[: phone.index("\n}\n")]
     assert "flex-direction: column" in phone
     assert "--card-w: min(" in phone  # fills the width, capped
+
+
+def test_phone_layout_column_does_not_wrap() -> None:
+    """A wrapping column flexbox sizes its line to the widest item's
+    max-content (the step nav), pushing the whole Build pane off-screen."""
+    phone = CSS[CSS.index("@media (max-width: 680px) {\n  .build-layout") :]
+    phone = phone[: phone.index("\n}\n")]
+    assert re.search(r"\.build-layout \{[^}]*flex-wrap: nowrap", phone)

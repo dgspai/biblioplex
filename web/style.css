@@ -1133,7 +1133,7 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-slot-goals { font-weight: 600; margin: 0.2rem 0 0.6rem; text-transform: capitalize; }
 .build-query-echo { font-family: monospace; font-size: 0.8em; margin-bottom: 0.4rem; word-break: break-word; }
 @media (max-width: 680px) {
-  .build-layout { flex-direction: column; align-items: stretch; }
+  .build-layout { flex-direction: column; flex-wrap: nowrap; align-items: stretch; }
   .build-sidenav { flex-direction: row; overflow-x: auto; width: auto; position: static; }
   .build-navstep { flex: none; }
   .build-scoreboard { position: static; }
