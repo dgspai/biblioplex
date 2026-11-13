@@ -21,7 +21,8 @@ const _REVIEW_STEP = BUILD_STEPS.length;
 const BUILD_STEP_SLOTS = { 3: ["card_advantage"], 4: ["ramp"], 5: ["targeted_disrupt", "mass_disrupt"] };
 // Search projection for wizard card rows — base cols plus usd price so
 // rows can show cmc + $ (suggest/manabase already return full cards).
-const _BUILD_LIST_PROJ = LIST_PROJECTION_BASE + ",prices.usd,oracle_text";
+const _BUILD_LIST_PROJ = LIST_PROJECTION_BASE
+  + ",prices.usd,oracle_text,image_uris.normal,card_faces.0.image_uris.normal";
 
 // A land counts as ramp only if it makes extra mana or puts more lands on
 // the battlefield — plain fixing/utility lands (Command Tower, Reliquary
@@ -73,7 +74,7 @@ function _saveBuild() {
 
 // Search-panel options, keyed by control id; remembered across sessions.
 const BUILD_PREFS_KEY = "bx.build.prefs.v1";
-const _BUILD_PREF_DEFAULTS = { bsLegal: true, bsSlot: true, bsHide: true, bsOwned: false, bsSort: "edhrec" };
+const _BUILD_PREF_DEFAULTS = { bsLegal: true, bsSlot: true, bsHide: true, bsOwned: false, bsSort: "edhrec", dlView: "list", recView: "list" };
 function _loadBuildPrefs() {
   try { return { ..._BUILD_PREF_DEFAULTS, ...JSON.parse(localStorage.getItem(BUILD_PREFS_KEY)) }; }
   catch (_e) { return { ..._BUILD_PREF_DEFAULTS }; }
@@ -350,7 +351,9 @@ async function _refreshTagCounts() {
 // call, chunked). Metadata is immutable per card, so the cache never
 // invalidates.
 async function _ensureCardMeta(names) {
-  const need = [...new Set(names.map((n) => n.toLowerCase()))].filter((n) => !_cardMetaCache[n]);
+  const wantImg = _buildPrefs.dlView === "stack";
+  const need = [...new Set(names.map((n) => n.toLowerCase()))]
+    .filter((n) => !_cardMetaCache[n] || (wantImg && !("img" in _cardMetaCache[n])));
   for (let i = 0; i < need.length; i += 75) {
     const chunk = need.slice(i, i + 75);
     try {
@@ -358,7 +361,7 @@ async function _ensureCardMeta(names) {
       for (const c of (res.data || [])) {
         _cardMetaCache[(c.name || "").toLowerCase()] = {
           type_line: c.type_line, cmc: c.cmc, mana_cost: c.mana_cost, id: c.id,
-          oracle_id: c.oracle_id,
+          oracle_id: c.oracle_id, img: _cardImg(c),
         };
       }
     } catch (_e) { /* leave uncached */ }
@@ -374,7 +377,10 @@ const _DECK_TYPE_ORDER = [
 ];
 function _deckBucket(name) {
   if (name === _build.commander) return "Commander";
-  const tl = ((_cardMetaCache[name.toLowerCase()] || {}).type_line || "").toLowerCase();
+  return _typeBucket((_cardMetaCache[name.toLowerCase()] || {}).type_line);
+}
+function _typeBucket(typeLine) {
+  const tl = (typeLine || "").toLowerCase();
   if (tl.includes("land")) return "Lands";
   if (tl.includes("creature")) return "Creatures";
   if (tl.includes("planeswalker")) return "Planeswalkers";
@@ -402,6 +408,9 @@ function _dlRow(e, mark) {
     ? ` draggable="true" title="Drag onto a slot to recategorise"`
     : "";
   const dcls = drag ? " build-dl-draggable" : "";
+  if (_buildPrefs.dlView === "stack") {
+    return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, ctl: rm, cls: cls + dcls, attrs: drag });
+  }
   return `<div class="build-dl-row${cls}${dcls}" data-id="${escapeHtml(e.meta.id || "")}" data-name="${escapeHtml(e.name.toLowerCase())}" data-preview=""${drag}>
     <span class="build-dl-qty">${e.qty}</span>
     <span class="build-dl-name">${escapeHtml(e.name)}${_ownedBadge(e.meta.oracle_id)}</span>
@@ -414,16 +423,17 @@ function _dlTypeGroups(entries, markFn) {
   const groups = {};
   for (const label of _DECK_TYPE_ORDER) groups[label] = [];
   for (const e of entries) groups[_deckBucket(e.name)].push(e);
+  const stack = _buildPrefs.dlView === "stack";
   let html = "";
   for (const label of _DECK_TYPE_ORDER) {
     const list = groups[label];
     if (!list.length) continue;
     list.sort((a, b) => (a.meta.cmc ?? 0) - (b.meta.cmc ?? 0) || a.name.localeCompare(b.name));
     const n = list.reduce((s, e) => s + (e.qty || 1), 0);
-    html += `<div class="build-dl-group"><div class="build-dl-title">${label} · ${n}</div>`
+    html += `<div class="build-dl-group${stack ? " build-stack" : ""}"><div class="build-dl-title">${label} · ${n}</div>`
       + list.map((e) => _dlRow(e, markFn ? markFn(e) : null)).join("") + `</div>`;
   }
-  return html;
+  return stack ? `<div class="build-stacks">${html}</div>` : html;
 }
 
 async function _renderDeckPanel() {
@@ -432,7 +442,8 @@ async function _renderDeckPanel() {
   await symbolsReady;  // so mana costs render as glyphs, not {2}{R} text
   const names = Object.keys(_build.deck);
   if (_build.commander) names.push(_build.commander);
-  if (!names.length) { el.innerHTML = `<div class="build-decklist-head">Deck · 0</div><p class="help">No cards yet.</p>`; return; }
+  const head = (n) => `<div class="build-decklist-head">Deck · ${n}${_viewToggle("dlView")}</div>`;
+  if (!names.length) { el.innerHTML = head(0); return; }
   await _ensureCardMeta(names);
   const entries = names.map((name) => ({
     name,
@@ -444,7 +455,7 @@ async function _renderDeckPanel() {
   const focus = _panelFocusSlots();
   const fills = (e) => _cardFillsSlots(e.name.toLowerCase(), focus, byName);
 
-  let html = `<div class="build-decklist-head">Deck · ${_buildCount()}</div>`;
+  let html = head(_buildCount());
   if (_build.step === _REVIEW_STEP && _buildActiveSlot) {
     // Split: the slot's cards up top, the rest below — each still by type.
     const inSlot = entries.filter(fills);
@@ -474,9 +485,51 @@ function _renderBuildScoreboard() {
     ${_renderDeckCurve(a.curve, _CURVE_TARGET_MAP)}`;
 }
 
-// One suggestion/search row with an add (or remove) control.
+const _cardImg = (c) => ((c.image_uris || (c.card_faces && c.card_faces[0] && c.card_faces[0].image_uris) || {}).normal || "");
+
+// List/Stack switch for a panel; `key` is its pref (dlView / recView).
+function _viewToggle(key) {
+  const b = (v, l) => `<button type="button" data-build-view="${key}" data-v="${v}" aria-pressed="${_buildPrefs[key] === v}">${l}</button>`;
+  return `<span class="build-view" role="group" aria-label="View">${b("list", "List")}${b("stack", "Stack")}</span>`;
+}
+
+// One card image in a stack. Focusable so a tap (no hover on touch) or Tab
+// lifts it out of the pile; it is its own preview, so no hover popup.
+function _stackCard({ id, name, img, qty, ctl, cls = "", attrs = "" }) {
+  const face = img
+    ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy">`
+    : `<span class="build-stack-name">${escapeHtml(name)}</span>`;
+  const n = qty > 1 ? `<span class="build-stack-qty">×${qty}</span>` : "";
+  return `<div class="build-stack-card${cls}" tabindex="0" data-no-hover data-id="${escapeHtml(id || "")}" data-name="${escapeHtml(name.toLowerCase())}"${attrs}>
+    ${face}<span class="build-stack-ctl">${n}${ctl}</span></div>`;
+}
+
+function _addBtn(name, inDeck, compact) {
+  const n = escapeHtml(name);
+  if (inDeck) {
+    return compact
+      ? `<button type="button" class="build-rm" data-build-remove="${n}" aria-label="Remove ${n}">✓</button>`
+      : `<button type="button" class="build-rm" data-build-remove="${n}">✓ in deck — remove</button>`;
+  }
+  return compact
+    ? `<button type="button" class="build-add" data-build-add="${n}" aria-label="Add ${n}">+</button>`
+    : `<button type="button" class="build-add" data-build-add="${n}">+ add</button>`;
+}
+
+// Suggestion/search results with an add (or remove) control per card.
+let _buildLastCards = [];
 function _buildCardRows(cards) {
+  _buildLastCards = cards || [];
   if (!cards || !cards.length) return `<p class="empty">Nothing to suggest.</p>`;
+  if (_buildPrefs.recView === "stack") {
+    // Grouped by type like the decklist; the chosen sort holds within a group.
+    const groups = {};
+    for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
+    return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
+      `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
+        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
+    ).join("")}</div>`;
+  }
   return `<ul class="build-cards">${cards.map((c) => {
     const labs = (c.predicted_labels || []).map((l) => l.replace(/_/g, " ")).join(", ");
     const cost = c.mana_cost ? renderSymbols(c.mana_cost) : "";
@@ -485,14 +538,10 @@ function _buildCardRows(cards) {
     // keep it out of the escaped text join and prepend it.
     const textMeta = [c.type_line, labs, usd].filter(Boolean).map(escapeHtml).join(" · ");
     const meta = [cost, textMeta].filter(Boolean).join(" · ");
-    const inDeck = _buildHas(c.name);
-    const btn = inDeck
-      ? `<button type="button" class="build-rm" data-build-remove="${escapeHtml(c.name)}">✓ in deck — remove</button>`
-      : `<button type="button" class="build-add" data-build-add="${escapeHtml(c.name)}">+ add</button>`;
     return `<li data-id="${escapeHtml(c.id || "")}" data-preview="">
       <span class="build-card-name">${escapeHtml(c.name)}</span>
       <span class="help">${meta}</span>
-      ${btn}</li>`;
+      ${_addBtn(c.name, _buildHas(c.name), false)}</li>`;
   }).join("")}</ul>`;
 }
 
@@ -519,6 +568,7 @@ function _buildSearchPanelHtml(slotPred, open) {
         <label><input type="checkbox" id="bsOwned"${on("bsOwned")}> Owned only</label>
         <label>Sort <select id="bsSort">${sortOpts}</select></label>
         <button type="button" id="bsGo" class="btn btn--primary">Search</button>
+        ${_viewToggle("recView")}
       </div>
       <div id="bsQueryEcho" class="help build-query-echo"></div>
       <div id="bsResults"></div>
@@ -1081,7 +1131,7 @@ const _isDropSlot = (el) => {
   return s && s.dataset.buildSlot !== "land" ? s : null;
 };
 buildPaneEl.addEventListener("dragstart", (e) => {
-  const row = e.target.closest(".build-dl-row[draggable]");
+  const row = e.target.closest(".build-dl-row[draggable], .build-stack-card[draggable]");
   _dragCardId = row && row.dataset.id ? row.dataset.id : null;
   if (_dragCardId && e.dataTransfer) {
     e.dataTransfer.effectAllowed = "move";
@@ -1172,15 +1222,25 @@ buildPaneEl.addEventListener("input", (e) => {
 });
 buildPaneEl.addEventListener("click", async (e) => {
   if (e.target.closest("#bsGo")) { await _runBuildSearch(); return; }
+  const view = e.target.closest("[data-build-view]");
+  if (view) {
+    const key = view.dataset.buildView;
+    _buildPrefs[key] = view.dataset.v;
+    _saveBuildPrefs();
+    for (const b of buildPaneEl.querySelectorAll(`[data-build-view="${key}"]`)) b.setAttribute("aria-pressed", String(b.dataset.v === view.dataset.v));
+    if (key === "dlView") await _renderDeckPanel();
+    else if ($("#bsResults") && _buildLastCards.length) $("#bsResults").innerHTML = _buildCardRows(_buildLastCards);
+    return;
+  }
   // Add/remove swap the clicked button IN PLACE (not a full step re-render)
   // so a search/suggest list survives adding several cards from it; the
   // scoreboard refreshes via the debounced analyze inside _buildAdd/Remove.
   const add = e.target.closest("[data-build-add]");
   if (add) {
     const nm = add.dataset.buildAdd;
-    const rowId = add.closest("li") && add.closest("li").dataset.id;
+    const rowId = add.closest("[data-id]") && add.closest("[data-id]").dataset.id;
     _buildAdd(nm);
-    add.outerHTML = `<button type="button" class="build-rm" data-build-remove="${escapeHtml(nm)}">✓ in deck — remove</button>`;
+    add.outerHTML = _addBtn(nm, true, !!add.closest(".build-stack-card"));
     // Step 1: pull the added card's themes into the focus pool as suggestions.
     if (_build.step === 1) await _addFocusFromCard(rowId);
     return;
@@ -1189,7 +1249,7 @@ buildPaneEl.addEventListener("click", async (e) => {
   if (rm) {
     const nm = rm.dataset.buildRemove;
     _buildRemove(nm);
-    rm.outerHTML = `<button type="button" class="build-add" data-build-add="${escapeHtml(nm)}">+ add</button>`;
+    rm.outerHTML = _addBtn(nm, false, !!rm.closest(".build-stack-card"));
     return;
   }
   // Step 6: pip-weighted basic fill, per-basic decrement, and swap-in.
