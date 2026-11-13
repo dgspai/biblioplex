@@ -557,18 +557,24 @@ function _renderPredictedLabelsSection(card) {
 // Persist a manual label correction, then repaint the detail from the
 // response so predicted_labels + the "edited" marker reflect the new state.
 // `labels === null` clears the override (revert to the rules verdict).
+// Pin a card's role labels everywhere (PUT), or clear the override with
+// `labels === null` (DELETE). Resolves to the updated card.
+async function putCardLabels(cardId, labels) {
+  const path = `/api/cards/${encodeURIComponent(cardId)}/labels`;
+  const resp = labels === null
+    ? await fetch(path, { method: "DELETE" })
+    : await fetch(path, {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ labels }),
+      });
+  if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).details || resp.status);
+  return resp.json();
+}
+
 async function _saveCardLabels(pane, card, labels) {
-  const path = `/api/cards/${card.id}/labels`;
   try {
-    const resp = labels === null
-      ? await fetch(path, { method: "DELETE" })
-      : await fetch(path, {
-          method: "PUT",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ labels }),
-        });
-    if (!resp.ok) throw new Error((await resp.json().catch(() => ({}))).details || resp.status);
-    const updated = await resp.json();
+    const updated = await putCardLabels(card.id, labels);
     // The GET carries an epoch ETag that a label edit doesn't bump, so repaint
     // from the write response rather than re-fetching (which could 304-stale).
     renderDetail(updated, 0, pane);

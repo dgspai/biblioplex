@@ -1120,6 +1120,15 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-stack-card.slot-hit { outline: 2px solid var(--accent); }
 .build-stack-ctl { position: absolute; top: var(--title-h); right: 4px; display: flex; gap: 3px; align-items: center; padding-top: 2px; }
 .build-stack-ctl .role-tags { margin-left: 0; }
+.build-stack-ctl .role-edit { margin-left: 0; }
+.role-edit { display: inline-flex; margin-left: 0.35rem; padding: 2px; border: none; background: none; cursor: pointer; border-radius: 5px; vertical-align: middle; }
+.role-edit .role-tags { margin-left: 0; }
+.role-edit .role-tag { cursor: pointer; }
+.role-edit:hover .role-tag { filter: brightness(0.95); }
+.role-pop { position: fixed; z-index: 50; display: flex; flex-wrap: wrap; gap: 6px; max-width: min(320px, calc(100vw - 32px)); padding: 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 24px rgb(0 0 0 / 0.25); }
+.role-pop[hidden] { display: none; }
+.role-pop .role-opt { font-size: 0.8rem; letter-spacing: 0; padding: 6px 10px; min-height: 32px; border-radius: 999px; cursor: pointer; }
+.role-pop .role-opt[aria-pressed="false"] { background: none; color: var(--fg-muted); border-color: var(--border); }
 .build-stack-qty, .build-stack-ctl button { background: rgb(0 0 0 / 0.75); color: #fff; border: none; border-radius: 999px; font-size: 0.8rem; line-height: 1; padding: 4px 8px; min-width: 26px; }
 .build-stack-ctl button { cursor: pointer; opacity: 1; }
 .build-stack-ctl .build-rm { background: var(--accent); color: var(--accent-fg); }

@@ -62,6 +62,7 @@ def test_every_role_has_a_colour() -> None:
 def test_tags_shown_in_inventory_and_build() -> None:
     assert "roleTags(r.predicted_labels)" in INV
     rows = _slice(BUILD, "function _buildCardRows(")
-    assert rows.count("roleTags(c.predicted_labels)") == 2  # stack + list
-    assert "roleTags(" in _slice(BUILD, "function _dlRow(")
+    assert rows.count("_roleEdit(c.id, c.predicted_labels)") == 2  # stack + list
+    assert "_roleEdit(" in _slice(BUILD, "function _dlRow(")
+    assert "roleTags(labels)" in _slice(BUILD, "function _roleEdit(")
     assert "tags" in _slice(BUILD, "function _stackCard(")

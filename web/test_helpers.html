@@ -14,7 +14,7 @@
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy,
+    shouldRerunSearch, emptyResultsCopy, toggleRole,
   } = window.bibliohelpers;
   const out = document.getElementById("out");
   let fail = 0;
@@ -446,6 +446,20 @@
   check("hoverPreview: empty data-id → null",
     hoverPreviewShouldShow({dataset: {id: ""}}),
     null);
+
+  // toggleRole: plan is the residue role, exclusive with the functional ones.
+  check("toggleRole: add a functional role drops plan",
+    toggleRole(["plan"], "ramp"), ["ramp"]);
+  check("toggleRole: roles stack",
+    toggleRole(["ramp"], "card_advantage"), ["ramp", "card_advantage"]);
+  check("toggleRole: removing a role keeps the rest",
+    toggleRole(["ramp", "card_advantage"], "ramp"), ["card_advantage"]);
+  check("toggleRole: removing the last role falls back to plan",
+    toggleRole(["ramp"], "ramp"), ["plan"]);
+  check("toggleRole: picking plan clears functional roles",
+    toggleRole(["ramp", "card_advantage"], "plan"), ["plan"]);
+  check("toggleRole: null input",
+    toggleRole(null, "ramp"), ["ramp"]);
 
   out.textContent += fail === 0 ? "\nPASS" : `\nFAIL (${fail})`;
 </script>
