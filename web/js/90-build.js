@@ -70,6 +70,18 @@ function _loadBuild() {
 function _saveBuild() {
   try { localStorage.setItem(BUILD_KEY, JSON.stringify(_build)); } catch (_e) { /* ignore */ }
 }
+
+// Search-panel options, keyed by control id; remembered across sessions.
+const BUILD_PREFS_KEY = "bx.build.prefs.v1";
+const _BUILD_PREF_DEFAULTS = { bsLegal: true, bsSlot: true, bsHide: true, bsOwned: false, bsSort: "edhrec" };
+function _loadBuildPrefs() {
+  try { return { ..._BUILD_PREF_DEFAULTS, ...JSON.parse(localStorage.getItem(BUILD_PREFS_KEY)) }; }
+  catch (_e) { return { ..._BUILD_PREF_DEFAULTS }; }
+}
+const _buildPrefs = _loadBuildPrefs();
+function _saveBuildPrefs() {
+  try { localStorage.setItem(BUILD_PREFS_KEY, JSON.stringify(_buildPrefs)); } catch (_e) { /* ignore */ }
+}
 function _buildDecklist() {
   const lines = [];
   if (_build.commander) lines.push("Commander", "1 " + _build.commander, "");
@@ -489,28 +501,23 @@ function _buildCardRows(cards) {
 // toggle so search complements the auto-suggestions. Results reuse the
 // +add rows, so adding from here behaves like adding a suggestion.
 function _buildSearchPanelHtml(slotPred, open) {
+  const on = (id) => (_buildPrefs[id] ? " checked" : "");
   const slotChk = slotPred
-    ? `<label><input type="checkbox" id="bsSlot" checked> This slot only</label>`
+    ? `<label><input type="checkbox" id="bsSlot"${on("bsSlot")}> This slot only</label>`
     : "";
+  const sortOpts = [["edhrec", "EDHREC rank"], ["name", "name"], ["usd", "price"], ["released", "newest"], ["relevance", "best match"]]
+    .map(([v, l]) => `<option value="${v}"${_buildPrefs.bsSort === v ? " selected" : ""}>${l}</option>`).join("");
   const summary = open ? "Recommendations" : "Search cards to add";
   return `<details class="build-search"${open ? " open" : ""}><summary>${summary}</summary>
     <div class="build-search-body" data-slot="${escapeHtml(slotPred || "")}">
       <div id="buildThemes" class="build-themes"></div>
       <input type="text" id="bsQ" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="name, or DSL — e.g. o:&quot;draw a card&quot; cmc&lt;=2">
       <div class="build-search-opts">
-        <label><input type="checkbox" id="bsLegal" checked> Legal for commander</label>
+        <label><input type="checkbox" id="bsLegal"${on("bsLegal")}> Legal for commander</label>
         ${slotChk}
-        <label><input type="checkbox" id="bsHide" checked> Hide cards in deck</label>
-        <label><input type="checkbox" id="bsOwned"> Owned only</label>
-        <label>Sort
-          <select id="bsSort">
-            <option value="edhrec">EDHREC rank</option>
-            <option value="name">name</option>
-            <option value="usd">price</option>
-            <option value="released">newest</option>
-            <option value="relevance">best match</option>
-          </select>
-        </label>
+        <label><input type="checkbox" id="bsHide"${on("bsHide")}> Hide cards in deck</label>
+        <label><input type="checkbox" id="bsOwned"${on("bsOwned")}> Owned only</label>
+        <label>Sort <select id="bsSort">${sortOpts}</select></label>
         <button type="button" id="bsGo" class="btn btn--primary">Search</button>
       </div>
       <div id="bsQueryEcho" class="help build-query-echo"></div>
@@ -1103,6 +1110,12 @@ buildPaneEl.addEventListener("drop", async (e) => {
   if (id) await _recategoriseCard(id, slot.dataset.buildSlot);
 });
 
+buildPaneEl.addEventListener("change", (e) => {
+  const id = e.target.id;
+  if (!(id in _BUILD_PREF_DEFAULTS)) return;
+  _buildPrefs[id] = e.target.type === "checkbox" ? e.target.checked : e.target.value;
+  _saveBuildPrefs();
+});
 // One delegated listener for the whole wizard.
 buildPaneEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && e.target.id === "bsQ") { e.preventDefault(); _runBuildSearch(); }
