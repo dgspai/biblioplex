@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.8.0 (2026-11-13)
+
+### Features
+
+- **build**: Tap a card's role tags to change its roles
+  ([#20](https://github.com/dgspai/biblioplex/pull/20),
+  [`5b03c6e`](https://github.com/dgspai/biblioplex/commit/5b03c6ebdc240996b0f0ae5747aa4ab80468a060))
+
+
 ## v0.7.0 (2026-11-13)
 
 ### Features
