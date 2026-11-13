@@ -69,3 +69,12 @@ def test_phone_layout_column_does_not_wrap() -> None:
     phone = CSS[CSS.index("@media (max-width: 680px) {\n  .build-layout") :]
     phone = phone[: phone.index("\n}\n")]
     assert re.search(r"\.build-layout \{[^}]*flex-wrap: nowrap", phone)
+
+
+def test_stack_controls_sit_below_the_title_bar() -> None:
+    """Tags and buttons must not cover the card's name or mana cost: the
+    control row starts below the title bar and the peek leaves room for it."""
+    ctl = CSS[CSS.index(".build-stack-ctl {") :].split("}", 1)[0]
+    assert "top: var(--title-h)" in ctl
+    stack = CSS[CSS.index(".build-stack {") :].split("}", 1)[0]
+    assert "--peek: calc(var(--title-h) +" in stack

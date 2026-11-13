@@ -94,7 +94,7 @@ function _renderInvList(list) {
     const printingAttrs = p
       ? ` data-printing="${escapeHtml(p.id)}" data-preview="${escapeHtml(p.image_uris.normal || "")}"` : "";
     return `<li data-id="${escapeHtml(cardId)}" data-oracle="${escapeHtml(r.oracle_id || "")}"${printingAttrs} tabindex="0">
-      <div class="name"><span class="inv-qty-badge">${r.quantity}×</span>${escapeHtml(r.card_name || "?")}${_ownedBadge(r.oracle_id)}</div>
+      <div class="name"><span class="inv-qty-badge">${r.quantity}×</span>${escapeHtml(r.card_name || "?")}${_ownedBadge(r.oracle_id)}${roleTags(r.predicted_labels)}</div>
       <div class="meta">${meta.join("")}</div>
     </li>`;
   }).join("");

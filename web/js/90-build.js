@@ -409,11 +409,11 @@ function _dlRow(e, mark) {
     : "";
   const dcls = drag ? " build-dl-draggable" : "";
   if (_buildPrefs.dlView === "stack") {
-    return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, ctl: rm, cls: cls + dcls, attrs: drag });
+    return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, tags: roleTags(e.labels), ctl: rm, cls: cls + dcls, attrs: drag });
   }
   return `<div class="build-dl-row${cls}${dcls}" data-id="${escapeHtml(e.meta.id || "")}" data-name="${escapeHtml(e.name.toLowerCase())}" data-preview=""${drag}>
     <span class="build-dl-qty">${e.qty}</span>
-    <span class="build-dl-name">${escapeHtml(e.name)}${_ownedBadge(e.meta.oracle_id)}</span>
+    <span class="build-dl-name">${escapeHtml(e.name)}${_ownedBadge(e.meta.oracle_id)}</span>${roleTags(e.labels)}
     <span class="build-dl-cost">${cost}</span>${rm}</div>`;
 }
 
@@ -445,13 +445,16 @@ async function _renderDeckPanel() {
   const head = (n) => `<div class="build-decklist-head">Deck · ${n}${_viewToggle("dlView")}</div>`;
   if (!names.length) { el.innerHTML = head(0); return; }
   await _ensureCardMeta(names);
+  const byName = {};
+  for (const c of (_buildAnalysis && _buildAnalysis.cards) || []) byName[c.name.toLowerCase()] = c;
+  // Lands get no role tags: the scoreboard counts them by type, not label.
+  const labelsOf = (c) => (c && !c.is_land ? c.predicted_labels : null);
   const entries = names.map((name) => ({
     name,
     qty: name === _build.commander ? 1 : _build.deck[name],
     meta: _cardMetaCache[name.toLowerCase()] || {},
+    labels: labelsOf(byName[name.toLowerCase()]),
   }));
-  const byName = {};
-  for (const c of (_buildAnalysis && _buildAnalysis.cards) || []) byName[c.name.toLowerCase()] = c;
   const focus = _panelFocusSlots();
   const fills = (e) => _cardFillsSlots(e.name.toLowerCase(), focus, byName);
 
@@ -495,13 +498,13 @@ function _viewToggle(key) {
 
 // One card image in a stack. Focusable so a tap (no hover on touch) or Tab
 // lifts it out of the pile; it is its own preview, so no hover popup.
-function _stackCard({ id, name, img, qty, ctl, cls = "", attrs = "" }) {
+function _stackCard({ id, name, img, qty, ctl, tags = "", cls = "", attrs = "" }) {
   const face = img
     ? `<img src="${escapeHtml(img)}" alt="${escapeHtml(name)}" loading="lazy">`
     : `<span class="build-stack-name">${escapeHtml(name)}</span>`;
   const n = qty > 1 ? `<span class="build-stack-qty">×${qty}</span>` : "";
   return `<div class="build-stack-card${cls}" tabindex="0" data-no-hover data-id="${escapeHtml(id || "")}" data-name="${escapeHtml(name.toLowerCase())}"${attrs}>
-    ${face}<span class="build-stack-ctl">${n}${ctl}</span></div>`;
+    ${face}<span class="build-stack-ctl">${tags}${n}${ctl}</span></div>`;
 }
 
 function _addBtn(name, inDeck, compact) {
@@ -527,19 +530,18 @@ function _buildCardRows(cards) {
     for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
     return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
       `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
-        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
+        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: roleTags(c.predicted_labels), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
     ).join("")}</div>`;
   }
   return `<ul class="build-cards">${cards.map((c) => {
-    const labs = (c.predicted_labels || []).map((l) => l.replace(/_/g, " ")).join(", ");
     const cost = c.mana_cost ? renderSymbols(c.mana_cost) : "";
     const usd = c.prices && c.prices.usd ? formatUsd(c.prices.usd) : "";
     // Cost is trusted symbol HTML (renderSymbols escapes its own text), so
     // keep it out of the escaped text join and prepend it.
-    const textMeta = [c.type_line, labs, usd].filter(Boolean).map(escapeHtml).join(" · ");
+    const textMeta = [c.type_line, usd].filter(Boolean).map(escapeHtml).join(" · ");
     const meta = [cost, textMeta].filter(Boolean).join(" · ");
     return `<li data-id="${escapeHtml(c.id || "")}" data-preview="">
-      <span class="build-card-name">${escapeHtml(c.name)}</span>
+      <span class="build-card-name">${escapeHtml(c.name)}</span>${roleTags(c.predicted_labels)}
       <span class="help">${meta}</span>
       ${_addBtn(c.name, _buildHas(c.name), false)}</li>`;
   }).join("")}</ul>`;

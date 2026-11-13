@@ -422,11 +422,13 @@ ul.cards .meta .cost .mana-sym { height: 0.95em; width: 0.95em; }
    the detail chip strip and the page-level counter. Pastel base + dark
    text for AA contrast in light theme; dark-tone backgrounds + light
    text for the dark theme block below. */
-.chip-pred.pred-ramp,             .slot.pred-ramp             { background: var(--pred-ramp-bg); color: var(--pred-ramp-fg); border-color: var(--pred-ramp-bd); }
-.chip-pred.pred-card_advantage,   .slot.pred-card_advantage   { background: var(--pred-card_advantage-bg); color: var(--pred-card_advantage-fg); border-color: var(--pred-card_advantage-bd); }
-.chip-pred.pred-targeted_disrupt, .slot.pred-targeted_disrupt { background: var(--pred-targeted_disrupt-bg); color: var(--pred-targeted_disrupt-fg); border-color: var(--pred-targeted_disrupt-bd); }
-.chip-pred.pred-mass_disrupt,     .slot.pred-mass_disrupt     { background: var(--pred-mass_disrupt-bg); color: var(--pred-mass_disrupt-fg); border-color: var(--pred-mass_disrupt-bd); }
-.chip-pred.pred-plan,             .slot.pred-plan             { background: var(--pred-plan-bg); color: var(--pred-plan-fg); border-color: var(--pred-plan-bd); }
+.role-tags { display: inline-flex; gap: 2px; margin-left: 0.35rem; vertical-align: middle; }
+.role-tag { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.03em; line-height: 1; padding: 2px 4px; border: 1px solid; border-radius: 4px; text-decoration: none; cursor: default; }
+.chip-pred.pred-ramp,             .slot.pred-ramp,             .role-tag.pred-ramp             { background: var(--pred-ramp-bg); color: var(--pred-ramp-fg); border-color: var(--pred-ramp-bd); }
+.chip-pred.pred-card_advantage,   .slot.pred-card_advantage,   .role-tag.pred-card_advantage   { background: var(--pred-card_advantage-bg); color: var(--pred-card_advantage-fg); border-color: var(--pred-card_advantage-bd); }
+.chip-pred.pred-targeted_disrupt, .slot.pred-targeted_disrupt, .role-tag.pred-targeted_disrupt { background: var(--pred-targeted_disrupt-bg); color: var(--pred-targeted_disrupt-fg); border-color: var(--pred-targeted_disrupt-bd); }
+.chip-pred.pred-mass_disrupt,     .slot.pred-mass_disrupt,     .role-tag.pred-mass_disrupt     { background: var(--pred-mass_disrupt-bg); color: var(--pred-mass_disrupt-fg); border-color: var(--pred-mass_disrupt-bd); }
+.chip-pred.pred-plan,             .slot.pred-plan,             .role-tag.pred-plan             { background: var(--pred-plan-bg); color: var(--pred-plan-fg); border-color: var(--pred-plan-bd); }
 
 /* Slot-counts bar — compact horizontal strip above the result list.
    Each slot is a button mirroring the chip styling but a touch wider so
@@ -1100,7 +1102,8 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 /* Stack view: one pile per type, each card shows its title bar; hovering,
    tapping or tabbing to a card slides the rest of the pile down to reveal it. */
 .build-stacks { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin: 0.4rem 0; }
-.build-stack { --card-w: 146px; --peek: calc(var(--card-w) * 0.18); width: var(--card-w); }
+/* --title-h: a real card's name + mana-cost bar (~15% of its width). */
+.build-stack { --card-w: 146px; --title-h: calc(var(--card-w) * 0.15); --peek: calc(var(--title-h) + 22px); width: var(--card-w); }
 .build-decklist .build-stack { --card-w: 200px; }
 .build-stack-card { position: relative; display: block; width: var(--card-w); aspect-ratio: 488 / 680; border-radius: 4.75% / 3.5%; overflow: hidden; background: var(--bg-elev); box-shadow: 0 1px 3px rgb(0 0 0 / 0.35); transition: transform 0.15s ease; outline-offset: 2px; }
 .build-stack-card + .build-stack-card { margin-top: calc(var(--peek) - var(--card-w) * 680 / 488); }
@@ -1115,7 +1118,8 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-stack-name { display: block; padding: 6px 8px; font-weight: 600; font-size: 0.85em; }
 .build-stack-card.dim { opacity: 0.3; }
 .build-stack-card.slot-hit { outline: 2px solid var(--accent); }
-.build-stack-ctl { position: absolute; top: 3px; right: 3px; display: flex; gap: 3px; align-items: center; }
+.build-stack-ctl { position: absolute; top: var(--title-h); right: 4px; display: flex; gap: 3px; align-items: center; padding-top: 2px; }
+.build-stack-ctl .role-tags { margin-left: 0; }
 .build-stack-qty, .build-stack-ctl button { background: rgb(0 0 0 / 0.75); color: #fff; border: none; border-radius: 999px; font-size: 0.8rem; line-height: 1; padding: 4px 8px; min-width: 26px; }
 .build-stack-ctl button { cursor: pointer; opacity: 1; }
 .build-stack-ctl .build-rm { background: var(--accent); color: var(--accent-fg); }
