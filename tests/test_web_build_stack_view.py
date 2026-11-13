@@ -53,3 +53,11 @@ def test_decklist_shows_on_mobile() -> None:
 
 def test_reveal_works_without_hover() -> None:
     assert ".build-stack-card:focus-within ~ .build-stack-card" in CSS
+
+
+def test_phone_shows_one_pile_per_row() -> None:
+    """Piles side by side overflow a phone; stack them in one column."""
+    phone = CSS[CSS.index("@media (max-width: 680px) {\n  .build-stacks") :]
+    phone = phone[: phone.index("\n}\n")]
+    assert "flex-direction: column" in phone
+    assert "--card-w: min(" in phone  # fills the width, capped
