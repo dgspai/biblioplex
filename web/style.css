@@ -1106,6 +1106,10 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-stack-card + .build-stack-card { margin-top: calc(var(--peek) - var(--card-w) * 680 / 488); }
 .build-stack-card:hover ~ .build-stack-card,
 .build-stack-card:focus-within ~ .build-stack-card { transform: translateY(calc(var(--card-w) * 680 / 488 - var(--peek))); }
+@media (max-width: 680px) {
+  .build-stacks { flex-direction: column; align-items: center; }
+  .build-stack, .build-decklist .build-stack { --card-w: min(300px, calc(100vw - 32px)); }
+}
 .build-stack:hover, .build-stack:focus-within { position: relative; z-index: 2; }
 .build-stack-card img { display: block; width: 100%; height: 100%; }
 .build-stack-name { display: block; padding: 6px 8px; font-weight: 600; font-size: 0.85em; }
