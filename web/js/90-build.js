@@ -1106,18 +1106,9 @@ function _cardFillsSlots(nameLower, slots, byName) {
 async function _recategoriseCard(cardId, label) {
   const cur = ((_buildAnalysis && _buildAnalysis.cards) || [])
     .find((c) => c.id === cardId)?.predicted_labels || [];
-  const labels = label === "plan"
-    ? ["plan"]
-    : [...new Set([...cur.filter((l) => l !== "plan"), label])];
+  if (cur.includes(label)) return;  // drop only ever adds a role
   try {
-    const resp = await fetch(`/api/cards/${encodeURIComponent(cardId)}/labels`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ labels }),
-    });
-    if (!resp.ok) {
-      throw new Error((await resp.json().catch(() => ({}))).details || resp.status);
-    }
+    await putCardLabels(cardId, window.bibliohelpers.toggleRole(cur, label));
     await _buildAnalyze();
   } catch (err) {
     showBanner(`Recategorise failed: ${err.message || "network"}`);

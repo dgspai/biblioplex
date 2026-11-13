@@ -26,6 +26,7 @@
 //     fields overlaid — drives the click-a-face-to-see-its-text flow (D9.11).
 //   - historyPush(list, q, max): dedup + LRU insert of `q` at the head of the
 //     search-history list, capped at `max` (D13.8).
+//   - toggleRole(labels, role): flip one role; plan is exclusive + the fallback.
 //   - landRecommendation(landCount): {status, message} for the deck-view land
 //     count vs the EDH baseline of ~37 (D13.9).
 
@@ -373,12 +374,23 @@
     return { status, message: `Lands: ${n} / ~37 recommended` };
   }
 
+  // Flip one role on a card's label set. `plan` is the classifier's residue
+  // role: exclusive with the functional ones, and what a card falls back to.
+  function toggleRole(labels, role) {
+    const cur = labels || [];
+    if (cur.includes(role)) {
+      const rest = cur.filter((l) => l !== role);
+      return rest.length ? rest : ["plan"];
+    }
+    return role === "plan" ? ["plan"] : [...cur.filter((l) => l !== "plan"), role];
+  }
+
   window.bibliohelpers = {
     appendPredicate, splitTypeLine, bannerStateFromHealth,
     urlStateFromSearch, urlStateToSearch, clampSplit,
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy,
+    shouldRerunSearch, emptyResultsCopy, toggleRole,
   };
 })();
