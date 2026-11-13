@@ -1102,7 +1102,8 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 /* Stack view: one pile per type, each card shows its title bar; hovering,
    tapping or tabbing to a card slides the rest of the pile down to reveal it. */
 .build-stacks { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-start; margin: 0.4rem 0; }
-.build-stack { --card-w: 146px; --peek: calc(var(--card-w) * 0.18); width: var(--card-w); }
+/* --title-h: a real card's name + mana-cost bar (~15% of its width). */
+.build-stack { --card-w: 146px; --title-h: calc(var(--card-w) * 0.15); --peek: calc(var(--title-h) + 22px); width: var(--card-w); }
 .build-decklist .build-stack { --card-w: 200px; }
 .build-stack-card { position: relative; display: block; width: var(--card-w); aspect-ratio: 488 / 680; border-radius: 4.75% / 3.5%; overflow: hidden; background: var(--bg-elev); box-shadow: 0 1px 3px rgb(0 0 0 / 0.35); transition: transform 0.15s ease; outline-offset: 2px; }
 .build-stack-card + .build-stack-card { margin-top: calc(var(--peek) - var(--card-w) * 680 / 488); }
@@ -1117,7 +1118,7 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-stack-name { display: block; padding: 6px 8px; font-weight: 600; font-size: 0.85em; }
 .build-stack-card.dim { opacity: 0.3; }
 .build-stack-card.slot-hit { outline: 2px solid var(--accent); }
-.build-stack-ctl { position: absolute; top: 3px; right: 3px; display: flex; gap: 3px; align-items: center; }
+.build-stack-ctl { position: absolute; top: var(--title-h); right: 4px; display: flex; gap: 3px; align-items: center; padding-top: 2px; }
 .build-stack-ctl .role-tags { margin-left: 0; }
 .build-stack-qty, .build-stack-ctl button { background: rgb(0 0 0 / 0.75); color: #fff; border: none; border-radius: 999px; font-size: 0.8rem; line-height: 1; padding: 4px 8px; min-width: 26px; }
 .build-stack-ctl button { cursor: pointer; opacity: 1; }
