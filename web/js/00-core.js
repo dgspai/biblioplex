@@ -151,6 +151,14 @@ const LIST_PROJECTION_BASE =
 const PRED_LABELS = [
   "ramp", "card_advantage", "targeted_disrupt", "mass_disrupt", "plan",
 ];
+// Colour-coded role pills; the short code keeps them readable without colour.
+const _ROLE_CODE = { ramp: "RAMP", card_advantage: "CA", targeted_disrupt: "TD", mass_disrupt: "MD", plan: "PLAN" };
+function roleTags(labels) {
+  const have = new Set(labels || []);
+  const tags = PRED_LABELS.filter((l) => have.has(l))
+    .map((l) => `<abbr class="role-tag pred-${l}" title="${l.replace(/_/g, " ")}">${_ROLE_CODE[l]}</abbr>`).join("");
+  return tags ? `<span class="role-tags">${tags}</span>` : "";
+}
 const SIMILAR_PROJECTION =
   "id,name,type_line,similarity,image_uris.small,image_uris.normal,"
   + "card_faces.0.image_uris.small,card_faces.0.image_uris.normal";
