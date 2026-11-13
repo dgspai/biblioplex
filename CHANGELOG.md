@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.6.1 (2026-11-13)
+
+### Bug Fixes
+
+- **build**: One pile per row for stack view on phones
+  ([#17](https://github.com/dgspai/biblioplex/pull/17),
+  [`baa3840`](https://github.com/dgspai/biblioplex/commit/baa384029b8b361af6838e73db038a6442e5b05a))
+
+
 ## v0.6.0 (2026-11-13)
 
 ### Continuous Integration
