@@ -272,6 +272,7 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
                 "raw": {"name": "Sol Ring"},
                 "printing_id": "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb",
                 "printing_image": "https://img/normal.jpg",
+                "predicted_labels": ["ramp"],
             },
             {
                 "id": "cccccccc-cccc-cccc-cccc-cccccccccccc",
@@ -286,6 +287,7 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
                 "raw": {"name": "Sol Ring"},
                 "printing_id": None,
                 "printing_image": None,
+                "predicted_labels": None,
             },
         ])),
     )
@@ -306,6 +308,10 @@ async def test_list_inventory_cards_endpoint(app: FastAPI) -> None:
     }
     assert body["data"][1]["printing"] is None
     assert body["has_more"] is False
+    # Role labels drive the colour tags; an unmatched card has none.
+    assert body["data"][0]["predicted_labels"] == ["ramp"]
+    assert body["data"][1]["predicted_labels"] == []
+    assert "c.predicted_labels" in str(fake_conn.execute.call_args_list[1].args[0])
 
 
 @pytest.mark.asyncio
