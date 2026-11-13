@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v0.6.0 (2026-11-13)
+
+### Continuous Integration
+
+- **release**: Read release secrets from a main-only environment
+  ([#15](https://github.com/dgspai/biblioplex/pull/15),
+  [`18d9254`](https://github.com/dgspai/biblioplex/commit/18d92549cabb577e4480c8b2a20f33f3c647eac8))
+
+### Features
+
+- **build**: Stack view and remembered search options
+  ([#16](https://github.com/dgspai/biblioplex/pull/16),
+  [`825122c`](https://github.com/dgspai/biblioplex/commit/825122c2787f54f351faf2072c5c3072b03a111c))
+
+
 ## v0.5.1 (2026-11-12)
 
 ### Bug Fixes
