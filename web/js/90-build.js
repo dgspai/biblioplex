@@ -408,12 +408,13 @@ function _dlRow(e, mark) {
     ? ` draggable="true" title="Drag onto a slot to recategorise"`
     : "";
   const dcls = drag ? " build-dl-draggable" : "";
+  const tags = e.isLand ? "" : _roleEdit(e.meta.id, e.labels);
   if (_buildPrefs.dlView === "stack") {
-    return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, tags: roleTags(e.labels), ctl: rm, cls: cls + dcls, attrs: drag });
+    return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, tags, ctl: rm, cls: cls + dcls, attrs: drag });
   }
   return `<div class="build-dl-row${cls}${dcls}" data-id="${escapeHtml(e.meta.id || "")}" data-name="${escapeHtml(e.name.toLowerCase())}" data-preview=""${drag}>
     <span class="build-dl-qty">${e.qty}</span>
-    <span class="build-dl-name">${escapeHtml(e.name)}${_ownedBadge(e.meta.oracle_id)}</span>${roleTags(e.labels)}
+    <span class="build-dl-name">${escapeHtml(e.name)}${_ownedBadge(e.meta.oracle_id)}</span>${tags}
     <span class="build-dl-cost">${cost}</span>${rm}</div>`;
 }
 
@@ -448,13 +449,16 @@ async function _renderDeckPanel() {
   const byName = {};
   for (const c of (_buildAnalysis && _buildAnalysis.cards) || []) byName[c.name.toLowerCase()] = c;
   // Lands get no role tags: the scoreboard counts them by type, not label.
-  const labelsOf = (c) => (c && !c.is_land ? c.predicted_labels : null);
-  const entries = names.map((name) => ({
-    name,
-    qty: name === _build.commander ? 1 : _build.deck[name],
-    meta: _cardMetaCache[name.toLowerCase()] || {},
-    labels: labelsOf(byName[name.toLowerCase()]),
-  }));
+  const entries = names.map((name) => {
+    const a = byName[name.toLowerCase()];
+    return {
+      name,
+      qty: name === _build.commander ? 1 : _build.deck[name],
+      meta: _cardMetaCache[name.toLowerCase()] || {},
+      labels: a ? a.predicted_labels : null,
+      isLand: a ? !!a.is_land : _isLandType((_cardMetaCache[name.toLowerCase()] || {}).type_line),
+    };
+  });
   const focus = _panelFocusSlots();
   const fills = (e) => _cardFillsSlots(e.name.toLowerCase(), focus, byName);
 
@@ -519,6 +523,14 @@ function _addBtn(name, inDeck, compact) {
     : `<button type="button" class="build-add" data-build-add="${n}">+ add</button>`;
 }
 
+// A card's role tags as a button that opens the role editor; a card with
+// no roles yet shows a lone "+" to start one.
+function _roleEdit(id, labels) {
+  if (!id) return roleTags(labels);
+  const tags = roleTags(labels) || `<span class="role-tags"><span class="role-tag">+</span></span>`;
+  return `<button type="button" class="role-edit" data-role-edit="${escapeHtml(id)}" data-roles="${escapeHtml((labels || []).join(","))}" aria-label="Edit roles">${tags}</button>`;
+}
+
 // Suggestion/search results with an add (or remove) control per card.
 let _buildLastCards = [];
 function _buildCardRows(cards) {
@@ -530,7 +542,7 @@ function _buildCardRows(cards) {
     for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
     return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
       `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
-        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: roleTags(c.predicted_labels), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
+        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
     ).join("")}</div>`;
   }
   return `<ul class="build-cards">${cards.map((c) => {
@@ -541,7 +553,7 @@ function _buildCardRows(cards) {
     const textMeta = [c.type_line, usd].filter(Boolean).map(escapeHtml).join(" · ");
     const meta = [cost, textMeta].filter(Boolean).join(" · ");
     return `<li data-id="${escapeHtml(c.id || "")}" data-preview="">
-      <span class="build-card-name">${escapeHtml(c.name)}</span>${roleTags(c.predicted_labels)}
+      <span class="build-card-name">${escapeHtml(c.name)}</span>${_roleEdit(c.id, c.predicted_labels)}
       <span class="help">${meta}</span>
       ${_addBtn(c.name, _buildHas(c.name), false)}</li>`;
   }).join("")}</ul>`;
@@ -1153,6 +1165,64 @@ buildPaneEl.addEventListener("drop", async (e) => {
   if (id) await _recategoriseCard(id, slot.dataset.buildSlot);
 });
 
+// Role editor: one popover for the whole tab. Every toggle saves at once
+// (a global override, same as the card-detail editor) and re-tallies.
+const _rolePop = document.createElement("div");
+_rolePop.className = "role-pop";
+_rolePop.hidden = true;
+document.body.appendChild(_rolePop);
+let _rolePopFor = null;
+
+function _renderRolePop(roles) {
+  _rolePop.innerHTML = PRED_LABELS.map((l) =>
+    `<button type="button" class="role-tag role-opt pred-${l}" data-role="${l}" aria-pressed="${roles.includes(l)}">${l.replace(/_/g, " ")}</button>`
+  ).join("") + `<button type="button" class="btn btn--ghost btn--sm" data-role-reset>Reset to auto</button>`;
+}
+function _openRolePop(btn) {
+  _rolePopFor = btn.dataset.roleEdit;
+  const roles = (btn.dataset.roles || "").split(",").filter(Boolean);
+  _renderRolePop(roles);
+  _rolePop.dataset.roles = roles.join(",");
+  _rolePop.hidden = false;
+  const r = btn.getBoundingClientRect();
+  const w = _rolePop.offsetWidth;
+  _rolePop.style.left = `${Math.max(16, Math.min(r.left, window.innerWidth - w - 16))}px`;
+  const below = r.bottom + 6;
+  _rolePop.style.top = `${below + _rolePop.offsetHeight > window.innerHeight ? Math.max(16, r.top - _rolePop.offsetHeight - 6) : below}px`;
+  const first = _rolePop.querySelector("button");
+  if (first) first.focus();
+}
+function _closeRolePop() {
+  _rolePop.hidden = true;
+  _rolePopFor = null;
+}
+async function _setRoles(id, labels) {
+  try {
+    const card = await putCardLabels(id, labels);
+    const now = card.predicted_labels || [];
+    for (const c of _buildLastCards) if (c.id === id) c.predicted_labels = now;
+    for (const b of buildPaneEl.querySelectorAll(`[data-role-edit="${CSS.escape(id)}"]`)) b.outerHTML = _roleEdit(id, now);
+    if (_rolePopFor === id) { _renderRolePop(now); _rolePop.dataset.roles = now.join(","); }
+    _scheduleBuildAnalyze();
+  } catch (err) {
+    showBanner(`Role update failed: ${err.message || "network"}`);
+  }
+}
+_rolePop.addEventListener("click", async (e) => {
+  const id = _rolePopFor;
+  if (!id) return;
+  const cur = (_rolePop.dataset.roles || "").split(",").filter(Boolean);
+  const opt = e.target.closest("[data-role]");
+  if (opt) { await _setRoles(id, window.bibliohelpers.toggleRole(cur, opt.dataset.role)); return; }
+  if (e.target.closest("[data-role-reset]")) await _setRoles(id, null);
+});
+document.addEventListener("click", (e) => {
+  if (!_rolePop.hidden && !_rolePop.contains(e.target) && !e.target.closest("[data-role-edit]")) _closeRolePop();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !_rolePop.hidden) _closeRolePop();
+});
+
 buildPaneEl.addEventListener("change", (e) => {
   const id = e.target.id;
   if (!(id in _BUILD_PREF_DEFAULTS)) return;
@@ -1214,6 +1284,8 @@ buildPaneEl.addEventListener("input", (e) => {
   }, 200);
 });
 buildPaneEl.addEventListener("click", async (e) => {
+  const roleBtn = e.target.closest("[data-role-edit]");
+  if (roleBtn) { _openRolePop(roleBtn); return; }
   if (e.target.closest("#bsGo")) { await _runBuildSearch(); return; }
   const view = e.target.closest("[data-build-view]");
   if (view) {
