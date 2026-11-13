@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.7.0 (2026-11-13)
+
+### Features
+
+- **web**: Colour-coded role tags on inventory and build cards
+  ([#19](https://github.com/dgspai/biblioplex/pull/19),
+  [`8a89c92`](https://github.com/dgspai/biblioplex/commit/8a89c9265af3b4795eefee080c6b94e2d20d08c3))
+
+
 ## v0.6.2 (2026-11-13)
 
 ### Bug Fixes
