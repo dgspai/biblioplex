@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.10.1 (2026-11-14)
+
+### Bug Fixes
+
+- **web**: Sidebar sections reopen the segment last used in them
+  ([#23](https://github.com/dgspai/biblioplex/pull/23),
+  [`1604814`](https://github.com/dgspai/biblioplex/commit/160481443e7daf1c2a8c3934a488f876fbf977ab))
+
+
 ## v0.10.0 (2026-11-14)
 
 ### Features
