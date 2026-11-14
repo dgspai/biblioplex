@@ -866,7 +866,8 @@ def _compile_is(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
         return cards.c.raw.op("->>")("set_type") == _IS_SET_TYPE_MAP[value]
     if value == "edited":
         # Manual role override (PUT /cards/:id/labels) — see refresh.py.
-        return cards.c.label_reasons.has_key("_override")
+        edited: sa.ColumnElement[bool] = cards.c.label_reasons.has_key("_override")
+        return edited
     if value in ("owned", "inventory"):
         return _compile_in_inventory(cards)
     if value in ("unowned", "not_owned"):
