@@ -1599,7 +1599,7 @@ async def get_card_by_id(
         result = await conn.execute(
             text(
                 "SELECT oracle_id, raw, predicted_labels, label_scores, "
-                "label_reasons FROM cards WHERE id = :id"
+                "label_reasons, is_commander FROM cards WHERE id = :id"
             ),
             {"id": str(card_id)},
         )
@@ -1610,6 +1610,7 @@ async def get_card_by_id(
     payload = _decorate(
         row.raw, row.predicted_labels, row.label_scores, row.label_reasons
     )
+    payload["is_commander"] = bool(row.is_commander)
     projected = _apply_projection(payload, projection)
     if isinstance(projected, JSONResponse):
         return projected

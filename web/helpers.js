@@ -29,6 +29,8 @@
 //   - toggleRole(labels, role): flip one role; plan is exclusive + the fallback.
 //   - autoRoles(scores) / sameRoles(a, b): the classifier's own role set, and
 //     an order-free role-set comparison.
+//   - inIdentity(cardCi, cmdCi): card colour identity fits the commander's
+//     (no commander yet → fits).
 //   - landRecommendation(landCount): {status, message} for the deck-view land
 //     count vs the EDH baseline of ~37 (D13.9).
 
@@ -398,12 +400,17 @@
     return x.size === y.size && [...x].every((l) => y.has(l));
   }
 
+  function inIdentity(cardCi, cmdCi) {
+    if (!Array.isArray(cmdCi)) return true;
+    return (cardCi || []).every((c) => cmdCi.includes(c));
+  }
+
   window.bibliohelpers = {
     appendPredicate, splitTypeLine, bannerStateFromHealth,
     urlStateFromSearch, urlStateToSearch, clampSplit,
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles,
+    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles, inIdentity,
   };
 })();

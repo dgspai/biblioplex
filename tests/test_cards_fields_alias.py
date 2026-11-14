@@ -48,6 +48,7 @@ class _ScalarRow:
         self.predicted_labels: list[str] = []
         self.label_scores: dict[str, float] = {}
         self.label_reasons: dict[str, Any] | None = None
+        self.is_commander = False
 
 
 class _ScalarResult:

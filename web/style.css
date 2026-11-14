@@ -308,12 +308,13 @@ ul.cards .sort-info {
   margin: 0 0 4px;
 }
 .detail-pane .detail-actions { display: flex; gap: 6px; align-items: center; }
-.detail-pane .copy-id {
+.detail-pane .detail-actions button {
   padding: 2px 8px; font-size: var(--fs-xs); border-radius: var(--radius-sm);
   background: var(--bg-elev); color: var(--fg-muted);
   border: 1px solid var(--border); cursor: pointer;
 }
-.detail-pane .copy-id:hover { color: var(--fg); }
+.detail-pane .detail-actions button:hover:not(:disabled) { color: var(--fg); }
+.detail-pane .detail-actions button:disabled { cursor: default; opacity: 0.6; }
 /* D19.15: NOT scoped to a container. It was `.detail-pane .ext-link,
    #combosDetail .ext-link`, which silently excluded every other user —
    the Download anchors in `.upload-actions` (import history, deck version

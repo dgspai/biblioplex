@@ -59,6 +59,7 @@ class _ScalarRow:
         self.predicted_labels: list[str] = []
         self.label_scores: dict[str, float] = {}
         self.label_reasons: dict[str, Any] | None = None
+        self.is_commander = False
 
 
 class _ScalarResult:
@@ -130,7 +131,7 @@ async def test_card_by_id_no_projection_returns_raw(app: FastAPI) -> None:
     app.dependency_overrides[get_read_engine] = lambda: _ScalarEngine(_ScalarConn(RAW))
     async for c in _client(app):
         resp = await c.get(f"/cards/{SCRY_UUID}")
-    assert resp.json() == {**RAW, "predicted_labels": [], "label_scores": {}, "labels_overridden": False}
+    assert resp.json() == {**RAW, "predicted_labels": [], "label_scores": {}, "labels_overridden": False, "is_commander": False}
 
 
 async def test_card_by_id_empty_projection_returns_raw(app: FastAPI) -> None:
@@ -138,7 +139,7 @@ async def test_card_by_id_empty_projection_returns_raw(app: FastAPI) -> None:
     app.dependency_overrides[get_read_engine] = lambda: _ScalarEngine(_ScalarConn(RAW))
     async for c in _client(app):
         resp = await c.get(f"/cards/{SCRY_UUID}", params={"projection": ""})
-    assert resp.json() == {**RAW, "predicted_labels": [], "label_scores": {}, "labels_overridden": False}
+    assert resp.json() == {**RAW, "predicted_labels": [], "label_scores": {}, "labels_overridden": False, "is_commander": False}
 
 
 async def test_card_by_id_missing_field_emits_null(app: FastAPI) -> None:

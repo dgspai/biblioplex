@@ -56,7 +56,7 @@ Combos ingest downloads Commander Spellbook's bulk file (`variants.json.gz`, ~32
 
 ### `GET /cards/:id`
 
-Single card by Scryfall UUID. Returns `raw` verbatim. `404 not_found` on miss; `422` on a non-UUID path param. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`.
+Single card by Scryfall UUID. Returns `raw` verbatim, plus `predicted_labels`, `label_scores`, `labels_overridden` and `is_commander` (whether the card can lead a Commander deck). `404 not_found` on miss; `422` on a non-UUID path param. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`.
 
 ```bash
 curl -fsS http://localhost:8000/cards/56ebc372-aabd-4174-a943-c7bf59e5028d
