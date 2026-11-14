@@ -117,9 +117,10 @@ are not CA. One-shot recursion of a single card is not CA.
   pattern).
 - **R29 — Playing off the library top** (Future Sight, The Reality
   Chip, The Lunar Whale) → CA. A Rule 3 engine: each turn the top card
-  is an extra card.
+  is an extra card. Cascade is not this ruling: its reminder text
+  exiles from the top once per cast.
 - **R30 — `{T}` abilities that draw** (Iron Lad, Diverging Destiny) →
-  CA, a Rule 3 engine. Break-even tap loot stays `plan` (R5'), as does
+  CA, a Rule 3 engine. Break-even tap loot or rummage stays `plan` (R5'), as does
   a draw that sacrifices the card (Mind Stone).
 
 ## 3. Targeted disruption

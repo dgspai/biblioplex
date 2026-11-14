@@ -91,14 +91,18 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ),
     (
         "ca:play-from-top",
-        re.compile(r"\b(play|cast)\b[^.]{0,40}\btop (card )?of your library", re.I),
+        re.compile(
+            r"\b(play|cast)\b[^.,]{0,40}\bfrom the top of your library|"
+            r"\b(play|cast) the top card of your library",
+            re.I,
+        ),
         0.85,
     ),
     (
         "ca:tap-draw",
-        # Sacrifice in the cost = one-shot; "then discard" = R5' break-even loot.
+        # Sacrifice in the cost = one-shot; discard = R5' break-even loot.
         re.compile(
-            r"\{t\}(?:(?!sacrifice)[^:\n]){0,40}:[^\n]{0,120}draw a card(?!, then discard)",
+            r"\{t\}(?:(?!sacrifice|discard)[^:\n]){0,40}:[^\n]{0,120}draw a card(?!, then discard)",
             re.I,
         ),
         0.85,
