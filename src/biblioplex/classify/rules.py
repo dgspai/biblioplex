@@ -98,6 +98,7 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         ),
         0.85,
     ),
+    ("ca:cascade", re.compile(r"\b(cascade|discover (\d+|x))\b", re.I), 0.85),
     (
         "ca:tap-draw",
         # Sacrifice in the cost = one-shot; discard = R5' break-even loot.
@@ -239,6 +240,7 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:sac-feeder": "Sacrifice payoff draws multiple cards",
     "ca:play-from-top": "Plays cards from the top of your library",
     "ca:tap-draw": "Tap ability that draws a card",
+    "ca:cascade": "Cascade or discover: a free extra spell",
     "targeted:destroy": "Destroys a single target",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",

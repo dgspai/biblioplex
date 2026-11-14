@@ -281,6 +281,15 @@ def test_r30_tap_rummage_stays_plan() -> None:
     assert _labels("{T}, Discard a card: Draw a card.") == {"plan"}
 
 
+def test_r31_cascade_and_discover_are_ca_not_ramp() -> None:
+    """R31 — a free extra spell per cast is net +1 card; no lasting mana."""
+    assert _labels("Cascade") == {"card_advantage"}
+    assert _labels("When this creature enters, discover 3.") == {"card_advantage"}
+    assert _labels("Nontoken creature spells you cast have cascade.") == {
+        "card_advantage"
+    }
+
+
 def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
     """Plasma Cascade names itself; that isn't the cascade keyword."""
     card = {

@@ -117,11 +117,13 @@ are not CA. One-shot recursion of a single card is not CA.
   pattern).
 - **R29 — Playing off the library top** (Future Sight, The Reality
   Chip, The Lunar Whale) → CA. A Rule 3 engine: each turn the top card
-  is an extra card. Cascade is not this ruling: its reminder text
-  exiles from the top once per cast.
+  is an extra card. Cascade is R31, not this ruling.
 - **R30 — `{T}` abilities that draw** (Iron Lad, Diverging Destiny) →
   CA, a Rule 3 engine. Break-even tap loot or rummage stays `plan` (R5'), as does
   a draw that sacrifices the card (Mind Stone).
+- **R31 — Cascade and discover** (Bituminous Blast, Maelstrom Nexus,
+  discover N) → CA, not ramp. One cast yields two spells, net +1 card;
+  the free spell leaves no lasting mana, so it is not acceleration.
 
 ## 3. Targeted disruption
 
