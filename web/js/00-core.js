@@ -248,6 +248,13 @@ const _TAB_PANES = {
   build: buildPaneEl, settings: settingsPaneEl,
 };
 
+const _LAST_TAB_KEY = "bx.lastTab.v1";
+function _lastTab(section) {
+  let tab;
+  try { tab = JSON.parse(localStorage.getItem(_LAST_TAB_KEY))?.[section]; } catch { /* storage disabled */ }
+  return _TAB_NAMES.includes(tab) ? tab : undefined;
+}
+
 // A tab belongs to the section of its closest [data-section] (the sidebar
 // item itself, or the .segments bar it sits in). The section lights its
 // sidebar item and reveals its segments bar, if it has one.
@@ -265,6 +272,10 @@ function _setTab(name) {
     el.classList.toggle("active", el.dataset.section === section);
   }
   for (const el of document.querySelectorAll(".segments")) el.hidden = el.dataset.section !== section;
+  try {
+    const last = JSON.parse(localStorage.getItem(_LAST_TAB_KEY)) || {};
+    localStorage.setItem(_LAST_TAB_KEY, JSON.stringify({ ...last, [section]: name }));
+  } catch { /* storage disabled */ }
   _syncUrl();
   const load = _TAB_LOADERS[name];
   if (load) load();
@@ -320,7 +331,8 @@ function emptyStateHtml(title, text, cta) {
 document.addEventListener("click", (e) => {
   const b = e.target.closest("[data-goto-tab]");
   if (!b) return;
-  _setTab(b.dataset.gotoTab);
+  const remembered = b.matches(".nav-item") && _lastTab(b.dataset.section);
+  _setTab(remembered || b.dataset.gotoTab);
   const el = b.dataset.gotoFocus && document.querySelector(b.dataset.gotoFocus);
   if (el) { el.scrollIntoView({ block: "center" }); el.focus(); }
 });
