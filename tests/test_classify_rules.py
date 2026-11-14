@@ -211,3 +211,89 @@ def test_r26_mdfc_front_face_ramp_back_face_land() -> None:
     }
     scores = classify_by_rules(card)
     assert scores["ramp"] >= 0.9, scores
+
+
+def _labels(text: str) -> set[str]:
+    return {k for k, v in classify_by_rules({"oracle_text": text}).items() if v >= 0.5}
+
+
+def test_r28_cost_reducer_is_ramp() -> None:
+    """R28 — Foundry Inspector / Cloud Key shape: spells you cast cost less."""
+    assert _labels("Artifact spells you cast cost {1} less to cast.") == {"ramp"}
+    assert _labels(
+        "Spells you cast of the chosen type cost {1} less to cast."
+    ) == {"ramp"}
+
+
+def test_r28_self_cost_reduction_is_not_ramp() -> None:
+    """A card that only discounts itself accelerates nothing else."""
+    assert _labels(
+        "This spell costs {1} less to cast for each artifact you control."
+    ) == {"plan"}
+
+
+def test_r29_play_from_top_is_ca_engine() -> None:
+    """R29 — Future-Sight shape (Rule 3 engine): play off the library top."""
+    assert _labels(
+        "You may play lands and cast spells from the top of your library."
+    ) == {"card_advantage"}
+    assert _labels(
+        "As long as this attacked this turn, you may play the top card of "
+        "your library."
+    ) == {"card_advantage"}
+    assert _labels("You may cast artifact spells from the top of your library.") == {
+        "card_advantage"
+    }
+
+
+def test_r30_repeatable_tap_draw_is_ca_engine() -> None:
+    """R30 — Iron Lad shape: a {T} ability that draws is a Rule 3 engine."""
+    assert _labels(
+        "{T}: Reveal the top card of your library. If it's an artifact card, "
+        "draw a card."
+    ) == {"card_advantage"}
+
+
+def test_r30_tap_loot_and_sac_draw_stay_plan() -> None:
+    """R5' break-even loot and one-shot sacrifice draw are not engines."""
+    assert _labels("{T}: Draw a card, then discard a card.") == {"plan"}
+    assert _labels("{1}, {T}, Sacrifice this artifact: Draw a card.") == {"plan"}
+
+
+def test_r29_peeking_at_the_top_is_not_ca() -> None:
+    """Looking at the top card is selection, not an extra card."""
+    assert _labels(
+        "Whenever you cast a spell, look at the top card of your library."
+    ) == {"plan"}
+
+
+def test_r29_cascade_reminder_is_not_play_from_top() -> None:
+    """Cascade's reminder text isn't a play-off-the-top engine."""
+    _, reasons = classify_by_rules_ex({"oracle_text": (
+        "Cascade (When you cast this spell, exile cards from the top of your "
+        "library until you exile a nonland card that costs less.)"
+    )})
+    assert "ca:play-from-top" not in reasons["card_advantage"]
+
+
+def test_r30_tap_rummage_stays_plan() -> None:
+    """R5' — discard-to-draw on a tap is break-even, not an engine."""
+    assert _labels("{T}, Discard a card: Draw a card.") == {"plan"}
+
+
+def test_r31_cascade_and_discover_are_ca_not_ramp() -> None:
+    """R31 — a free extra spell per cast is net +1 card; no lasting mana."""
+    assert _labels("Cascade") == {"card_advantage"}
+    assert _labels("When this creature enters, discover 3.") == {"card_advantage"}
+    assert _labels("Nontoken creature spells you cast have cascade.") == {
+        "card_advantage"
+    }
+
+
+def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
+    """Plasma Cascade names itself; that isn't the cascade keyword."""
+    card = {
+        "name": "Plasma Cascade",
+        "oracle_text": "Plasma Cascade deals 3 damage to any target.",
+    }
+    assert classify_by_rules(card)["card_advantage"] == 0.0

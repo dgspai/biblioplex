@@ -1172,14 +1172,22 @@ _rolePop.className = "role-pop";
 _rolePop.hidden = true;
 document.body.appendChild(_rolePop);
 let _rolePopFor = null;
+let _rolePopCard = null;  // fresh /cards/:id payload: auto verdict + override flag
 
 function _renderRolePop(roles) {
+  const c = _rolePopCard;
+  const auto = c ? window.bibliohelpers.autoRoles(c.label_scores) : [];
+  const same = window.bibliohelpers.sameRoles(roles, auto);
   _rolePop.innerHTML = PRED_LABELS.map((l) =>
-    `<button type="button" class="role-tag role-opt pred-${l}" data-role="${l}" aria-pressed="${roles.includes(l)}">${l.replace(/_/g, " ")}</button>`
-  ).join("") + `<button type="button" class="btn btn--ghost btn--sm" data-role-reset>Reset to auto</button>`;
+    `<button type="button" class="role-tag role-opt pred-${l}${auto.includes(l) ? " is-auto" : ""}" data-role="${l}" aria-pressed="${roles.includes(l)}">${l.replace(/_/g, " ")}</button>`
+  ).join("") + (c && c.labels_overridden
+    ? `<button type="button" class="btn btn--ghost btn--sm" data-role-reset>${same ? "✎ matches auto · reset" : "Reset to auto"}</button>`
+    : "");
 }
 function _openRolePop(btn) {
-  _rolePopFor = btn.dataset.roleEdit;
+  const id = btn.dataset.roleEdit;
+  _rolePopFor = id;
+  _rolePopCard = null;
   const roles = (btn.dataset.roles || "").split(",").filter(Boolean);
   _renderRolePop(roles);
   _rolePop.dataset.roles = roles.join(",");
@@ -1191,6 +1199,15 @@ function _openRolePop(btn) {
   _rolePop.style.top = `${below + _rolePop.offsetHeight > window.innerHeight ? Math.max(16, r.top - _rolePop.offsetHeight - 6) : below}px`;
   const first = _rolePop.querySelector("button");
   if (first) first.focus();
+  // Search/decklist payloads lack the override flag, so fetch the card once.
+  api(`/cards/${encodeURIComponent(id)}`).then((card) => {
+    if (_rolePopFor !== id) return;
+    _rolePopCard = card;
+    const focused = _rolePop.contains(document.activeElement) ? document.activeElement.dataset.role : null;
+    _renderRolePop((_rolePop.dataset.roles || "").split(",").filter(Boolean));
+    const back = focused && _rolePop.querySelector(`[data-role="${focused}"]`);
+    if (back) back.focus();
+  }).catch(() => { /* popover still works without the auto marker */ });
 }
 function _closeRolePop() {
   _rolePop.hidden = true;
@@ -1202,7 +1219,7 @@ async function _setRoles(id, labels) {
     const now = card.predicted_labels || [];
     for (const c of _buildLastCards) if (c.id === id) c.predicted_labels = now;
     for (const b of buildPaneEl.querySelectorAll(`[data-role-edit="${CSS.escape(id)}"]`)) b.outerHTML = _roleEdit(id, now);
-    if (_rolePopFor === id) { _renderRolePop(now); _rolePop.dataset.roles = now.join(","); }
+    if (_rolePopFor === id) { _rolePopCard = card; _renderRolePop(now); _rolePop.dataset.roles = now.join(","); }
     _scheduleBuildAnalyze();
   } catch (err) {
     showBanner(`Role update failed: ${err.message || "network"}`);

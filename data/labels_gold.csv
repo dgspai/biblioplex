@@ -212,3 +212,14 @@ Cloudthresher,0,0,0,1,0,otag_sample,otag:sweeper
 Forced March,0,0,0,1,0,otag_sample,otag:sweeper
 Dragonback Assault,0,0,0,1,0,otag_sample,otag:sweeper
 Black Sun's Zenith,0,0,0,1,0,otag_sample,otag:sweeper
+Cloud Key,1,0,0,0,0,owner,R28 cost reducer
+"Crystal Skull, Isu Spyglass",1,1,0,0,0,owner,rock + R29
+Enthusiastic Mechanaut,1,0,0,0,0,owner,R28 cost reducer
+Etherium Sculptor,1,0,0,0,0,owner,R28 cost reducer
+Foundry Inspector,1,0,0,0,0,owner,R28 cost reducer
+"Iron Lad, Diverging Destiny",0,1,0,0,0,owner,R30 tap draw
+"Mm'menon, the Right Hand",1,1,0,0,0,owner,granted rock + R29
+The Belligerent,1,1,0,0,0,owner,treasure + R29
+The Lunar Whale,0,1,0,0,0,owner,R29
+The Reality Chip,0,1,0,0,0,owner,R29
+Voyager Quickwelder,1,0,0,0,0,owner,R28 cost reducer

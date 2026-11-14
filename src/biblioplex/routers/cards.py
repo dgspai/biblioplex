@@ -372,6 +372,7 @@ def _build_cards_table() -> sa.Table:
         # `@>` lookup); `label_scores` is read-only payload for UI display.
         sa.Column("predicted_labels", postgresql.ARRAY(sa.Text)),
         sa.Column("label_scores", postgresql.JSONB),
+        sa.Column("label_reasons", postgresql.JSONB),
         sa.Column("raw", postgresql.JSONB),
     )
 

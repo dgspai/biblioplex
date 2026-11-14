@@ -14,7 +14,7 @@
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy, toggleRole,
+    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles,
   } = window.bibliohelpers;
   const out = document.getElementById("out");
   let fail = 0;
@@ -460,6 +460,15 @@
     toggleRole(["ramp", "card_advantage"], "plan"), ["plan"]);
   check("toggleRole: null input",
     toggleRole(null, "ramp"), ["ramp"]);
+
+  // autoRoles: what "Reset to auto" restores — every label scoring >= 0.5.
+  check("autoRoles: threshold at 0.5",
+    autoRoles({ ramp: 0.85, card_advantage: 0.5, plan: 0, mass_disrupt: 0.49 }),
+    ["ramp", "card_advantage"]);
+  check("autoRoles: missing scores", autoRoles(null), []);
+  check("sameRoles: order-insensitive",
+    sameRoles(["card_advantage", "ramp"], ["ramp", "card_advantage"]), true);
+  check("sameRoles: different sets", sameRoles(["ramp"], ["ramp", "plan"]), false);
 
   out.textContent += fail === 0 ? "\nPASS" : `\nFAIL (${fail})`;
 </script>

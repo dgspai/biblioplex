@@ -27,6 +27,8 @@
 //   - historyPush(list, q, max): dedup + LRU insert of `q` at the head of the
 //     search-history list, capped at `max` (D13.8).
 //   - toggleRole(labels, role): flip one role; plan is exclusive + the fallback.
+//   - autoRoles(scores) / sameRoles(a, b): the classifier's own role set, and
+//     an order-free role-set comparison.
 //   - landRecommendation(landCount): {status, message} for the deck-view land
 //     count vs the EDH baseline of ~37 (D13.9).
 
@@ -385,12 +387,23 @@
     return role === "plan" ? ["plan"] : [...cur.filter((l) => l !== "plan"), role];
   }
 
+  // The classifier's verdict from `label_scores`: what "Reset to auto" restores.
+  function autoRoles(scores) {
+    return Object.keys(scores || {}).filter((l) => scores[l] >= 0.5);
+  }
+
+  function sameRoles(a, b) {
+    const x = new Set(a || []);
+    const y = new Set(b || []);
+    return x.size === y.size && [...x].every((l) => y.has(l));
+  }
+
   window.bibliohelpers = {
     appendPredicate, splitTypeLine, bannerStateFromHealth,
     urlStateFromSearch, urlStateToSearch, clampSplit,
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy, toggleRole,
+    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles,
   };
 })();

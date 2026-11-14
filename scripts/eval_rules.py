@@ -97,7 +97,7 @@ async def main() -> None:
             elif not yhat and y:
                 t[2] += 1
 
-    for source in ("strawman", "otag_sample"):
+    for source in ("strawman", "otag_sample", "owner"):
         if source not in tally:
             continue
         print(f"\n# {source}")

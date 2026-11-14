@@ -42,6 +42,9 @@ mana faster than the natural one-land-per-turn drop.
 - **R4 — Treasure-makers** (Smothering Tithe, Goldspan Dragon) → `ramp`.
   They generate disposable mana. Tithe is *also* `card-advantage` in
   some readings but lazy default: primary slot is ramp.
+- **R28 — Cost reducers** (Foundry Inspector, Etherium Sculptor, Cloud
+  Key) → `ramp`. Discounting every later spell is mana. A card that only
+  discounts itself is not.
 
 ## 2. Card advantage
 
@@ -112,6 +115,15 @@ are not CA. One-shot recursion of a single card is not CA.
   `plan`. Solemn Simulacrum (death-trigger draws 1 = 0) → `plan` for
   CA purposes, but already `ramp` from its ETB land-fetch (R4
   pattern).
+- **R29 — Playing off the library top** (Future Sight, The Reality
+  Chip, The Lunar Whale) → CA. A Rule 3 engine: each turn the top card
+  is an extra card. Cascade is R31, not this ruling.
+- **R30 — `{T}` abilities that draw** (Iron Lad, Diverging Destiny) →
+  CA, a Rule 3 engine. Break-even tap loot or rummage stays `plan` (R5'), as does
+  a draw that sacrifices the card (Mind Stone).
+- **R31 — Cascade and discover** (Bituminous Blast, Maelstrom Nexus,
+  discover N) → CA, not ramp. One cast yields two spells, net +1 card;
+  the free spell leaves no lasting mana, so it is not acceleration.
 
 ## 3. Targeted disruption
 
