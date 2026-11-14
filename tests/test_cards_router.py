@@ -24,6 +24,7 @@ class _FakeRow:
         self.predicted_labels: list[str] = []
         self.label_scores: dict[str, float] = {}
         self.label_reasons: dict[str, Any] | None = None
+        self.is_commander = raw.get("name") == "Atraxa" if isinstance(raw, dict) else False
 
 
 class _FakeResult:
@@ -114,7 +115,21 @@ async def test_card_by_id_returns_raw(app: FastAPI) -> None:
         resp = await client.get(f"/cards/{SCRY_UUID}")
 
     assert resp.status_code == 200
-    assert resp.json() == {**raw, "predicted_labels": [], "label_scores": {}, "labels_overridden": False}
+    assert resp.json() == {
+        **raw, "predicted_labels": [], "label_scores": {},
+        "labels_overridden": False, "is_commander": False,
+    }
+
+
+async def test_card_by_id_says_whether_it_can_lead_a_deck(app: FastAPI) -> None:
+    """The detail pane offers "start deck" only for commander-eligible cards."""
+    conn = _FakeConn(row={"object": "card", "id": SCRY_UUID, "name": "Atraxa"})
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(conn)
+
+    async for client in _client(app):
+        resp = await client.get(f"/cards/{SCRY_UUID}")
+
+    assert resp.json()["is_commander"] is True
 
 
 async def test_card_by_id_is_no_cache_and_ignores_if_none_match(app: FastAPI) -> None:
