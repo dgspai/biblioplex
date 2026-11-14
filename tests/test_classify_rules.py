@@ -279,3 +279,12 @@ def test_r29_cascade_reminder_is_not_play_from_top() -> None:
 def test_r30_tap_rummage_stays_plan() -> None:
     """R5' — discard-to-draw on a tap is break-even, not an engine."""
     assert _labels("{T}, Discard a card: Draw a card.") == {"plan"}
+
+
+def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
+    """Plasma Cascade names itself; that isn't the cascade keyword."""
+    card = {
+        "name": "Plasma Cascade",
+        "oracle_text": "Plasma Cascade deals 3 damage to any target.",
+    }
+    assert classify_by_rules(card)["card_advantage"] == 0.0

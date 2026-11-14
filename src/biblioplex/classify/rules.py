@@ -277,6 +277,11 @@ def _score_face_ex(text: str) -> tuple[dict[str, float], dict[str, list[str]]]:
     return scores, reasons
 
 
+def _unname(text: str, name: Any) -> str:
+    """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade."""
+    return text.replace(name, "~") if isinstance(name, str) and name else text
+
+
 def classify_by_rules_ex(
     card: Mapping[str, Any],
 ) -> tuple[dict[str, float], dict[str, list[str]]]:
@@ -292,11 +297,11 @@ def classify_by_rules_ex(
     if isinstance(faces, list) and faces:
         for face in faces:
             if isinstance(face, dict):
-                t = face.get("oracle_text") or ""
+                t = _unname(face.get("oracle_text") or "", face.get("name"))
                 if t:
                     texts.append(t)
     if not texts:
-        texts.append(card.get("oracle_text") or "")
+        texts.append(_unname(card.get("oracle_text") or "", card.get("name")))
 
     scores: dict[str, float] = {lab: 0.0 for lab in LABELS}
     reasons: dict[str, list[str]] = {lab: [] for lab in LABELS if lab != "plan"}
