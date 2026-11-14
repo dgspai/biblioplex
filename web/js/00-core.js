@@ -694,6 +694,7 @@ function renderDetail(card, faceIdx, target) {
     <div class="detail-header">
       <h2>${escapeHtml(view.name || "?")}${_ownedBadge(card.oracle_id)}</h2>
       <div class="detail-actions">
+        ${buildDetailActions(card)}
         <button type="button" class="copy-id" data-copy="${escapeHtml(card.id || "")}" title="Copy card id">copy id</button>
         ${scryLink}
       </div>

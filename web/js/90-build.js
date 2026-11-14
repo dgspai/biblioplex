@@ -110,6 +110,47 @@ function _buildAdd(name) {
   _saveBuild();
   _scheduleBuildAnalyze();
 }
+function _resetBuild() {
+  _build = { step: 1, commander: "", deck: {}, sideboard: {} };
+  _buildAnalysis = null; _buildCmdCard = null;
+  _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+}
+
+// Card-detail shortcuts (any tab): add to the in-progress build, or start
+// a new build led by this card.
+function buildDetailActions(card) {
+  if (!card || !card.name) return "";
+  const n = escapeHtml(card.name);
+  const start = card.is_commander
+    ? `<button type="button" data-build-start="${n}">start deck</button>`
+    : "";
+  if (_buildHas(card.name)) return `<button type="button" disabled>✓ in build</button>${start}`;
+  const ci = _buildCmdCard ? _buildCmdCard.color_identity : null;
+  const add = window.bibliohelpers.inIdentity(card.color_identity, ci)
+    ? `<button type="button" data-build-detail-add="${n}">+ build</button>`
+    : `<button type="button" disabled title="Outside ${escapeHtml(_build.commander)}'s colours">+ build</button>`;
+  return add + start;
+}
+function _startBuildFrom(name) {
+  const n = _buildCount();
+  if (n && !window.confirm(`Discard this build (${n} cards) and start a new deck with ${name}?`)) return;
+  _resetBuild();
+  _build.commander = name;  // _buildCmdCard resolves lazily, as for "use"
+  _build.step = 2;
+  _saveBuild(); _scheduleBuildAnalyze();
+  _setTab("build");
+}
+document.addEventListener("click", (e) => {
+  const add = e.target.closest("[data-build-detail-add]");
+  if (add) {
+    _buildAdd(add.dataset.buildDetailAdd);
+    add.outerHTML = `<button type="button" disabled>✓ in build</button>`;
+    return;
+  }
+  const start = e.target.closest("[data-build-start]");
+  if (start) _startBuildFrom(start.dataset.buildStart);
+});
+
 function _buildRemove(name) {
   delete _build.deck[name];
   _saveBuild();
@@ -1369,9 +1410,7 @@ buildPaneEl.addEventListener("click", async (e) => {
   if (e.target.closest("#buildNext")) { _build.step = Math.min(BUILD_STEPS.length, _build.step + 1); _saveBuild(); _renderBuild(); return; }
   if (e.target.closest("#buildReset")) {
     if (!window.confirm("Discard this build and start over?")) return;
-    _build = { step: 1, commander: "", deck: {}, sideboard: {} };
-    _buildAnalysis = null; _buildCmdCard = null;
-    _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+    _resetBuild();
     _saveBuild(); _renderBuild(); return;
   }
 

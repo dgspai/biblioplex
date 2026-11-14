@@ -14,7 +14,7 @@
     cardFaceImages, relatedParts, mergeFaceData,
     historyPush, landRecommendation, hoverPreviewShouldShow,
     refreshProgress, formatInt, formatPct, formatUsd, pagerRange, plural, bracketLabel,
-    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles,
+    shouldRerunSearch, emptyResultsCopy, toggleRole, autoRoles, sameRoles, inIdentity,
   } = window.bibliohelpers;
   const out = document.getElementById("out");
   let fail = 0;
@@ -469,6 +469,12 @@
   check("sameRoles: order-insensitive",
     sameRoles(["card_advantage", "ramp"], ["ramp", "card_advantage"]), true);
   check("sameRoles: different sets", sameRoles(["ramp"], ["ramp", "plan"]), false);
+
+  // inIdentity: a card fits a commander when its identity is a subset.
+  check("inIdentity: subset fits", inIdentity(["G"], ["G", "U"]), true);
+  check("inIdentity: colourless fits anything", inIdentity([], ["R"]), true);
+  check("inIdentity: off-colour does not fit", inIdentity(["B"], ["G", "U"]), false);
+  check("inIdentity: no commander yet fits", inIdentity(["B"], null), true);
 
   out.textContent += fail === 0 ? "\nPASS" : `\nFAIL (${fail})`;
 </script>
