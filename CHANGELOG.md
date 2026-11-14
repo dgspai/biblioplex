@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.10.0 (2026-11-14)
+
+### Features
+
+- **web**: Add to the build or start a deck from any card detail
+  ([#22](https://github.com/dgspai/biblioplex/pull/22),
+  [`0b87dc1`](https://github.com/dgspai/biblioplex/commit/0b87dc107c6b3d80146b9a7a6861db0facd37507))
+
+
 ## v0.9.0 (2026-11-14)
 
 ### Features
