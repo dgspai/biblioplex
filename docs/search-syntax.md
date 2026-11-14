@@ -13,6 +13,7 @@ Operators with no Scryfall equivalent, or that read data Scryfall doesn't have (
 | Operator | Matches |
 |---|---|
 | `pred:<label>` | Cards the rules classifier puts in a deckbuilding role: `ramp`, `card_advantage`, `targeted_disrupt`, `mass_disrupt`, `plan`. An unknown label returns `422`. |
+| `is:edited` | Cards whose roles you set by hand (role editor), overriding `pred:` |
 | `has:combo` / `combo:has` | Cards in any ingested Commander Spellbook combo |
 | `combo:"Card Name"` | Cards that appear in a combo with that card |
 | `combo:<id>` | Cards in one specific combo (e.g. `combo:spellbook-123`) |
@@ -62,6 +63,7 @@ combo:spellbook-123              # cards in the combo with source-id `spellbook-
 combo:"Isochron Scepter"         # cards that combo alongside Isochron Scepter (quoted = card name)
 has:combo                        # same as `combo:has`, agent-facing `has:` prefix parity with Scryfall
 is:reserved                      # on Wizards' Reserved List
+in:inventory is:edited           # owned cards whose roles you corrected by hand
 edhrec<10000                     # top 10k EDHrec-ranked cards
 edhrec:1                         # the current #1 EDHrec card
 usd<5 f:commander                # Commander-legal cards under $5

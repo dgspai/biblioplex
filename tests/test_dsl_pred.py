@@ -68,3 +68,15 @@ def test_pred_with_non_colon_op_rejected() -> None:
     """Only ``pred:X`` shape — `>`/`>=` make no sense for a set membership."""
     with pytest.raises(UnsupportedOperatorError):
         compile_ast(parse("pred>=ramp"), _cards())
+
+
+def test_is_edited_matches_manual_overrides() -> None:
+    """``is:edited`` — cards whose roles were corrected by hand."""
+    md = sa.MetaData()
+    cards = sa.Table(
+        "cards", md,
+        sa.Column("id", sa.String, primary_key=True),
+        sa.Column("label_reasons", postgresql.JSONB),
+    )
+    sql = _render(compile_ast(parse("is:edited"), cards))
+    assert "label_reasons ? '_override'" in sql
