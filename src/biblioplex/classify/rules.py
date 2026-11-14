@@ -58,6 +58,7 @@ RAMP_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("ramp:land-fetch", re.compile(r"search your library for .{0,40}\bland\b", re.I), 0.95),
     ("ramp:treasures", re.compile(r"\bcreate.{0,30}\btreasure\b", re.I), 0.85),
     ("ramp:tap-add", re.compile(r"\{t\}: add\b", re.I), 0.9),
+    ("ramp:cost-reduce", re.compile(r"spells you cast.{0,40}cost \{\d+\} less", re.I), 0.85),
 ]
 
 CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
@@ -85,6 +86,20 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
             r"sacrifice (a|an|another|one|two|\d+) (creature|permanent)"
             r".{0,30}:.{0,80}draw .{0,30}cards?",
             re.I | re.S,
+        ),
+        0.85,
+    ),
+    (
+        "ca:play-from-top",
+        re.compile(r"\b(play|cast)\b[^.]{0,40}\btop (card )?of your library", re.I),
+        0.85,
+    ),
+    (
+        "ca:tap-draw",
+        # Sacrifice in the cost = one-shot; "then discard" = R5' break-even loot.
+        re.compile(
+            r"\{t\}(?:(?!sacrifice)[^:\n]){0,40}:[^\n]{0,120}draw a card(?!, then discard)",
+            re.I,
         ),
         0.85,
     ),
@@ -213,10 +228,13 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ramp:land-fetch": "Searches library for a land",
     "ramp:treasures": "Creates Treasure tokens",
     "ramp:tap-add": "Taps to add mana",
+    "ramp:cost-reduce": "Makes your spells cost less",
     "ca:draw-n": "Draws two or more cards",
     "ca:engine-trigger": "Recurring draw trigger (upkeep/ETB/combat/etc.)",
     "ca:wheel": "Discards hand, then draws seven",
     "ca:sac-feeder": "Sacrifice payoff draws multiple cards",
+    "ca:play-from-top": "Plays cards from the top of your library",
+    "ca:tap-draw": "Tap ability that draws a card",
     "targeted:destroy": "Destroys a single target",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",
