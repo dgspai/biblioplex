@@ -531,11 +531,13 @@ function _renderPredictedLabelsSection(card) {
     : `<span class="help">(no role labels)</span>`;
   // A manual correction (labels_overridden) beats the rules classifier; the
   // editor lets you fix a miscategorised card and it sticks across refreshes.
+  const auto = window.bibliohelpers.autoRoles(scores);
+  const same = window.bibliohelpers.sameRoles(labels, auto);
   const edited = card.labels_overridden
-    ? ` <span class="label-edited" title="Manually corrected — overrides the classifier">✎ edited</span>`
+    ? ` <span class="label-edited" title="${same ? "Same as the classifier — reset to let future rules apply" : "Manually corrected — overrides the classifier"}">✎ ${same ? "matches auto" : "edited"}</span>`
     : "";
   const boxes = PRED_LABELS.map((lab) =>
-    `<label class="label-opt"><input type="checkbox" value="${escapeHtml(lab)}"`
+    `<label class="label-opt${auto.includes(lab) ? " is-auto" : ""}"><input type="checkbox" value="${escapeHtml(lab)}"`
     + `${labels.includes(lab) ? " checked" : ""}> ${escapeHtml(lab.replace(/_/g, " "))}</label>`
   ).join("");
   return `<section class="chips-section chips-predicted" aria-label="Predicted labels">
