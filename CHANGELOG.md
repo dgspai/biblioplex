@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.9.0 (2026-11-14)
+
+### Features
+
+- **classify**: Learn from hand-tagged roles, and show the auto verdict while editing
+  ([#21](https://github.com/dgspai/biblioplex/pull/21),
+  [`c3ee801`](https://github.com/dgspai/biblioplex/commit/c3ee8012e07e618f1db33ff47d655f9859635c54))
+
+
 ## v0.8.0 (2026-11-13)
 
 ### Features
