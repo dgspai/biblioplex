@@ -54,6 +54,8 @@ let _buildCmdTags = [];
 let _buildCmdTagsFor = null;
 // {tag: count of deck cards carrying it} — shown on each theme chip.
 let _buildTagCounts = {};
+// {tag: owned cards in the commander's identity}; cached with _buildCmdTags.
+let _buildOwnedTagCounts = {};
 let _buildBracket = null;  // WOTC 1-5 power bracket estimate
 let _buildActiveSlot = null;  // step-8 review: slot whose cards are lit in the decklist
 // nameLower -> {type_line, cmc, mana_cost, id}; feeds the decklist sidebar.
@@ -877,8 +879,13 @@ async function _renderThemeChips() {
     if (!_buildCmdCard || _buildCmdCard.name !== _build.commander) {
       _buildCmdCard = await api(`/cards/named?exact=${encodeURIComponent(_build.commander)}`).catch(() => null);
     }
-    const t = _buildCmdCard ? await api(`/cards/${_buildCmdCard.id}/tags`).catch(() => ({ data: [] })) : { data: [] };
+    const ci = ((_buildCmdCard && _buildCmdCard.color_identity) || []).join("");
+    const [t, owned] = _buildCmdCard ? await Promise.all([
+      api(`/cards/${_buildCmdCard.id}/tags`).catch(() => ({ data: [] })),
+      api(`/cards/owned-tag-counts?identity=${ci}`).catch(() => ({ counts: {} })),
+    ]) : [{ data: [] }, { counts: {} }];
     _buildCmdTags = t.data || [];
+    _buildOwnedTagCounts = owned.counts || {};
     _buildCmdTagsFor = _build.commander;
     // Reseed the candidate pool for the new commander (keeps any already
     // prioritised tags visible even if they came from a card).
@@ -910,7 +917,8 @@ async function _renderThemeChips() {
   $("#buildFocusChips").innerHTML = pool.map((t) => {
     const cls = (_buildOtagSel.has(t) ? " selected" : "") + (_buildFocusNew.has(t) ? " new" : "");
     const n = _buildTagCounts[t] || 0;
-    return `<button type="button" class="chip build-otag${cls}" data-build-otag="${escapeHtml(t)}" title="${n} deck card(s) with this tag">${escapeHtml(t)} <span class="chip-count">${n}</span></button>`;
+    const own = _buildOwnedTagCounts[t] || 0;
+    return `<button type="button" class="chip build-otag${cls}" data-build-otag="${escapeHtml(t)}" title="${n} in deck · ${own} owned in colours">${escapeHtml(t)} <span class="chip-count">${n}/${own}</span></button>`;
   }).join("");
   _filterFocusChips();
 }
