@@ -247,32 +247,18 @@ if (combosFormEl) {
     // Enter with a typed (not picked) name still adds it as a chip.
     _addCombosCard(combosCardsEl.value);
     combosCardsEl.value = "";
+    hideCombosAc();
     _combosPage = 1;
     runCombosSearch();
   });
-  // Card autocomplete: refill the native <datalist> from /cards/autocomplete
-  // (debounced); picking a suggestion makes the value an exact option match,
-  // which adds the chip and searches at once.
-  let _combosAcTimer = null;
-  combosCardsEl.addEventListener("input", () => {
-    const v = combosCardsEl.value.trim();
-    const picked = Array.from(combosCardListEl.options).some((o) => o.value === v);
-    if (picked) {
+  const { hide: hideCombosAc } = attachSuggest(
+    combosCardsEl, combosCardAcEl,
+    async (q) => (await api(`/cards/autocomplete?q=${encodeURIComponent(q)}`)).data.slice(0, 10),
+    (name) => {
       combosCardsEl.value = "";
-      combosCardListEl.innerHTML = "";
-      if (_addCombosCard(v)) { _combosPage = 1; runCombosSearch(); }
-      return;
-    }
-    if (_combosAcTimer) clearTimeout(_combosAcTimer);
-    if (v.length < 2) return;
-    _combosAcTimer = setTimeout(async () => {
-      try {
-        const res = await api(`/cards/autocomplete?q=${encodeURIComponent(v)}`);
-        combosCardListEl.innerHTML = (res.data || []).slice(0, 10)
-          .map((n) => `<option value="${escapeHtml(n)}"></option>`).join("");
-      } catch (_e) { /* no suggestions */ }
-    }, 200);
-  });
+      if (_addCombosCard(name)) { _combosPage = 1; runCombosSearch(); }
+    },
+  );
   combosCardChipsEl.addEventListener("click", (e) => {
     const chip = e.target.closest?.("[data-remove-card]");
     if (!chip) return;
