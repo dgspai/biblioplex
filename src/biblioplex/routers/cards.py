@@ -1553,32 +1553,35 @@ async def random_card(
     return projected
 
 
-_OWNED_TAG_COUNTS_SQL = text(
-    "WITH oid AS ("
-    "  SELECT DISTINCT i.oracle_id FROM inventory i"
-    "  JOIN cards c ON c.oracle_id = i.oracle_id"
-    "  WHERE i.quantity > 0"
-    "    AND COALESCE(c.color_identity, '{}') <@ CAST(:identity AS text[])"
+_IDENTITY_TAG_COUNTS_SQL = text(
+    "WITH c AS ("
+    "  SELECT c.oracle_id, EXISTS ("
+    "    SELECT 1 FROM inventory i"
+    "    WHERE i.oracle_id = c.oracle_id AND i.quantity > 0"
+    "  ) AS owned"
+    "  FROM cards c"
+    "  WHERE COALESCE(c.color_identity, '{}') <@ CAST(:identity AS text[])"
+    "    AND c.legalities->>'commander' = 'legal'"
     ") "
-    "SELECT ot.tag AS tag, COUNT(DISTINCT ot.oracle_id) AS n "
-    "FROM oracle_tags ot JOIN oid ON oid.oracle_id = ot.oracle_id "
+    "SELECT ot.tag, COUNT(*) FILTER (WHERE c.owned), COUNT(*) "
+    "FROM oracle_tags ot JOIN c ON c.oracle_id = ot.oracle_id "
     "GROUP BY ot.tag"
 )
 
 
 # Registered before `/{card_id}`: that UUID route would 422 this path.
 @router.get(
-    "/owned-tag-counts",
-    summary="Per-tag counts of owned cards within a colour identity",
+    "/identity-tag-counts",
+    summary="Per-tag owned and total card counts within a colour identity",
     description=(
-        "How many distinct owned cards (inventory) whose colour identity "
-        "fits inside `?identity=` carry each oracle tag — `{tag: count}`. "
-        "Empty identity means colourless. Powers the deck-builder's theme "
-        "chips (deck count / owned-in-colours count)."
+        "For every oracle tag, how many Commander-legal cards whose colour "
+        "identity fits inside `?identity=` carry it: `owned` (in inventory, "
+        "quantity > 0) and `total`, each `{tag: count}`. Empty identity "
+        "means colourless. Powers the deck-builder's theme chips."
     ),
     responses={422: _ERROR_RESPONSE},
 )
-async def owned_tag_counts(
+async def identity_tag_counts(
     identity: str = Query(
         default="",
         pattern="^[wubrgWUBRG]*$",
@@ -1586,12 +1589,16 @@ async def owned_tag_counts(
     ),
     engine: _Engine = Depends(get_read_engine),
 ) -> Any:
-    """Aggregate oracle-tag counts across owned cards in the identity."""
+    """Aggregate owned/total oracle-tag counts for cards in the identity."""
     colours = list(dict.fromkeys(identity.upper()))
     async with engine.connect() as conn:  # type: ignore[attr-defined]
-        result = await conn.execute(_OWNED_TAG_COUNTS_SQL, {"identity": colours})
+        result = await conn.execute(_IDENTITY_TAG_COUNTS_SQL, {"identity": colours})
         rows = result.all()
-    return {"object": "tag_counts", "counts": {r[0]: r[1] for r in rows}}
+    return {
+        "object": "identity_tag_counts",
+        "owned": {r[0]: r[1] for r in rows if r[1]},
+        "total": {r[0]: r[2] for r in rows},
+    }
 
 
 @router.get(
