@@ -702,6 +702,10 @@ function renderDetail(card, faceIdx, target) {
   const scryLink = scryUrl
     ? `<a class="ext-link" href="${scryUrl}" target="_blank" rel="noopener" title="Open on Scryfall">Scryfall</a>`
     : "";
+  const edhrecUrl = card.related_uris?.edhrec;
+  const edhrecLink = edhrecUrl
+    ? `<a class="ext-link" href="${escapeHtml(edhrecUrl)}" target="_blank" rel="noopener" title="Open on EDHREC">EDHREC</a>`
+    : "";
   pane.innerHTML = `
     <div class="detail-header">
       <h2>${escapeHtml(view.name || "?")}${_ownedBadge(card.oracle_id)}</h2>
@@ -709,6 +713,7 @@ function renderDetail(card, faceIdx, target) {
         ${buildDetailActions(card)}
         <button type="button" class="copy-id" data-copy="${escapeHtml(card.id || "")}" title="Copy card id">copy id</button>
         ${scryLink}
+        ${edhrecLink}
       </div>
     </div>
     <p class="typeline">${escapeHtml(view.type_line || "")}</p>
