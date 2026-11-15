@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.11.0 (2026-11-15)
+
+### Features
+
+- **web**: Filter build recommendations by card type
+  ([#24](https://github.com/dgspai/biblioplex/pull/24),
+  [`d54bea2`](https://github.com/dgspai/biblioplex/commit/d54bea2098adda9c0b95994a6a51d54c62d3dde1))
+
+
 ## v0.10.1 (2026-11-14)
 
 ### Bug Fixes
