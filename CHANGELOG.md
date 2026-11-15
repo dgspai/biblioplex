@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.13.0 (2026-11-15)
+
+### Features
+
+- Show deck/owned/total tag counts on build Focus chips
+  ([#28](https://github.com/dgspai/biblioplex/pull/28),
+  [`e12a3a5`](https://github.com/dgspai/biblioplex/commit/e12a3a579c968935272fc8e5fafae3648c1854ca))
+
+
 ## v0.12.1 (2026-11-15)
 
 ### Bug Fixes
