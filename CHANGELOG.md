@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.12.1 (2026-11-15)
+
+### Bug Fixes
+
+- **web**: Show fuzzy name suggestions in card inputs
+  ([#27](https://github.com/dgspai/biblioplex/pull/27),
+  [`4bd5c0b`](https://github.com/dgspai/biblioplex/commit/4bd5c0ba0c4fff5080726425896417f196bf78db))
+
+
 ## v0.12.0 (2026-11-15)
 
 ### Features
