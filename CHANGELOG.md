@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.12.0 (2026-11-15)
+
+### Features
+
+- **web**: Link card detail to its EDHREC page ([#26](https://github.com/dgspai/biblioplex/pull/26),
+  [`3498375`](https://github.com/dgspai/biblioplex/commit/349837540549b2ebb2cc372f16f0b0ebd397ac5c))
+
+
 ## v0.11.1 (2026-11-15)
 
 ### Bug Fixes
