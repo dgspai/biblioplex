@@ -120,7 +120,7 @@ def test_search_input_is_not_spellchecked_and_esc_closes_dropdown_only(js: str) 
     behaviour) — the handler preventDefaults and stops the document-level clear."""
     qtag = re.search(r'<input id="q"[^>]*>', INDEX.read_text()).group(0)
     assert 'spellcheck="false"' in qtag and 'autocapitalize="off"' in qtag
-    for opener in ('hideAutocomplete();\n  } else if (e.key === "Tab"', "hideHistory();\n  } else if (e.key === \"Backspace\""):
+    for opener in ('hide();\n    } else if (e.key === "Tab"', "hideHistory();\n  } else if (e.key === \"Backspace\""):
         head = js[: js.index(opener)]
         branch = head[head.rindex('e.key === "Escape"'):]
         assert "e.preventDefault()" in branch and "e.stopPropagation()" in branch

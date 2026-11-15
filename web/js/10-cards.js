@@ -7,108 +7,19 @@ form.addEventListener("submit", (e) => {
   search(qInput.value.trim(), orderSel.value, dirSel.value, 1);
 });
 
-// Autocomplete — fires when the query looks like a bare name (no DSL
-// operator chars). Debounced 200ms. Arrow keys navigate; Enter picks the
-// highlighted name (or falls through to normal submit); Esc closes.
-// ponytail: prefix-only heuristic for "is this DSL?" — one char in {:<>=()} kills AC. Widen if operator surface grows.
-const _AC_DEBOUNCE_MS = 200;
-let _acTimer = null;
-let _acAbort = null;
-let _acItems = [];
-let _acActive = -1;
-
+// Autocomplete for bare names only; one char of DSL syntax turns it off.
+// ponytail: char-class "is this DSL?" heuristic. Widen if operator surface grows.
 function _looksLikeDsl(q) {
   return /[:<>=()"]/.test(q);
 }
 
-function hideAutocomplete() {
-  acDropdownEl.hidden = true;
-  acDropdownEl.innerHTML = "";
-  _acItems = [];
-  _acActive = -1;
-  qInput.setAttribute("aria-expanded", "false");
-  qInput.removeAttribute("aria-activedescendant");
-}
-
-function _renderAcList() {
-  if (_acItems.length === 0) { hideAutocomplete(); return; }
-  acDropdownEl.innerHTML = _acItems.map((name, i) => {
-    const active = i === _acActive ? " active" : "";
-    const id = `acOpt${i}`;
-    return `<li id="${id}" role="option" class="ac-item${active}" data-name="${escapeHtml(name)}" aria-selected="${i === _acActive}">${escapeHtml(name)}</li>`;
-  }).join("");
-  acDropdownEl.hidden = false;
-  qInput.setAttribute("aria-expanded", "true");
-  if (_acActive >= 0) qInput.setAttribute("aria-activedescendant", `acOpt${_acActive}`);
-  else qInput.removeAttribute("aria-activedescendant");
-}
-
-async function _fetchAutocomplete(q) {
-  if (_acAbort) _acAbort.abort();
-  _acAbort = new AbortController();
-  try {
-    const resp = await fetch(`/api/cards/autocomplete?q=${encodeURIComponent(q)}`, { signal: _acAbort.signal });
-    if (!resp.ok) { hideAutocomplete(); return; }
-    const body = await resp.json();
-    _acItems = Array.isArray(body.data) ? body.data.slice(0, 20) : [];
-    _acActive = -1;
-    _renderAcList();
-  } catch (e) {
-    if (e.name !== "AbortError") hideAutocomplete();
-  }
-}
-
-qInput.addEventListener("input", () => {
-  const q = qInput.value.trim();
-  if (_acTimer) clearTimeout(_acTimer);
-  // D13.8 — hide history the moment the user starts typing; the AC panel
-  // takes over from here.
-  if (q !== "") hideHistory();
-  if (q.length < 2 || _looksLikeDsl(q)) { hideAutocomplete(); return; }
-  _acTimer = setTimeout(() => _fetchAutocomplete(q), _AC_DEBOUNCE_MS);
-});
-
-qInput.addEventListener("keydown", (e) => {
-  if (acDropdownEl.hidden || _acItems.length === 0) return;
-  if (e.key === "ArrowDown") {
-    e.preventDefault();
-    _acActive = (_acActive + 1) % _acItems.length;
-    _renderAcList();
-  } else if (e.key === "ArrowUp") {
-    e.preventDefault();
-    _acActive = (_acActive - 1 + _acItems.length) % _acItems.length;
-    _renderAcList();
-  } else if (e.key === "Enter" && _acActive >= 0) {
-    e.preventDefault();
-    qInput.value = _acItems[_acActive];
-    hideAutocomplete();
-    form.dispatchEvent(new SubmitEvent("submit", { cancelable: true }));
-  } else if (e.key === "Escape") {
-    // Close the dropdown only: a native type=search clears itself on Esc, and
-    // the document-level handler below clears the query once nothing is open.
-    e.preventDefault();
-    e.stopPropagation();
-    hideAutocomplete();
-  } else if (e.key === "Tab" && _acActive >= 0) {
-    e.preventDefault();
-    qInput.value = _acItems[_acActive];
-    hideAutocomplete();
-  }
-});
-
-qInput.addEventListener("blur", () => {
-  // Delay so a mousedown on a dropdown item can still resolve before hide.
-  setTimeout(hideAutocomplete, 120);
-});
-
-acDropdownEl.addEventListener("mousedown", (e) => {
-  const li = e.target.closest("li.ac-item[data-name]");
-  if (!li) return;
-  e.preventDefault();
-  qInput.value = li.dataset.name;
-  hideAutocomplete();
-  form.dispatchEvent(new SubmitEvent("submit", { cancelable: true }));
-});
+const { hide: hideAutocomplete } = attachSuggest(
+  qInput, acDropdownEl,
+  async (q) => _looksLikeDsl(q) ? null : (await api(`/cards/autocomplete?q=${encodeURIComponent(q)}`)).data,
+  () => form.dispatchEvent(new SubmitEvent("submit", { cancelable: true })),
+);
+// D13.8 — typing hands the panel from history to autocomplete.
+qInput.addEventListener("input", () => { if (qInput.value.trim()) hideHistory(); });
 
 // `target` is the detail pane this list feeds. Omitted for the cards tab,
 // which keeps the historical default of #detail.

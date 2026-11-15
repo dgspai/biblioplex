@@ -819,8 +819,10 @@ function _renderBuildStep1(body) {
   body.innerHTML = `
     <div class="build-cmd">
       <label>Commander name
-        <input type="text" id="buildCmdInput" list="buildCmdList" autocomplete="off" value="${escapeHtml(_build.commander)}" placeholder="e.g. Krenko, Mob Boss">
-        <datalist id="buildCmdList"></datalist>
+        <span class="ac-host">
+          <input type="text" id="buildCmdInput" autocomplete="off" value="${escapeHtml(_build.commander)}" placeholder="e.g. Krenko, Mob Boss">
+          <ul id="buildCmdAc" class="ac-dropdown" role="listbox" hidden></ul>
+        </span>
       </label>
       <button type="button" id="buildSetCmd" class="btn btn--primary">Set commander</button>
     </div>
@@ -842,6 +844,11 @@ function _renderBuildStep1(body) {
       <button type="button" id="buildLoadPaste">Load list</button>
     </details>
     ${_build.commander ? `<h3>Deck focus</h3>${_buildSearchPanelHtml(null, true)}` : ""}`;
+  // Top commanders for the fragment (is:commander, EDHREC-ranked), so
+  // "Radagast" surfaces even when far down the colours-based suggest list.
+  attachSuggest($("#buildCmdInput"), $("#buildCmdAc"),
+    async (q) => (await api(`/cards/search?q=${encodeURIComponent("is:commander " + q)}&order=edhrec&limit=10&projection=name`)).data.map((c) => c.name),
+    () => {});
   _fillSavedDecks();
 }
 
@@ -1337,24 +1344,6 @@ buildPaneEl.addEventListener("input", async (e) => {
         dl.innerHTML = (res.data || [])
           .map((t) => `<option value="${escapeHtml(t.slug)}" label="${t.count} cards"></option>`).join("");
       }
-    } catch (_e) { /* no suggestions */ }
-  }, 200);
-});
-// Commander-name autocomplete via a native <datalist>: fill it with the
-// top commanders matching the fragment (is:commander, EDHREC-ranked) so
-// typing "Radagast" surfaces the card even when it is far down the
-// colours-based suggest list.
-let _buildCmdAcTimer = null;
-buildPaneEl.addEventListener("input", (e) => {
-  if (e.target.id !== "buildCmdInput") return;
-  const q = e.target.value.trim();
-  if (_buildCmdAcTimer) clearTimeout(_buildCmdAcTimer);
-  if (q.length < 2) return;
-  _buildCmdAcTimer = setTimeout(async () => {
-    try {
-      const res = await api(`/cards/search?q=${encodeURIComponent("is:commander " + q)}&order=edhrec&limit=10&projection=name`);
-      const dl = $("#buildCmdList");
-      if (dl) dl.innerHTML = (res.data || []).map((c) => `<option value="${escapeHtml(c.name)}"></option>`).join("");
     } catch (_e) { /* no suggestions */ }
   }, 200);
 });

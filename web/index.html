@@ -105,8 +105,10 @@
     <form id="combosForm" class="cards-filters combos-filters" role="search">
       <div id="combosCardChips" class="chips combos-card-chips" aria-label="Selected cards"></div>
       <label for="combosCards" class="visually-hidden">Add a card</label>
-      <input id="combosCards" type="text" list="combosCardList" placeholder="Cards" title="Type a card name, pick a suggestion" autocomplete="off">
-      <datalist id="combosCardList"></datalist>
+      <div class="ac-host">
+        <input id="combosCards" type="text" placeholder="Cards" title="Type a card name, pick a suggestion" autocomplete="off">
+        <ul id="combosCardAc" class="ac-dropdown" role="listbox" hidden></ul>
+      </div>
       <div id="combosCi" class="combos-ci" role="group" aria-label="Color identity" title="Combos within these colors; C = colorless only">
         <button type="button" class="ci-btn" data-ci="W" aria-pressed="false" aria-label="White" title="White"><img src="https://svgs.scryfall.io/card-symbols/W.svg" alt="" width="20" height="20"></button>
         <button type="button" class="ci-btn" data-ci="U" aria-pressed="false" aria-label="Blue" title="Blue"><img src="https://svgs.scryfall.io/card-symbols/U.svg" alt="" width="20" height="20"></button>

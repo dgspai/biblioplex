@@ -82,11 +82,7 @@ def test_card_names_are_not_split_on_commas() -> None:
     assert 'getAll("card") || []).join' not in js
 
 
-def test_card_input_autocompletes_via_native_datalist() -> None:
-    pane = _pane()
-    inp = re.search(r'<input[^>]*id="combosCards"[^>]*>', pane).group(0)
-    assert 'list="combosCardList"' in inp
-    assert '<datalist id="combosCardList">' in pane
+def test_card_input_autocompletes_from_server() -> None:
     assert "/cards/autocomplete?q=" in _combos_js()
 
 

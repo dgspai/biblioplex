@@ -181,6 +181,9 @@ input[type="file"]::file-selector-button {
   box-shadow: var(--shadow-pop);
 }
 .ac-dropdown[hidden] { display: none; }
+.ac-host { position: relative; display: inline-block; }
+.ac-host > input { width: 100%; }
+.combos-filters .ac-host { flex: 1 1 140px; min-width: 100px; }
 .ac-item {
   padding: 6px 10px; cursor: pointer; font-size: var(--fs-sm);
   border-bottom: 1px solid var(--border);
