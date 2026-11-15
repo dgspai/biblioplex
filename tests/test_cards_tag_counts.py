@@ -101,3 +101,31 @@ async def test_tag_counts_empty_names_short_circuits(app: FastAPI) -> None:
     assert resp.json()["counts"] == {}
     # No DB round-trip when there are no names.
     assert conn.last_params is None
+
+
+async def test_identity_tag_counts_returns_owned_and_total(app: FastAPI) -> None:
+    conn = _FakeConn([("ramp", 12, 1411), ("tokens", 40, 900)])
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(conn)
+    async for client in _client(app):
+        resp = await client.get("/cards/identity-tag-counts", params={"identity": "rG"})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["object"] == "identity_tag_counts"
+    assert body["owned"] == {"ramp": 12, "tokens": 40}
+    assert body["total"] == {"ramp": 1411, "tokens": 900}
+    assert conn.last_params["identity"] == ["R", "G"]
+
+
+async def test_identity_tag_counts_colorless_identity(app: FastAPI) -> None:
+    conn = _FakeConn([])
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(conn)
+    async for client in _client(app):
+        resp = await client.get("/cards/identity-tag-counts")
+    assert resp.status_code == 200
+    assert conn.last_params["identity"] == []
+
+
+async def test_identity_tag_counts_rejects_non_colour(app: FastAPI) -> None:
+    async for client in _client(app):
+        resp = await client.get("/cards/identity-tag-counts", params={"identity": "rx"})
+    assert resp.status_code == 422
