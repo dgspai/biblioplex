@@ -1553,6 +1553,47 @@ async def random_card(
     return projected
 
 
+_OWNED_TAG_COUNTS_SQL = text(
+    "WITH oid AS ("
+    "  SELECT DISTINCT i.oracle_id FROM inventory i"
+    "  JOIN cards c ON c.oracle_id = i.oracle_id"
+    "  WHERE i.quantity > 0"
+    "    AND COALESCE(c.color_identity, '{}') <@ CAST(:identity AS text[])"
+    ") "
+    "SELECT ot.tag AS tag, COUNT(DISTINCT ot.oracle_id) AS n "
+    "FROM oracle_tags ot JOIN oid ON oid.oracle_id = ot.oracle_id "
+    "GROUP BY ot.tag"
+)
+
+
+# Registered before `/{card_id}`: that UUID route would 422 this path.
+@router.get(
+    "/owned-tag-counts",
+    summary="Per-tag counts of owned cards within a colour identity",
+    description=(
+        "How many distinct owned cards (inventory) whose colour identity "
+        "fits inside `?identity=` carry each oracle tag — `{tag: count}`. "
+        "Empty identity means colourless. Powers the deck-builder's theme "
+        "chips (deck count / owned-in-colours count)."
+    ),
+    responses={422: _ERROR_RESPONSE},
+)
+async def owned_tag_counts(
+    identity: str = Query(
+        default="",
+        pattern="^[wubrgWUBRG]*$",
+        description="Commander colour identity as WUBRG letters, e.g. `rg`.",
+    ),
+    engine: _Engine = Depends(get_read_engine),
+) -> Any:
+    """Aggregate oracle-tag counts across owned cards in the identity."""
+    colours = list(dict.fromkeys(identity.upper()))
+    async with engine.connect() as conn:  # type: ignore[attr-defined]
+        result = await conn.execute(_OWNED_TAG_COUNTS_SQL, {"identity": colours})
+        rows = result.all()
+    return {"object": "tag_counts", "counts": {r[0]: r[1] for r in rows}}
+
+
 @router.get(
     "/{card_id}",
     summary="Single card lookup by Scryfall UUID",
