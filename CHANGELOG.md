@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.11.1 (2026-11-15)
+
+### Bug Fixes
+
+- **web**: Hidden type chips no longer filter the land step
+  ([#25](https://github.com/dgspai/biblioplex/pull/25),
+  [`d24842e`](https://github.com/dgspai/biblioplex/commit/d24842ef571874998afc0d9e57c15d53872f0b8e))
+
+
 ## v0.11.0 (2026-11-15)
 
 ### Features
