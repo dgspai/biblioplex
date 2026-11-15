@@ -21,6 +21,8 @@ def test_type_chips_render_with_deck_counts() -> None:
 def test_selected_types_are_or_ed_into_the_search() -> None:
     body = _fn("_runBuildSearch")
     assert "_buildTypeSel" in body and "t:" in body
+    # Hidden on type-slot steps (land), so it must not filter there either.
+    assert '_buildTypeSel.size && !slotPred.startsWith("t:")' in body
 
 
 def test_type_chip_click_toggles_and_searches() -> None:

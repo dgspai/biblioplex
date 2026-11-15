@@ -658,7 +658,7 @@ async function _runBuildSearch() {
     const tags = Array.from(_buildOtagSel).map((t) => `otag:"${t}"`);
     parts.push(tags.length > 1 ? `(${tags.join(" or ")})` : tags[0]);
   }
-  if (_buildTypeSel.size) {
+  if (_buildTypeSel.size && !slotPred.startsWith("t:")) {
     const types = Array.from(_buildTypeSel).map((t) => `t:${t}`);
     parts.push(types.length > 1 ? `(${types.join(" or ")})` : types[0]);
   }
