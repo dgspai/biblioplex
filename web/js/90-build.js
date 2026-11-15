@@ -45,6 +45,9 @@ function _landRamps(c) {
 // flags freshly-surfaced tags (from a just-added card) so they stand out
 // as suggestions. _buildCmdTags/_For cache the commander's own tags.
 let _buildOtagSel = new Set();
+// Card types picked in the Type chip row; OR-ed, then ANDed with the themes.
+let _buildTypeSel = new Set();
+const _BUILD_TYPES = ["creature", "instant", "sorcery", "artifact", "enchantment", "planeswalker", "battle", "land"];
 let _buildFocusPool = new Set();
 let _buildFocusNew = new Set();
 let _buildCmdTags = [];
@@ -113,7 +116,7 @@ function _buildAdd(name) {
 function _resetBuild() {
   _build = { step: 1, commander: "", deck: {}, sideboard: {} };
   _buildAnalysis = null; _buildCmdCard = null;
-  _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+  _buildOtagSel = new Set(); _buildTypeSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
 }
 
 // Card-detail shortcuts (any tab): add to the in-progress build, or start
@@ -655,6 +658,10 @@ async function _runBuildSearch() {
     const tags = Array.from(_buildOtagSel).map((t) => `otag:"${t}"`);
     parts.push(tags.length > 1 ? `(${tags.join(" or ")})` : tags[0]);
   }
+  if (_buildTypeSel.size) {
+    const types = Array.from(_buildTypeSel).map((t) => `t:${t}`);
+    parts.push(types.length > 1 ? `(${types.join(" or ")})` : types[0]);
+  }
   if ($("#bsOwned") && $("#bsOwned").checked) parts.push("is:owned");
   if (!parts.length) { out.innerHTML = `<p class="empty">Type a search or enable a filter.</p>`; return; }
   const sort = ($("#bsSort") && $("#bsSort").value) || "edhrec";
@@ -745,7 +752,7 @@ async function _loadSavedDeck(id) {
   }
   _build.step = 1;
   _buildAnalysis = null; _buildCmdCard = null;
-  _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+  _buildOtagSel = new Set(); _buildTypeSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
   _saveBuild();
   _scheduleBuildAnalyze();
   _renderBuild();
@@ -881,8 +888,18 @@ async function _renderThemeChips() {
     el.innerHTML = `<span class="help">Focus</span>
       <input type="search" id="buildFocusQ" list="buildFocusList" class="build-focus-q" placeholder="Find a theme" aria-label="Find a theme" spellcheck="false" autocomplete="off">
       <datalist id="buildFocusList"></datalist>
-      <span id="buildFocusChips" class="build-themes"></span>`;
+      <span id="buildFocusChips" class="build-themes"></span>
+      <span class="help">Type</span><span id="buildTypeChips" class="build-themes"></span>`;
   }
+  // The land step already filters t:land, so a type row there only conflicts.
+  const typeRow = $("#buildTypeChips");
+  const slot = ($(".build-search-body") || { dataset: {} }).dataset.slot || "";
+  typeRow.hidden = typeRow.previousElementSibling.hidden = slot.startsWith("t:");
+  const typeLines = Object.keys(_build.deck).map((n) => ((_cardMetaCache[n.toLowerCase()] || {}).type_line || "").toLowerCase());
+  typeRow.innerHTML = _BUILD_TYPES.map((t) => {
+    const n = typeLines.filter((tl) => tl.includes(t)).length;
+    return `<button type="button" class="chip build-otag${_buildTypeSel.has(t) ? " selected" : ""}" data-build-type="${t}" title="${n} deck card(s) of this type">${t} <span class="chip-count">${n}</span></button>`;
+  }).join("");
   $("#buildFocusChips").innerHTML = pool.map((t) => {
     const cls = (_buildOtagSel.has(t) ? " selected" : "") + (_buildFocusNew.has(t) ? " new" : "");
     const n = _buildTagCounts[t] || 0;
@@ -1432,7 +1449,7 @@ buildPaneEl.addEventListener("click", async (e) => {
       }
     }
     _build.commander = card ? card.name : ""; _buildCmdCard = card;
-    _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+    _buildOtagSel = new Set(); _buildTypeSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
     _saveBuild();
     _scheduleBuildAnalyze(); _renderBuildStep(); return;
   }
@@ -1452,7 +1469,7 @@ buildPaneEl.addEventListener("click", async (e) => {
   const useCmd = e.target.closest("[data-build-use-cmd]");
   if (useCmd) {
     _build.commander = useCmd.dataset.buildUseCmd; _buildCmdCard = null;
-    _buildOtagSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
+    _buildOtagSel = new Set(); _buildTypeSel = new Set(); _buildFocusPool = new Set(); _buildFocusNew = new Set(); _buildCmdTagsFor = null;
     _saveBuild();
     _scheduleBuildAnalyze(); _renderBuildStep(); return;
   }
@@ -1464,6 +1481,15 @@ buildPaneEl.addEventListener("click", async (e) => {
   }
   if (e.target.closest("#buildLoadDeckBtn")) {
     await _loadSavedDeck($("#buildLoadDeck") && $("#buildLoadDeck").value);
+    return;
+  }
+
+  const typeChip = e.target.closest("[data-build-type]");
+  if (typeChip) {
+    const t = typeChip.dataset.buildType;
+    if (_buildTypeSel.has(t)) _buildTypeSel.delete(t); else _buildTypeSel.add(t);
+    typeChip.classList.toggle("selected", _buildTypeSel.has(t));
+    await _runBuildSearch();
     return;
   }
 
