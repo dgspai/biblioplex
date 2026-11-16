@@ -921,7 +921,7 @@ async function _renderThemeChips() {
     const n = _buildTagCounts[t] || 0;
     const own = _buildOwnedTagCounts[t] || 0;
     const total = _buildTotalTagCounts[t] || 0;
-    return `<button type="button" class="chip build-otag${cls}" data-build-otag="${escapeHtml(t)}" title="${n} in deck · ${own} owned in colours · ${total} in colours total">${escapeHtml(t)} <span class="chip-count">${n}/${own}</span></button>`;
+    return `<button type="button" class="chip build-otag${cls}" data-build-otag="${escapeHtml(t)}" title="${n} in deck · ${own} owned in colours · ${total} in colours total">${escapeHtml(t)} <span class="chip-count">${n}/${own}/${total}</span></button>`;
   }).join("");
   _filterFocusChips();
 }

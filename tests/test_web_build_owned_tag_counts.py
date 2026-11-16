@@ -22,7 +22,7 @@ def test_owned_counts_fetched_once_per_commander_identity() -> None:
 
 def test_focus_chip_shows_deck_over_owned() -> None:
     body = _fn("_renderThemeChips")
-    assert "${n}/${own}" in body
+    assert "${n}/${own}/${total}" in body
     assert "_buildOwnedTagCounts[t]" in body
 
 
