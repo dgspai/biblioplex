@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.13.1 (2026-11-16)
+
+### Bug Fixes
+
+- **web**: Show in-colours total on build Focus chips
+  ([#29](https://github.com/dgspai/biblioplex/pull/29),
+  [`7b202ce`](https://github.com/dgspai/biblioplex/commit/7b202ceb9166e5e903edc098e5ef630ca3bf66cd))
+
+
 ## v0.13.0 (2026-11-15)
 
 ### Features
