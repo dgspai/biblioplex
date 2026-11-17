@@ -191,10 +191,12 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ),
     (
         "targeted:protect",
-        # R33: single-target protection, redirects, and one-moment phasing.
+        # R33: one-shot protection answers one moment, even board-wide.
         re.compile(
             r"target (creature|permanent|artifact|planeswalker) you control\b[^.]{0,40}"
             r"\bgains? (hexproof|indestructible|shroud|protection)|"
+            r"(creatures|permanents) you control (also )?gain "
+            r"(hexproof|indestructible|shroud|protection)|"
             r"change (the|a) target of target spell|"
             r"permanents you control phase out",
             re.I,
@@ -266,16 +268,6 @@ MASS_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         0.8,
     ),
     ("mass:overload", re.compile(r"\boverload\b", re.I), 0.7),
-    (
-        "mass:protect",
-        # R33: one-shot board-wide hexproof/indestructible.
-        re.compile(
-            r"(creatures|permanents) you control (also )?gain "
-            r"(hexproof|indestructible|shroud|protection)",
-            re.I,
-        ),
-        0.8,
-    ),
 ]
 
 
@@ -298,8 +290,7 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:impulse-engine": "Recurring look-at-top, put one into hand",
     "ramp:land-onto-battlefield": "Puts extra land cards onto the battlefield",
     "targeted:exile-that": "Exiles a creature it targeted earlier",
-    "targeted:protect": "Protects or redirects for a single target",
-    "mass:protect": "Protects your whole board at once",
+    "targeted:protect": "One-shot protection or redirect",
     "targeted:destroy": "Destroys a single target",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",

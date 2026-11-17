@@ -173,10 +173,9 @@ or resource. One card removed / countered / hated per cast.
   → `targeted-disrupt`. One target per cast regardless of mode.
 - **R33 — Protection is interaction.** Single-target protection or
   redirection (Blossoming Defense, Mother of Runes, Spellskite, Swerve)
-  → `targeted-disrupt`. Phasing out your board (Teferi's Protection,
-  Clever Concealment) is a one-moment answer → `targeted-disrupt` too.
-  One-shot board-wide hexproof/indestructible (Heroic Intervention,
-  Flawless Maneuver, Dawn's Truce) → `mass-disrupt`. Static keyword protection on a permanent (a creature
+  → `targeted-disrupt`. One-shot board protection (Teferi's Protection,
+  Heroic Intervention, Flawless Maneuver, Dawn's Truce) answers a single
+  moment → `targeted-disrupt` too, never `mass-disrupt`. Static keyword protection on a permanent (a creature
   with hexproof, Swiftfoot Boots) stays `plan` — it never answers anything.
 
 ## 4. Mass disruption
