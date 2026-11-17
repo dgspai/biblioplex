@@ -191,11 +191,12 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ),
     (
         "targeted:protect",
-        # R33: single-target protection counts as targeted interaction.
+        # R33: single-target protection, redirects, and one-moment phasing.
         re.compile(
             r"target (creature|permanent|artifact|planeswalker) you control\b[^.]{0,40}"
             r"\bgains? (hexproof|indestructible|shroud|protection)|"
-            r"change (the|a) target of target spell",
+            r"change (the|a) target of target spell|"
+            r"permanents you control phase out",
             re.I,
         ),
         0.85,
@@ -267,11 +268,10 @@ MASS_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("mass:overload", re.compile(r"\boverload\b", re.I), 0.7),
     (
         "mass:protect",
-        # R33: one-shot board protection (fogs-for-permanents, phasing).
+        # R33: one-shot board-wide hexproof/indestructible.
         re.compile(
             r"(creatures|permanents) you control (also )?gain "
-            r"(hexproof|indestructible|shroud|protection)|"
-            r"permanents you control phase out",
+            r"(hexproof|indestructible|shroud|protection)",
             re.I,
         ),
         0.8,

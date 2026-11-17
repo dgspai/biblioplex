@@ -331,13 +331,14 @@ def test_r33_single_target_protection_is_targeted() -> None:
     assert _labels("Change the target of target spell or ability with a single target.") == {
         "targeted_disrupt"
     }
+    # Phasing answers one moment, not the board over a turn (Teferi's Protection).
+    assert _labels("All permanents you control phase out.") == {"targeted_disrupt"}
 
 
 def test_r33_board_protection_is_mass() -> None:
     assert _labels("Creatures you control gain indestructible until end of turn.") == {
         "mass_disrupt"
     }
-    assert _labels("All permanents you control phase out.") == {"mass_disrupt"}
 
 
 def test_r33_static_hexproof_is_not_protection() -> None:
