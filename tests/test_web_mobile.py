@@ -46,3 +46,20 @@ def test_every_detail_pane_opens_over_its_list() -> None:
     assert "detail-open" in js and "split-back" in js
     assert ".detail-open" in _phone_css()
     assert len(re.findall(r'class="split-pane detail-pane"', INDEX)) == 4
+
+
+def test_deck_split_desktop_columns_do_not_leak_onto_phones() -> None:
+    # Same-specificity `.decks-split` after the phone block re-set two columns.
+    assert re.search(
+        r"@media \(min-width: 769px\)\s*\{\s*\.decks-split\s*\{[^}]*grid-template-columns", CSS
+    )
+    base = CSS[CSS.index(".decks-split {") :]
+    assert "grid-template-columns" not in base[: base.index("}")]
+
+
+def test_stylesheet_braces_balance() -> None:
+    depth = 0
+    for ch in re.sub(r"/\*.*?\*/", "", CSS, flags=re.S):
+        depth += {"{": 1, "}": -1}.get(ch, 0)
+        assert depth >= 0, "stray } swallows the next rule"
+    assert depth == 0

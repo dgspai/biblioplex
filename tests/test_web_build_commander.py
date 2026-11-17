@@ -60,7 +60,7 @@ def _load_saved_deck() -> str:
 
 def test_saved_deck_load_uses_stored_commander_and_no_duplicate() -> None:
     h = _load_saved_deck()
-    assert "_deckDetailData.commander" in h
+    assert "meta.commander" in h  # fetched, so the step-1 picker gets it too
     # Commander slot is decremented out of the main deck, never double-counted.
     assert "_build.deck[_build.commander] -= 1" in h
 

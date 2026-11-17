@@ -723,14 +723,20 @@ async function _fillSavedDecks() {
 // seed the metadata cache so the decklist sidebar groups immediately.
 async function _loadSavedDeck(id) {
   if (!id) return;
-  const res = await api(`/decks/${encodeURIComponent(id)}/cards`).catch(() => null);
+  const path = `/decks/${encodeURIComponent(id)}`;
+  const [res, meta] = await Promise.all([
+    api(path + "/cards").catch(() => null),
+    api(path).catch(() => ({})),
+  ]);
   if (!res) return;
   _build.commander = "";
   _build.deck = {};
   _build.sideboard = {};
+  _build.sourceId = id;
+  _build.sourceName = meta.name || "";
   // The deck's stored (effective) commander wins over the list's own
   // commander rows; it may be an override naming a card in the main board.
-  const stored = _deckDetailData && _deckDetailData.id === id ? _deckDetailData.commander : "";
+  const stored = meta.commander || "";
   let listCmd = "";
   for (const r of (res.data || [])) {
     if (!r.name) continue;
@@ -1081,6 +1087,19 @@ function _renderComboPanel(present, near) {
 }
 
 // Final step — the turn-7 goldfish test AND the read-only review, merged.
+// A build loaded from a saved deck saves back onto it as a new version.
+function _buildSaveRowHtml() {
+  const name = _build.sourceId ? _build.sourceName
+    : _build.commander ? _build.commander + " (built)" : "New EDH deck";
+  const save = _build.sourceId
+    ? `<button type="button" id="buildSaveVersion" class="btn btn--primary">Save new version</button>
+      <button type="button" id="buildSaveDeck">Save as new deck</button>`
+    : `<button type="button" id="buildSaveDeck" class="btn btn--primary">Save as deck</button>`;
+  return `<input type="text" id="buildSaveName" placeholder="deck name" value="${escapeHtml(name)}">
+      ${save}
+      <button type="button" id="buildCopyList">Copy decklist</button>`;
+}
+
 // Two render phases so the heavy goldfish/combos fetch runs once (on entry)
 // while the analysis-driven summary (colour balance, unresolved, ownership)
 // repaints cheaply whenever a later analyze lands, via _renderReviewSummary.
@@ -1089,11 +1108,7 @@ async function _renderBuildStep7(body) {
     <div id="buildReviewSummary"></div>
     <div id="buildTurn7"><p class="help">Goldfishing…</p></div>
     <p>Happy with it? Save the build or copy the list.</p>
-    <div class="build-cmd">
-      <input type="text" id="buildSaveName" placeholder="deck name" value="${escapeHtml(_build.commander ? _build.commander + " (built)" : "New EDH deck")}">
-      <button type="button" id="buildSaveDeck" class="btn btn--primary">Save as deck</button>
-      <button type="button" id="buildCopyList">Copy decklist</button>
-    </div>
+    <div class="build-cmd" id="buildSaveRow">${_buildSaveRowHtml()}</div>
     <div id="buildSaveStatus" class="help"></div>`;
   _renderReviewSummary();
   const decklist = _buildDecklist();
@@ -1515,7 +1530,22 @@ buildPaneEl.addEventListener("click", async (e) => {
     const st = $("#buildSaveStatus");
     try {
       const deck = await _buildPost("/decks", { name, decklist: _buildDecklist(), format: "commander", commander: _build.commander || null });
+      _build.sourceId = deck.id; _build.sourceName = deck.name;
+      _saveBuild();
+      $("#buildSaveRow").innerHTML = _buildSaveRowHtml();
       st.innerHTML = `Saved as <strong>${escapeHtml(deck.name)}</strong>. Open the Decks tab to evaluate it.`;
+    } catch (err) { st.textContent = "Save failed: " + (err.message || "error"); }
+    return;
+  }
+  if (e.target.closest("#buildSaveVersion")) {
+    const name = ($("#buildSaveName").value || _build.sourceName).trim();
+    const st = $("#buildSaveStatus");
+    try {
+      const deck = await _deckApiSend(`/decks/${encodeURIComponent(_build.sourceId)}`, "PATCH",
+        { name, decklist: _buildDecklist(), commander: _build.commander || null });
+      _build.sourceName = deck.name;
+      _saveBuild();
+      st.innerHTML = `Saved a new version of <strong>${escapeHtml(deck.name)}</strong>.`;
     } catch (err) { st.textContent = "Save failed: " + (err.message || "error"); }
     return;
   }
