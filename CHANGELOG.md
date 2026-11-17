@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.13.2 (2026-11-17)
+
+### Bug Fixes
+
+- **web**: Save edited decks as new versions; fix deck detail sideways scroll on phones
+  ([#30](https://github.com/dgspai/biblioplex/pull/30),
+  [`7662f78`](https://github.com/dgspai/biblioplex/commit/7662f78c0d85d494b2f1a42ef9536f474f3463f7))
+
+
 ## v0.13.1 (2026-11-16)
 
 ### Bug Fixes
