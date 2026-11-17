@@ -59,6 +59,13 @@ RAMP_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("ramp:treasures", re.compile(r"\bcreate.{0,30}\btreasure\b", re.I), 0.85),
     ("ramp:tap-add", re.compile(r"\{t\}: add\b", re.I), 0.9),
     ("ramp:cost-reduce", re.compile(r"spells you cast.{0,40}cost \{\d+\} less", re.I), 0.85),
+    (
+        "ramp:land-onto-battlefield",
+        re.compile(
+            r"put (a|an additional|up to \w+) land cards? [^.]{0,40}onto the battlefield", re.I
+        ),
+        0.85,
+    ),
 ]
 
 CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
@@ -98,7 +105,26 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         ),
         0.85,
     ),
-    ("ca:cascade", re.compile(r"\b(cascade|discover (\d+|x))\b", re.I), 0.85),
+    (
+        "ca:cascade-engine",
+        # R31: a one-shot cascade/discover is plan; a repeating source is an engine.
+        re.compile(
+            r"\bspells?\b[^.]{0,80}\b(ha(s|ve)|gain) \"?cascade\b|"
+            r"(\b(whenever|at the beginning of)\b|\{[^}\n]+\}[^:\n]{0,60}:)"
+            r"[^\n]{0,160}\bdiscover (\d+|x)\b",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "ca:impulse-engine",
+        re.compile(
+            r"\b(whenever|at the beginning of)\b[^.]{0,120}look at the top \w+ cards?"
+            r"[^.]{0,60}\.[^.]{0,120}\binto your hand",
+            re.I,
+        ),
+        0.85,
+    ),
     (
         "ca:tap-draw",
         # Sacrifice in the cost = one-shot; discard = R5' break-even loot.
@@ -153,6 +179,23 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         re.compile(
             r"deals? \d+ damage to (any target|target creature|"
             r"target creature or player|target creature, player, or planeswalker)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:exile-that",
+        # Dispatch: the exile refers back to an earlier "target creature".
+        re.compile(r"\btarget creature\b[^\n]*\n[^\n]*\bexile that creature\.", re.I),
+        0.85,
+    ),
+    (
+        "targeted:protect",
+        # R33: single-target protection counts as targeted interaction.
+        re.compile(
+            r"target (creature|permanent|artifact|planeswalker) you control\b[^.]{0,40}"
+            r"\bgains? (hexproof|indestructible|shroud|protection)|"
+            r"change (the|a) target of target spell",
             re.I,
         ),
         0.85,
@@ -222,6 +265,17 @@ MASS_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         0.8,
     ),
     ("mass:overload", re.compile(r"\boverload\b", re.I), 0.7),
+    (
+        "mass:protect",
+        # R33: one-shot board protection (fogs-for-permanents, phasing).
+        re.compile(
+            r"(creatures|permanents) you control (also )?gain "
+            r"(hexproof|indestructible|shroud|protection)|"
+            r"permanents you control phase out",
+            re.I,
+        ),
+        0.8,
+    ),
 ]
 
 
@@ -240,7 +294,12 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:sac-feeder": "Sacrifice payoff draws multiple cards",
     "ca:play-from-top": "Plays cards from the top of your library",
     "ca:tap-draw": "Tap ability that draws a card",
-    "ca:cascade": "Cascade or discover: a free extra spell",
+    "ca:cascade-engine": "Gives spells cascade, or discovers repeatedly",
+    "ca:impulse-engine": "Recurring look-at-top, put one into hand",
+    "ramp:land-onto-battlefield": "Puts extra land cards onto the battlefield",
+    "targeted:exile-that": "Exiles a creature it targeted earlier",
+    "targeted:protect": "Protects or redirects for a single target",
+    "mass:protect": "Protects your whole board at once",
     "targeted:destroy": "Destroys a single target",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",
