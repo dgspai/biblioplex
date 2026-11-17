@@ -1,0 +1,131 @@
+[
+  {
+    "name": "Adaptive Omnitool",
+    "oracle_text": "Equipped creature gets +1/+1 for each artifact you control.\nWhenever equipped creature attacks, look at the top six cards of your library. You may reveal an artifact card from among them and put it into your hand. Put the rest on the bottom of your library in a random order.\nEquip {3}",
+    "labels": [
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "Cloud Key",
+    "oracle_text": "As this artifact enters, choose artifact, creature, enchantment, instant, or sorcery.\nSpells you cast of the chosen type cost {1} less to cast.",
+    "labels": [
+      "ramp"
+    ]
+  },
+  {
+    "name": "Crystal Skull, Isu Spyglass",
+    "oracle_text": "You may look at the top card of your library any time.\nYou may play historic lands and cast historic spells from the top of your library. (Artifacts, legendaries, and Sagas are historic.)\n{T}: Add {U}.",
+    "labels": [
+      "ramp",
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "Dawn's Truce",
+    "oracle_text": "Gift a card (You may promise an opponent a gift as you cast this spell. If you do, they draw a card before its other effects.)\nYou and permanents you control gain hexproof until end of turn. If the gift was promised, permanents you control also gain indestructible until end of turn.",
+    "labels": [
+      "mass_disrupt"
+    ]
+  },
+  {
+    "name": "Dispatch",
+    "oracle_text": "Tap target creature.\nMetalcraft — If you control three or more artifacts, exile that creature.",
+    "labels": [
+      "targeted_disrupt"
+    ]
+  },
+  {
+    "name": "Enthusiastic Mechanaut",
+    "oracle_text": "Flying\nArtifact spells you cast cost {1} less to cast.",
+    "labels": [
+      "ramp"
+    ]
+  },
+  {
+    "name": "Etherium Sculptor",
+    "oracle_text": "Artifact spells you cast cost {1} less to cast.",
+    "labels": [
+      "ramp"
+    ]
+  },
+  {
+    "name": "Flawless Maneuver",
+    "oracle_text": "If you control a commander, you may cast this spell without paying its mana cost.\nCreatures you control gain indestructible until end of turn.",
+    "labels": [
+      "mass_disrupt"
+    ]
+  },
+  {
+    "name": "Foundry Inspector",
+    "oracle_text": "Artifact spells you cast cost {1} less to cast.",
+    "labels": [
+      "ramp"
+    ]
+  },
+  {
+    "name": "Iron Lad, Diverging Destiny",
+    "oracle_text": "Flying, vigilance\nYou may look at the top card of your library any time.\n{T}: Reveal the top card of your library. If it's an artifact card, draw a card.",
+    "labels": [
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "Mm'menon, the Right Hand",
+    "oracle_text": "Flying\nYou may look at the top card of your library any time.\nYou may cast artifact spells from the top of your library.\nArtifacts you control have \"{T}: Add {U}. Spend this mana only to cast a spell from anywhere other than your hand.\"",
+    "labels": [
+      "ramp",
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "Realmbreaker, the Invasion Tree",
+    "oracle_text": "{2}, {T}: Target opponent mills three cards. Put a land card from their graveyard onto the battlefield tapped under your control. It gains \"If this land would leave the battlefield, exile it instead of putting it anywhere else.\"\n{10}, {T}, Sacrifice Realmbreaker: Search your library for any number of Praetor cards, put them onto the battlefield, then shuffle.",
+    "labels": [
+      "ramp"
+    ]
+  },
+  {
+    "name": "Spellskite",
+    "oracle_text": "{U/P}: Change a target of target spell or ability to this creature. ({U/P} can be paid with either {U} or 2 life.)",
+    "labels": [
+      "targeted_disrupt"
+    ]
+  },
+  {
+    "name": "Teferi's Protection",
+    "oracle_text": "Until your next turn, your life total can't change and you gain protection from everything. All permanents you control phase out. (While they're phased out, they're treated as though they don't exist. They phase in before you untap during your untap step.)\nExile Teferi's Protection.",
+    "labels": [
+      "mass_disrupt"
+    ]
+  },
+  {
+    "name": "The Belligerent",
+    "oracle_text": "Whenever The Belligerent attacks, create a Treasure token. Until end of turn, you may look at the top card of your library any time, and you may play lands and cast spells from the top of your library.\nCrew 3",
+    "labels": [
+      "ramp",
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "The Lunar Whale",
+    "oracle_text": "Flying\nYou may look at the top card of your library any time.\nAs long as The Lunar Whale attacked this turn, you may play the top card of your library.\nCrew 1",
+    "labels": [
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "The Reality Chip",
+    "oracle_text": "You may look at the top card of your library any time.\nAs long as The Reality Chip is attached to a creature, you may play lands and cast spells from the top of your library.\nReconfigure {2}{U} ({2}{U}: Attach to target creature you control; or unattach from a creature. Reconfigure only as a sorcery. While attached, this isn't a creature.)",
+    "labels": [
+      "card_advantage"
+    ]
+  },
+  {
+    "name": "Voyager Quickwelder",
+    "oracle_text": "Artifact spells you cast cost {1} less to cast.",
+    "labels": [
+      "ramp"
+    ]
+  }
+]
