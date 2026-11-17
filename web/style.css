@@ -768,7 +768,6 @@ ul.cards .meta .foil { color: var(--accent); }
     border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: var(--sp-2) var(--sp-4);
   }
 }
-}
 
 
 /* D18.18 — Settings tab: import, refresh, and import history. */

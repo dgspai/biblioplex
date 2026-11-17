@@ -56,3 +56,10 @@ def test_deck_split_desktop_columns_do_not_leak_onto_phones() -> None:
     base = CSS[CSS.index(".decks-split {") :]
     assert "grid-template-columns" not in base[: base.index("}")]
 
+
+def test_stylesheet_braces_balance() -> None:
+    depth = 0
+    for ch in re.sub(r"/\*.*?\*/", "", CSS, flags=re.S):
+        depth += {"{": 1, "}": -1}.get(ch, 0)
+        assert depth >= 0, "stray } swallows the next rule"
+    assert depth == 0
