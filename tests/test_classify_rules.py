@@ -538,3 +538,11 @@ def test_r40_permanent_steal_is_targeted_threaten_is_not() -> None:
         "Gain control of target creature until end of turn. Untap that creature. "
         "It gains haste until end of turn."
     ) == {"plan"}
+
+
+def test_r40_steal_auras_are_targeted() -> None:
+    """Control Magic / Confiscate phrase the steal as 'You control enchanted ...'."""
+    assert _labels("Enchant creature\nYou control enchanted creature.") == {"targeted_disrupt"}
+    assert _labels("Enchant permanent\nYou control enchanted permanent.") == {
+        "targeted_disrupt"
+    }

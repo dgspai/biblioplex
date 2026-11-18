@@ -289,7 +289,8 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         # R40: permanent control change; "until end of turn" (threaten) is not removal.
         re.compile(
             r"gain control of target (?!player)[^.\n]{0,50}(?<!until end of turn)(\.|$)"
-            r"(?![^.\n]*until end of turn)",
+            r"(?![^.\n]*until end of turn)|"
+            r"you control enchanted (creature|permanent|artifact|planeswalker|land)\b",
             re.I,
         ),
         0.85,
