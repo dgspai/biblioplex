@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.16.0 (2026-11-18)
+
+### Features
+
+- Land profile — colours made, how it enters, utility
+  ([#33](https://github.com/dgspai/biblioplex/pull/33),
+  [`582f51e`](https://github.com/dgspai/biblioplex/commit/582f51ed4407429ea51d38dd12fe32d4f148b745))
+
+
 ## v0.15.0 (2026-11-18)
 
 ### Features
