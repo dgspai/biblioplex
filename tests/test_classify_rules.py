@@ -353,3 +353,262 @@ def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
         "oracle_text": "Plasma Cascade deals 3 damage to any target.",
     }
     assert classify_by_rules(card)["card_advantage"] == 0.0
+
+
+def test_r34_reminder_text_is_not_classified() -> None:
+    """Parenthesised reminder text describes a keyword; it is not the card's own text."""
+    assert _labels("({T}: Add {B} or {R}.)\nThis land enters tapped.") == {"plan"}
+    assert _labels(
+        "Echo {G}{G} (At the beginning of your upkeep, sacrifice it unless you pay its echo "
+        "cost.)\nWhen this creature enters, draw a card."
+    ) == {"plan"}
+    assert _labels(
+        "Spells you cast have affinity for artifacts. (They cost {1} less to cast for each "
+        "artifact you control.)"
+    ) == {"plan"}
+
+
+def test_r34_basic_landcycling_and_powerstone_stay_ramp() -> None:
+    assert _labels(
+        "Basic landcycling {2} ({2}, Discard this card: Search your library for a basic land "
+        "card, reveal it, put it into your hand, then shuffle.)"
+    ) == {"ramp"}
+    assert _labels(
+        "When this creature enters, create a tapped Powerstone token. (It's an artifact with "
+        '"{T}: Add {C}. This mana can\'t be spent to cast a nonartifact spell.")'
+    ) == {"ramp"}
+
+
+def test_r34_clue_and_blood_makers_are_card_advantage() -> None:
+    assert _labels("When this creature enters, investigate. (Create a Clue token.)") == {
+        "card_advantage"
+    }
+    assert _labels("Whenever you cast a spell, create a Blood token.") == {"card_advantage"}
+    assert _labels("Whenever this creature attacks, it connives. (Draw a card, then discard a card.)") == {
+        "plan"
+    }
+
+
+def test_r15_destroy_with_adjectives_is_targeted() -> None:
+    assert _labels("Destroy target nonblack attacking creature.") == {"targeted_disrupt"}
+    assert _labels("Destroy up to one target creature.") == {"targeted_disrupt"}
+    assert _labels("Destroy target nonland, nontoken permanent an opponent controls.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r15_destroying_your_own_permanent_is_not_removal() -> None:
+    assert _labels("{T}: Destroy target permanent you own.") == {"plan"}
+    assert _labels("{B}: Destroy target artifact, creature, or land you control.") == {"plan"}
+
+
+def test_r9_graveyard_recursion_is_not_bounce() -> None:
+    """Raise Dead / Gravedigger return a card from the graveyard; that is plan."""
+    assert _labels("Return target creature card from your graveyard to your hand.") == {"plan"}
+    assert _labels(
+        "When this creature enters, return target creature card from your graveyard to your hand."
+    ) == {"plan"}
+
+
+def test_bounce_still_targeted() -> None:
+    assert _labels("Return target creature to its owner's hand.") == {"targeted_disrupt"}
+    assert _labels(
+        "Return target creature defending player controls with toughness 2 or less to its "
+        "owner's hand."
+    ) == {"targeted_disrupt"}
+    # Own-permanent save is protection (R33), still targeted.
+    assert _labels("Return target permanent you control to its owner's hand.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r35_minus_x_minus_x_is_removal() -> None:
+    assert _labels("Target creature gets -X/-X until end of turn.") == {"targeted_disrupt"}
+    assert _labels("When this creature enters, target creature an opponent controls gets -1/-1 until end of turn.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("Put three -1/-1 counters on target creature.") == {"targeted_disrupt"}
+
+
+def test_r35_minus_n_zero_and_own_creature_are_not_removal() -> None:
+    assert _labels("Target creature gets -3/-0 until end of turn.") == {"plan"}
+    assert _labels("When this creature enters, put a -1/-1 counter on target creature you control.") == {
+        "plan"
+    }
+    assert _labels("Target creature you control gets -1/-1 until end of turn.") == {"plan"}
+
+
+def test_r36_damage_equal_to_and_x_damage_are_removal() -> None:
+    assert _labels("~ deals X damage to any target.") == {"targeted_disrupt"}
+    assert _labels("When this creature enters, it deals damage equal to its power to any target.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("Target creature you control deals damage equal to its power to target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r36_fight_is_removal() -> None:
+    assert _labels("Target creature you control fights target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("When this creature enters, it fights up to one target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("{2}: This creature fights another target creature you control.") == {"plan"}
+
+
+def test_r37_extra_land_drop_is_ramp() -> None:
+    assert _labels("You may play an additional land on each of your turns.") == {"ramp"}
+    assert _labels("You may play two additional lands this turn.") == {"ramp"}
+
+
+def test_r38_mana_multipliers_are_ramp() -> None:
+    assert _labels(
+        "Whenever enchanted land is tapped for mana, its controller adds an additional {G}."
+    ) == {"ramp"}
+    assert _labels(
+        "{T}, Sacrifice an artifact: Add an amount of {R} equal to the sacrificed artifact's "
+        "mana value."
+    ) == {"ramp"}
+    assert _labels("If you tap a permanent for mana, it produces twice as much of that mana.") == {
+        "ramp"
+    }
+
+
+def test_r2_counterspell_that_refunds_mana_stays_targeted_only() -> None:
+    assert _labels(
+        "Counter target spell. Add an amount of {C} equal to that spell's mana value."
+    ) == {"targeted_disrupt"}
+
+
+def test_r39_typed_land_fetch_is_ramp() -> None:
+    assert _labels("Search your library for a Forest card, reveal it, put it into your hand.") == {
+        "ramp"
+    }
+    assert _labels(
+        "Search your library for up to two Forest cards, put them onto the battlefield tapped."
+    ) == {"ramp"}
+
+
+def test_r39_fetchland_and_typecycling_are_not_ramp() -> None:
+    """R1: a fetchland is a land. Typecycling is an open question (not ramp)."""
+    assert _labels(
+        "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, "
+        "put it onto the battlefield, then shuffle."
+    ) == {"plan"}
+    assert _labels(
+        "Forestcycling {2} ({2}, Discard this card: Search your library for a Forest card.)"
+    ) == {"plan"}
+
+
+def test_r39_untap_land_ability_is_ramp_but_refund_is_not() -> None:
+    assert _labels("{T}: Untap target land.") == {"ramp"}
+    assert _labels("Counter target spell. Untap up to three lands.") == {"targeted_disrupt"}
+
+
+def test_r39_land_from_graveyard_to_battlefield_is_ramp() -> None:
+    assert _labels("When this creature enters, return target land card from your graveyard to the battlefield.") == {
+        "ramp"
+    }
+
+
+def test_r4_treasure_you_create_is_ramp_opponent_creates_is_not() -> None:
+    assert _labels("When this creature enters, create a Treasure token.") == {"ramp"}
+    assert _labels("{T}: Target opponent creates X Treasure tokens.") == {"plan"}
+    assert _labels(
+        "If an opponent would create a Treasure token beyond the first one, instead you draw a card."
+    ) == {"plan"}
+
+
+def test_r40_pacifism_style_aura_is_targeted() -> None:
+    assert _labels("Enchant creature\nEnchanted creature can't attack or block.") == {
+        "targeted_disrupt"
+    }
+    assert _labels(
+        "Enchant creature\nEnchanted creature doesn't untap during its controller's untap step."
+    ) == {"targeted_disrupt"}
+
+
+def test_r40_permanent_steal_is_targeted_threaten_is_not() -> None:
+    assert _labels("Gain control of target creature with mana value X or less.") == {
+        "targeted_disrupt"
+    }
+    assert _labels(
+        "Gain control of target creature until end of turn. Untap that creature. "
+        "It gains haste until end of turn."
+    ) == {"plan"}
+
+
+def test_r40_steal_auras_are_targeted() -> None:
+    """Control Magic / Confiscate phrase the steal as 'You control enchanted ...'."""
+    assert _labels("Enchant creature\nYou control enchanted creature.") == {"targeted_disrupt"}
+    assert _labels("Enchant permanent\nYou control enchanted permanent.") == {
+        "targeted_disrupt"
+    }
+
+
+def _land(text: str, type_line: str = "Land") -> set[str]:
+    s = classify_by_rules({"oracle_text": text, "type_line": type_line})
+    return {k for k, v in s.items() if v >= 0.5}
+
+
+def test_r41_lands_that_make_normal_mana_are_not_ramp() -> None:
+    assert _land("{T}: Add one mana of any color in your commander's color identity.") == {
+        "plan"
+    }
+    assert _land("({T}: Add {B} or {R}.)", "Land — Swamp Mountain") == {"plan"}
+    assert _land(
+        "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or "
+        "Swamp card, put it onto the battlefield, then shuffle."
+    ) == {"plan"}
+
+
+def test_r41_bounce_lands_are_not_ramp() -> None:
+    assert _land(
+        "This land enters tapped.\nWhen this land enters, return a land you control "
+        "to its owner's hand.\n{T}: Add {G}{U}."
+    ) == {"plan"}
+    assert _land(
+        "When this land enters, sacrifice it unless you return an untapped Island "
+        "you control to its owner's hand.\n{T}: Add {C}{U}."
+    ) == {"plan"}
+    assert _land("{T}: Add {C}.\n{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.") == {"plan"}
+    assert _land("{T}: Add {C}.\n{1}, {T}: Add two mana of different colors.") == {"plan"}
+
+
+def test_r41_lands_that_make_extra_mana_are_ramp() -> None:
+    assert _land("{T}: Add {C}{C}. This land deals 2 damage to you.") == {"ramp"}
+    assert _land("{T}: Add {G} for each creature you control.") == {"ramp"}
+    assert _land("{2}, {T}: Add {B} for each Swamp you control.") == {"ramp"}
+    assert _land(
+        "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, "
+        "add {C}{C}{C} instead.",
+        "Land — Urza's Tower",
+    ) == {"ramp"}
+    assert _land("{T}: Add three mana of any one color.") == {"ramp"}
+    assert _land(
+        "{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to "
+        "two basic land cards that share a land type, put them onto the battlefield "
+        "tapped, then shuffle."
+    ) == {"ramp"}
+    assert _land("{T}: Add {C}.\n{1}, {T}: Untap target land.") == {"ramp"}
+
+
+def test_r41_only_lands_are_gated() -> None:
+    assert _land("{T}: Add {C}.", "Artifact") == {"ramp"}
+    assert _labels("{T}: Add {C}.") == {"ramp"}  # no type_line: unchanged
+    mdfc = {
+        "type_line": "Creature — Human Warlock // Land",
+        "card_faces": [
+            {"name": "A", "type_line": "Creature — Human Warlock", "oracle_text": "Flying"},
+            {"name": "B", "type_line": "Land", "oracle_text": "{T}: Add {W}."},
+        ],
+    }
+    assert classify_by_rules(mdfc)["ramp"] == 0.0
+
+
+def test_r41_lands_keep_their_other_roles() -> None:
+    assert _land("When this land enters, exile target player's graveyard.\n{T}: Add {B}.") == {
+        "targeted_disrupt"
+    }

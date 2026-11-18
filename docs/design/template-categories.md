@@ -29,10 +29,19 @@ mana faster than the natural one-land-per-turn drop.
 
 **Edge rulings**
 
-- **R1 — Lands are never ramp.** Even multi-color or fetch lands count
-  as `land` (the 38-slot, excluded from the model output). The land
-  slot is structural; the ramp slot is for cards that *accelerate
-  beyond* the land drop.
+- **R1 — Lands are not ramp** (refined by R41). Lands count as `land`
+  (the 38-slot). The land slot is structural; the ramp slot is for
+  cards that *accelerate beyond* the land drop.
+- **R41 — Lands that beat the land drop are ramp.** A land is `ramp`
+  only when it nets more than one mana per land: a fixed 2+ mana from a
+  tap-only cost (Ancient Tomb, Tron, Mishra's Workshop), "for each" /
+  "equal to" mana (Gaea's Cradle, Cabal Coffers, Nykthos), two or more
+  basic lands fetched (Myriad Landscape), Treasures, untapping lands, or
+  cost reduction (Eye of Ugin). Never ramp: one-mana lands of any colour
+  (Command Tower, duals, shocks), 1-for-1 fetches (Evolving Wilds,
+  Polluted Delta), bounce lands and karoos (they return a land), and
+  filter lands that pay mana to make two. Gated on the face's
+  `type_line`, so an MDFC's spell face keeps its ramp.
 - **R2 — Counterspells that also add mana** (Mana Drain) → `targeted-disrupt`
   only. The primary function is the counter; the mana is a bonus, not
   the reason it's in the deck.
@@ -45,6 +54,16 @@ mana faster than the natural one-land-per-turn drop.
 - **R28 — Cost reducers** (Foundry Inspector, Etherium Sculptor, Cloud
   Key) → `ramp`. Discounting every later spell is mana. A card that only
   discounts itself is not.
+
+- **R37 — Extra land drops** ("You may play an additional land on each
+  of your turns": Exploration, Azusa) → `ramp`.
+- **R38 — Mana multipliers** ("adds an additional {G}", "add an amount
+  of {C} equal to ...", "produces twice as much") → `ramp`. A counterspell
+  that refunds mana stays targeted-only (R2).
+- **R39 — Typed land fetch and land recursion into play** (Nature's
+  Lore's "Forest card", "{T}: Untap target land", "return target land
+  card from your graveyard to the battlefield") → `ramp`. A fetchland
+  is a land (R1); typecycling is not ramp (undecided).
 
 ## 2. Card advantage
 
@@ -133,6 +152,12 @@ are not CA. One-shot recursion of a single card is not CA.
   hand" trigger → CA, a Rule 3 engine. A one-shot ETB version stays
   `plan` (R6/R10 math: net 0).
 
+- **R34 — Reminder text is not the card's text.** Parenthesised reminder
+  text is stripped before scoring: a basic-typed land's "({T}: Add {G}.)",
+  Echo/Vanishing and Affinity reminders no longer fire rules. Kept by name:
+  `Basic landcycling` and Powerstone makers → `ramp`; `investigate` and
+  Clue/Blood token makers → `card_advantage` (a draw for mana).
+
 ## 3. Targeted disruption
 
 **Definition.** Interacts with a *specific* opponent permanent, spell,
@@ -177,6 +202,18 @@ or resource. One card removed / countered / hated per cast.
   Heroic Intervention, Flawless Maneuver, Dawn's Truce) answers a single
   moment → `targeted-disrupt` too, never `mass-disrupt`. Static keyword protection on a permanent (a creature
   with hexproof, Swiftfoot Boots) stays `plan` — it never answers anything.
+
+- **R35 — `-X/-X` on a target is removal** (Disfigure, Sickening
+  Shoal, -1/-1 counters on a target creature) → `targeted-disrupt`. `-N/-0`
+  and effects on your own creature are not.
+- **R36 — Damage by formula and fight/bite** ("deals X damage to any
+  target", "deals damage equal to its power", "target creature you control
+  fights ...") → `targeted-disrupt`, like digit burn. Recursion from the
+  graveyard ("return target creature card ... to your hand") is R9 `plan`,
+  not bounce; destroying your own permanent is not removal.
+- **R40 — Neutralisers** — Pacifism-style auras ("can't attack or
+  block", "doesn't untap") and permanent steal (Dominate; not "until end of
+  turn") → `targeted-disrupt`.
 
 ## 4. Mass disruption
 

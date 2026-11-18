@@ -1689,12 +1689,15 @@ class _SetLabelsRequest(BaseModel):
 
 
 def _rules_verdict(
-    oracle_text: Any, card_faces: Any
+    src: Any,
 ) -> tuple[list[str], dict[str, float], dict[str, list[str]]]:
     """Fresh rules-layer verdict for one card — labels, scores, reasons."""
-    scores, reasons = classify_by_rules_ex(
-        {"oracle_text": oracle_text, "card_faces": card_faces}
-    )
+    scores, reasons = classify_by_rules_ex({
+        "name": src.name,
+        "type_line": src.type_line,
+        "oracle_text": src.oracle_text,
+        "card_faces": src.card_faces,
+    })
     labels = [lab for lab in LABELS if scores[lab] >= 0.5]
     return labels, scores, reasons
 
@@ -1762,13 +1765,15 @@ async def clear_card_labels(
     async with engine.begin() as conn:
         src = (
             await conn.execute(
-                text("SELECT oracle_text, card_faces FROM cards WHERE id = :id"),
+                text(
+                    "SELECT name, type_line, oracle_text, card_faces FROM cards WHERE id = :id"
+                ),
                 {"id": str(card_id)},
             )
         ).one_or_none()
         if src is None:
             return _not_found(f"No card found with id '{card_id}'")
-        labels, scores, reasons = _rules_verdict(src.oracle_text, src.card_faces)
+        labels, scores, reasons = _rules_verdict(src)
         row = (
             await conn.execute(
                 text(

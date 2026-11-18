@@ -423,7 +423,7 @@ so the runner can be exercised without the rules module + DB roundtrip.
 _CLASSIFY_PAGE: int = 2048
 
 _CLASSIFY_SELECT_SQL: str = (
-    "SELECT id, oracle_text, card_faces, label_reasons FROM cards "
+    "SELECT id, name, type_line, oracle_text, card_faces, label_reasons FROM cards "
     "WHERE id > :last_id "
     "ORDER BY id LIMIT :limit"
 )
@@ -472,6 +472,8 @@ async def default_classify(engine: _Engine) -> int:
             payload: list[dict[str, Any]] = []
             for row in rows:
                 scores, reasons = classify_by_rules_ex({
+                    "name": row.name,
+                    "type_line": row.type_line,
                     "oracle_text": row.oracle_text,
                     "card_faces": row.card_faces,
                 })

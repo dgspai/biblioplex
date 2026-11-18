@@ -56,16 +56,54 @@ RAMP_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("ramp:rock", re.compile(r"add \{[wubrgc]\}", re.I), 1.0),
     ("ramp:add-mana-n", re.compile(r"add (one|two|three|four|five|x) mana", re.I), 1.0),
     ("ramp:land-fetch", re.compile(r"search your library for .{0,40}\bland\b", re.I), 0.95),
-    ("ramp:treasures", re.compile(r"\bcreate.{0,30}\btreasure\b", re.I), 0.85),
+    # R4: only when you create it ("opponent creates", "would create" don't ramp you).
+    ("ramp:treasures", re.compile(r"(?<!would )\bcreate\b.{0,30}\btreasure\b", re.I), 0.85),
     ("ramp:tap-add", re.compile(r"\{t\}: add\b", re.I), 0.9),
     ("ramp:cost-reduce", re.compile(r"spells you cast.{0,40}cost \{\d+\} less", re.I), 0.85),
     (
         "ramp:land-onto-battlefield",
         re.compile(
-            r"put (a|an additional|up to \w+) land cards? [^.]{0,40}onto the battlefield", re.I
+            r"put (a|an additional|up to \w+) land cards? [^.]{0,40}onto the battlefield|"
+            r"return (up to \w+ )?(target )?lands? cards? from your graveyard to the battlefield",
+            re.I,
         ),
         0.85,
     ),
+    ("ramp:extra-land-drop", re.compile(
+        r"play an additional land|may play (up to )?\w+ additional lands", re.I), 0.85),
+    (
+        "ramp:land-type-fetch",
+        # R39. Not a fetchland (R1: a land) and not typecycling (open question).
+        re.compile(
+            r"^(?!.*sacrifice this land)(?!.*cycling).*search your library for "
+            r"(a|an|up to \w+|up to x)( basic)? (plains|island|swamp|mountain|forest)"
+            r"( or (plains|island|swamp|mountain|forest))? cards?[^.]*"
+            r"(onto the battlefield|into your hand)",
+            re.I | re.S,
+        ),
+        0.9,
+    ),
+    (
+        "ramp:mana-amount",
+        # R38. A counterspell that refunds mana stays targeted-only (R2).
+        re.compile(
+            r"^(?!.*counter target).*(\badds? (an amount of|that much|an additional|"
+            r"one additional) (\{[wubrgcs]\}|one mana|mana|two mana)|"
+            r"produces twice as much|for mana, (it|that player|its controller) adds)",
+            re.I | re.S,
+        ),
+        0.85,
+    ),
+    (
+        "ramp:untap-land",
+        # Needs {T} in the cost: "Untap up to three lands" on a counterspell is a refund.
+        re.compile(r"\{t\}[^:\n]*:[^\n]{0,40}untap (target|another target) land", re.I),
+        0.85,
+    ),
+    # R34: reminder text is stripped, so keywords whose only mana/land text sat in
+    # the reminder are matched by name.
+    ("ramp:basic-landcycling", re.compile(r"\bbasic landcycling\b", re.I), 0.85),
+    ("ramp:powerstone", re.compile(r"\bcreate[^.]{0,30}powerstone", re.I), 0.85),
 ]
 
 CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
@@ -126,6 +164,12 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         0.85,
     ),
     (
+        "ca:clue-maker",
+        # R34: Clue/Blood tokens are a draw for mana; the token text is reminder text.
+        re.compile(r"\binvestigate\b|\bcreates?\b[^.]{0,30}\b(clue|blood) tokens?", re.I),
+        0.85,
+    ),
+    (
         "ca:tap-draw",
         # Sacrifice in the cost = one-shot; discard = R5' break-even loot.
         re.compile(
@@ -139,9 +183,12 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
 TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     (
         "targeted:destroy",
+        # R15: adjectives ("nonblack attacking creature") and "up to one" count; your own
+        # permanent (sacrifice outlets) does not.
         re.compile(
-            r"destroy target (creature|planeswalker|nonland|artifact|"
-            r"enchantment|permanent|land)",
+            r"destroy (up to \w+ )?target (?!player\b)([\w,-]+ ){0,3}?"
+            r"(creature|planeswalker|artifact|enchantment|permanent|land|battle)s?\b"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
             re.I,
         ),
         1.0,
@@ -167,10 +214,11 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ),
     (
         "targeted:bounce",
+        # R9: "creature CARD from your graveyard" is recursion, not bounce.
         re.compile(
-            r"return target (creature|nonland|permanent|artifact|enchantment) "
-            r".{0,60}(owner'?s? hand|hand)",
-            re.I | re.S,
+            r"return target (creature|nonland permanent|nonland|permanent|artifact|enchantment)"
+            r"(?! card)\b(?![^.\n]{0,60}graveyard)[^.\n]{0,80}hand",
+            re.I,
         ),
         0.85,
     ),
@@ -179,6 +227,70 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         re.compile(
             r"deals? \d+ damage to (any target|target creature|"
             r"target creature or player|target creature, player, or planeswalker)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:shrink",
+        # R35: -X/-X on a target is removal; -N/-0 is a combat trick.
+        re.compile(
+            r"(target (\w+ ){0,3}creature|up to (one|two|three) target creatures?)"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)[^.\n]{0,60}gets? -(\d+|x)/-(?!0\b)(\d+|x)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:minus-counters",
+        re.compile(
+            r"put (a|an|two|three|four|x|\d+) -1/-1 counters? on (up to one )?target creature"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:damage-var",
+        # R36: burn whose amount is X / "damage equal to ..." (targeted:burn needs digits).
+        re.compile(
+            r"deals? (x|that much|damage equal to [^.]{3,60}) (damage )?to (any target|"
+            r"up to \w+ target creatures?|target creature|target (creature|planeswalker)"
+            r"( or planeswalker)?)(?![^.\n]{0,40}\byou (control|own)\b)|"
+            r"deals damage equal to [^.]{3,60} to (any target|target creature( or planeswalker)?)"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:fight",
+        re.compile(
+            r"target creature you control (fights|deals damage equal to (its|twice its) power to)"
+            r" (up to one )?(another )?target (creature|planeswalker) "
+            r"(you don't control|an opponent controls)|"
+            r"\bfights? (up to one )?(another )?target creature you don't control",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:pacify",
+        # R40: Pacifism-style auras neutralise one creature.
+        re.compile(
+            r"enchanted creature (can't attack or block|can't attack, block|"
+            r"doesn't untap during its controller's untap step)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:steal",
+        # R40: permanent control change; "until end of turn" (threaten) is not removal.
+        re.compile(
+            r"gain control of target (?!player)[^.\n]{0,50}(?<!until end of turn)(\.|$)"
+            r"(?![^.\n]*until end of turn)|"
+            r"you control enchanted (creature|permanent|artifact|planeswalker|land)\b",
             re.I,
         ),
         0.85,
@@ -286,12 +398,26 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:sac-feeder": "Sacrifice payoff draws multiple cards",
     "ca:play-from-top": "Plays cards from the top of your library",
     "ca:tap-draw": "Tap ability that draws a card",
+    "ca:clue-maker": "Investigates or makes Clue/Blood tokens",
+    "ramp:extra-land-drop": "Lets you play additional lands",
+    "ramp:land-type-fetch": "Searches for a Forest/Plains/etc. card",
+    "ramp:mana-amount": "Adds an amount of mana, or an additional mana",
+    "ramp:untap-land": "Taps to untap a land",
+    "ramp:basic-landcycling": "Basic landcycling fetches a land",
+    "ramp:powerstone": "Creates Powerstone tokens",
+    "ramp:land-big-mana": "Land that makes more than one mana",
     "ca:cascade-engine": "Gives spells cascade, or discovers repeatedly",
     "ca:impulse-engine": "Recurring look-at-top, put one into hand",
     "ramp:land-onto-battlefield": "Puts extra land cards onto the battlefield",
     "targeted:exile-that": "Exiles a creature it targeted earlier",
     "targeted:protect": "One-shot protection or redirect",
     "targeted:destroy": "Destroys a single target",
+    "targeted:shrink": "Gives a target creature -X/-X",
+    "targeted:minus-counters": "Puts -1/-1 counters on a target creature",
+    "targeted:damage-var": "Deals X or equal-to damage to a target",
+    "targeted:pacify": "Aura that stops a creature attacking, blocking or untapping",
+    "targeted:steal": "Gains permanent control of a target",
+    "targeted:fight": "Fights or bites a target creature",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",
     "targeted:edict": "Forces opponent to sacrifice",
@@ -329,9 +455,47 @@ def _score_face_ex(text: str) -> tuple[dict[str, float], dict[str, list[str]]]:
     return scores, reasons
 
 
+_REMINDER = re.compile(r"\([^)\n]*\)")
+
+# R41: a land is ramp only when it beats one-mana-per-land-drop.
+_LAND_RAMP_KEPT = frozenset({
+    "ramp:treasures", "ramp:untap-land", "ramp:mana-amount", "ramp:cost-reduce",
+    "ramp:extra-land-drop", "ramp:land-onto-battlefield", "ramp:powerstone",
+})
+# Fixed 2+ mana only from a tap-only cost: "{1}, {T}: Add {U}{B}" is a filter, not ramp.
+_LAND_BIG_MANA = re.compile(
+    r"(^|\n)\{t\}[^:\n{]{0,60}:\s*add ((\{[^}]+\}){2,}|(two|three|four|five|x) mana)|"
+    r"\badd (\{[^}]+\}){2,} instead\b|"
+    r"add [^.\n]{0,60}\b(for each|equal to)\b|\b(two|three) basic land cards\b",
+    re.I,
+)
+_BOUNCE_LAND = re.compile(
+    r"return (a|an untapped) [^.\n]{0,20}\byou control to its owner'?s hand", re.I
+)
+_RAMP_WEIGHT = {rid: w for rid, _, w in RAMP_PATTERNS}
+
+
+def _gate_land_ramp(text: str, scores: dict[str, float], reasons: dict[str, list[str]]) -> None:
+    kept = [rid for rid in reasons["ramp"] if rid in _LAND_RAMP_KEPT]
+    if _LAND_BIG_MANA.search(text) and not _BOUNCE_LAND.search(text):
+        kept.append("ramp:land-big-mana")
+    reasons["ramp"] = kept
+    scores["ramp"] = max((_RAMP_WEIGHT.get(rid, 0.9) for rid in kept), default=0.0)
+
+
+def _is_land(type_line: Any) -> bool:
+    return isinstance(type_line, str) and re.search(r"\bLand\b", type_line) is not None
+
+
 def _unname(text: str, name: Any) -> str:
-    """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade."""
-    return text.replace(name, "~") if isinstance(name, str) and name else text
+    """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade.
+
+    Also drops parenthesised reminder text (R34): "({T}: Add {G}.)" on a basic-typed
+    land or "Draw a card" inside a token's reminder is not the card's own effect.
+    """
+    if isinstance(name, str) and name:
+        text = text.replace(name, "~")
+    return _REMINDER.sub("", text)
 
 
 def classify_by_rules_ex(
@@ -344,21 +508,26 @@ def classify_by_rules_ex(
     rule pattern that matched (across all faces per R25). Dedup within
     a label preserves first-seen order.
     """
-    texts: list[str] = []
+    texts: list[tuple[str, bool]] = []
+    card_types = str(card.get("type_line") or "").split(" // ")
     faces = card.get("card_faces")
     if isinstance(faces, list) and faces:
-        for face in faces:
+        for i, face in enumerate(faces):
             if isinstance(face, dict):
                 t = _unname(face.get("oracle_text") or "", face.get("name"))
+                ft = face.get("type_line") or (card_types[i] if i < len(card_types) else "")
                 if t:
-                    texts.append(t)
+                    texts.append((t, _is_land(ft)))
     if not texts:
-        texts.append(_unname(card.get("oracle_text") or "", card.get("name")))
+        text = _unname(card.get("oracle_text") or "", card.get("name"))
+        texts.append((text, _is_land(card_types[0])))
 
     scores: dict[str, float] = {lab: 0.0 for lab in LABELS}
     reasons: dict[str, list[str]] = {lab: [] for lab in LABELS if lab != "plan"}
-    for text in texts:
+    for text, is_land in texts:
         face_scores, face_reasons = _score_face_ex(text)
+        if is_land:
+            _gate_land_ramp(text, face_scores, face_reasons)
         for lab, s in face_scores.items():
             if s > scores[lab]:
                 scores[lab] = s

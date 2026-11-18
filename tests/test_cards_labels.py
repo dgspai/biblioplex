@@ -111,10 +111,11 @@ async def test_put_404_when_no_card(app: FastAPI) -> None:
 async def test_delete_reverts_to_rules_verdict(app: FastAPI) -> None:
     conn = AsyncMock()
     conn.execute.side_effect = _seq(
-        # SELECT oracle_text/card_faces — a ramp rock, so rules say ramp.
+        # SELECT name/type_line/oracle_text/card_faces — a ramp rock, so rules say ramp.
         AsyncMock(
             one_or_none=lambda: SimpleNamespace(
-                oracle_text="{T}: Add {G}{G}.", card_faces=None
+                name="Some Rock", type_line="Artifact",
+                oracle_text="{T}: Add {G}{G}.", card_faces=None,
             )
         ),
         # UPDATE ... RETURNING — override cleared, so label_reasons has no _override.
