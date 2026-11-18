@@ -69,6 +69,7 @@ _DECK_ROW_COLUMNS = (
     # `/decks/price` collects these as `missing_price` rather than
     # silently zeroing the sum.
     "price_usd",
+    "land_profile",
 )
 
 
@@ -232,7 +233,7 @@ resolved AS (
 SELECT r.ord, r.input_name, r.similarity,
        c.id, c.oracle_id, c.name, c.type_line, c.layout, c.card_faces,
        c.predicted_labels, c.cmc, c.mana_cost, c.color_identity,
-       c.legalities, c.has_unlimited_copies, c.price_usd
+       c.legalities, c.has_unlimited_copies, c.price_usd, c.land_profile
 FROM resolved r
 JOIN cards c ON c.id = r.id
 ORDER BY r.ord

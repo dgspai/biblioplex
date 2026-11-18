@@ -46,6 +46,7 @@ from psycopg.types.json import Jsonb
 from sqlalchemy import text
 
 from biblioplex import SCRYFALL_BULK_TIMEOUT, SCRYFALL_HEADERS
+from biblioplex.classify.lands import land_profile
 from biblioplex.classify.rules import LABELS, classify_by_rules_ex
 from biblioplex.decks.service import rebuild_all_deck_cards
 from biblioplex.ingest.bulk import discover_bulk_uri
@@ -423,13 +424,14 @@ so the runner can be exercised without the rules module + DB roundtrip.
 _CLASSIFY_PAGE: int = 2048
 
 _CLASSIFY_SELECT_SQL: str = (
-    "SELECT id, name, type_line, oracle_text, card_faces, label_reasons FROM cards "
+    "SELECT id, name, type_line, oracle_text, card_faces, produced_mana, label_reasons "
+    "FROM cards "
     "WHERE id > :last_id "
     "ORDER BY id LIMIT :limit"
 )
 _CLASSIFY_UPDATE_SQL: str = (
     "UPDATE cards SET predicted_labels = :labels, label_scores = :scores, "
-    "label_reasons = :reasons WHERE id = :id"
+    "label_reasons = :reasons, land_profile = :land WHERE id = :id"
 )
 
 
@@ -488,11 +490,18 @@ async def default_classify(engine: _Engine) -> int:
                     reasons["_override"] = override
                 else:
                     labels = [lab for lab in LABELS if scores[lab] >= threshold]
+                land = land_profile({
+                    "type_line": row.type_line,
+                    "oracle_text": row.oracle_text,
+                    "card_faces": row.card_faces,
+                    "produced_mana": row.produced_mana,
+                }, labels)
                 payload.append({
                     "id": str(row.id),
                     "labels": labels,
                     "scores": Jsonb(scores),
                     "reasons": Jsonb(reasons),
+                    "land": Jsonb(land) if land is not None else None,
                 })
             await conn.execute(update_stmt, payload)
             total += len(payload)

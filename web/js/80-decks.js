@@ -844,6 +844,20 @@ async function _loadDeckSyncStrip(deckId) {
   }
 }
 
+// Manabase line: how the lands enter, what colours they make, and which do a job.
+function _renderLandSummary(l) {
+  if (!l || !(l.unknown + Object.values(l.etb || {}).reduce((a, b) => a + b, 0))) return "";
+  const colors = Object.entries(l.colors || {}).sort((x, y) => y[1] - x[1])
+    .map(([k, n]) => `${_LAND_COLOR_LABEL[k] || k} ${n}`).join(" · ");
+  const util = (l.utility || []).map((u) =>
+    `<li><span class="build-card-name">${escapeHtml(u.name)}</span>${landTags({ utility: u.utility })}</li>`).join("");
+  const unknown = l.unknown ? ` · ${l.unknown} not profiled yet` : "";
+  return `<div class="deck-lands"><h3>Manabase</h3>
+    <p class="help">${l.etb.untapped} untapped · ${l.etb.conditional} cond. · ${l.etb.tapped} tapped${unknown}</p>
+    ${colors ? `<p class="help">${escapeHtml(colors)}</p>` : ""}
+    ${util ? `<ul class="build-cards">${util}</ul>` : ""}</div>`;
+}
+
 // Render the wizard-style scoreboard (slot deltas + curve vs guide targets)
 // on a saved deck's detail pane, from its HEAD decklist.
 async function _renderDeckStats(deck) {
@@ -870,6 +884,7 @@ async function _renderDeckStats(deck) {
     }).then((r) => (r.ok ? r.json() : null)).catch(() => null);
     el.innerHTML = `<p class="help">${plural(total, "card")} · ${lands} lands / 38${bracket}</p>`
       + _renderDeckSlots(a) + _renderDeckCurve(a.curve, _CURVE_TARGET_MAP)
+      + _renderLandSummary(a.lands)
       + _renderComboPanel(combos && combos.combos, null);
   } catch (_e) { el.innerHTML = ""; }
 }

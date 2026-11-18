@@ -29,6 +29,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.dialects import postgresql
 
+from biblioplex.classify.lands import land_profile
 from biblioplex.classify.rules import LABELS, RULE_DESCRIPTIONS, classify_by_rules_ex
 from biblioplex.decklist.resolve_pt import resolve_pt_names
 from biblioplex.dsl.compiler import (
@@ -130,6 +131,9 @@ def _decorate(
     out = dict(raw) if raw else {}
     out["predicted_labels"] = list(predicted_labels or [])
     out["label_scores"] = dict(label_scores or {})
+    land = land_profile(out, out["predicted_labels"])
+    if land is not None:
+        out["land_profile"] = land
     if label_reasons is not _REASONS_UNREAD:
         out["labels_overridden"] = bool(
             isinstance(label_reasons, dict) and "_override" in label_reasons
@@ -373,6 +377,7 @@ def _build_cards_table() -> sa.Table:
         sa.Column("predicted_labels", postgresql.ARRAY(sa.Text)),
         sa.Column("label_scores", postgresql.JSONB),
         sa.Column("label_reasons", postgresql.JSONB),
+        sa.Column("land_profile", postgresql.JSONB),
         sa.Column("raw", postgresql.JSONB),
     )
 

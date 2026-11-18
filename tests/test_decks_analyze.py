@@ -239,6 +239,7 @@ async def test_ramp_tagged_land_flagged_is_land(app: FastAPI) -> None:
             "qty": 1,
             "predicted_labels": ["ramp"],
             "is_land": True,
+            "land_profile": None,
         },
     ]
 

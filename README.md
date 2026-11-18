@@ -38,7 +38,7 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 ## Features
 
 **Search**
-- Search about 34,600 unique cards with Scryfall syntax, plus `pred:`, `has:combo`, `combo:`, `edhrec<` and ownership operators.
+- Search about 34,600 unique cards with Scryfall syntax, plus `pred:`, `land:`, `has:combo`, `combo:`, `edhrec<` and ownership operators.
 - Find similar cards by embedding, or substitutes that keep a card's deck role.
 - Inspect each card's oracle tags, related cards, combos and predicted role labels; see why a label applies and override it.
 - See every printing of a card and how many of each you own.
@@ -188,6 +188,8 @@ combo:"Isochron Scepter"              # cards that combo with Isochron Scepter
 is:commander id<=esper edhrec<500     # popular Esper-or-narrower commanders
 is:unowned is:wanted                  # your shopping list (after importing a wishlist)
 otag:sweeper-one-sided id<=wb         # one-sided board wipes in Orzhov colours
+land:dual land:untapped id<=ub        # untapped Dimir duals
+land:utility c:g                      # green lands that do a job (removal, card advantage, creature lands...)
 ```
 
 Results are scoped by `SEARCH_DEFAULT_FILTER`, which `.env.example` sets to `game:paper f:commander`. Full reference and tested examples: [docs/search-syntax.md](docs/search-syntax.md).
