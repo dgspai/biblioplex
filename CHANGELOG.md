@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.17.0 (2026-11-18)
+
+### Features
+
+- Fetch lands and swap on land recommendations ([#34](https://github.com/dgspai/biblioplex/pull/34),
+  [`0142f1e`](https://github.com/dgspai/biblioplex/commit/0142f1e60ab5e0216713a07804cab15fe96aeab8))
+
+
 ## v0.16.0 (2026-11-18)
 
 ### Features
