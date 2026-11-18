@@ -23,6 +23,11 @@ _SELECTION = re.compile(
     r"^[^\n]*\{[^}\n]+\}[^:\n]*:(?!\s*add\b)[^\n]*\b(look at the top|scry \d|surveil \d)",
     re.I | re.M,
 )
+_FETCH = re.compile(
+    r"sacrifice this land[^:\n]*:\s*search your library for [^.\n]*?"
+    r"\b(land|plains|island|swamp|mountain|forest) cards?\b",
+    re.I,
+)
 _ROLES = ("ramp", "card_advantage", "targeted_disrupt", "mass_disrupt")
 
 
@@ -63,6 +68,7 @@ def land_profile(card: Mapping[str, Any], labels: Iterable[str]) -> dict[str, An
         ("creature_land", _CREATURE_LAND),
         ("sac_outlet", _SAC_OUTLET),
         ("selection", _SELECTION),
+        ("fetch", _FETCH),
     ):
         if pat.search(text):
             utility.append(kind)

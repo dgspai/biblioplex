@@ -122,7 +122,9 @@ _PRED_KEYS = frozenset({"pred"})
 _LAND_KEYS = frozenset({"land"})
 _LAND_COLORS = frozenset({"none", "colorless", "mono", "dual", "tri", "four", "five"})
 _LAND_ETB = frozenset({"untapped", "tapped", "conditional"})
-_LAND_UTILITY_KINDS = frozenset({"creature_land", "sac_outlet", "selection", *_PRED_LABELS})
+_LAND_UTILITY_KINDS = frozenset(
+    {"creature_land", "sac_outlet", "selection", "fetch", *_PRED_LABELS}
+)
 
 _HAS_RAW_FIELD: dict[str, str] = {
     "indicator": "color_indicator",

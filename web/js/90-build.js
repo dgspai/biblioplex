@@ -22,7 +22,7 @@ const BUILD_STEP_SLOTS = { 3: ["card_advantage"], 4: ["ramp"], 5: ["targeted_dis
 // Search projection for wizard card rows — base cols plus usd price so
 // rows can show cmc + $ (suggest/manabase already return full cards).
 const _BUILD_LIST_PROJ = LIST_PROJECTION_BASE
-  + ",prices.usd,oracle_text,land_profile,image_uris.normal,card_faces.0.image_uris.normal";
+  + ",prices.usd,oracle_text,land_profile,produced_mana,image_uris.normal,card_faces.0.image_uris.normal";
 
 // A land counts as ramp only if it makes extra mana or puts more lands on
 // the battlefield — plain fixing/utility lands (Command Tower, Reliquary
@@ -420,7 +420,7 @@ const _LAND_COLOR_GROUP = {
   five: "5-color", four: "4-color", tri: "3-color", dual: "2-color",
   mono: "1-color", colorless: "Colorless", none: "No-mana",
 };
-const _LAND_GROUPS = Object.values(_LAND_COLOR_GROUP).map((c) => `${c} lands`);
+const _LAND_GROUPS = ["Fetch", ...Object.values(_LAND_COLOR_GROUP)].map((c) => `${c} lands`);
 // Display order + assignment precedence for the decklist sidebar. Lands
 // win over creature (Dryad Arbor is a land); artifact/enchantment creatures
 // sit under Creatures.
@@ -428,9 +428,10 @@ const _DECK_TYPE_ORDER = [
   "Commander", "Creatures", "Planeswalkers", "Instants", "Sorceries",
   "Artifacts", "Enchantments", "Battles", ..._LAND_GROUPS, "Lands", "Other",
 ];
-// On the land step, lands split by how many colours they make.
+// On the land step, lands split by how many colours they make; fetches first.
 function _landBucket(bucket, profile) {
   if (bucket !== "Lands" || _build.step !== _LAND_STEP || !profile) return bucket;
+  if ((profile.utility || []).includes("fetch")) return "Fetch lands";
   const c = _LAND_COLOR_GROUP[profile.colors];
   return c ? `${c} lands` : bucket;
 }
@@ -599,11 +600,16 @@ function _roleEdit(id, labels) {
 
 // Suggestion/search results with an add (or remove) control per card.
 let _buildLastCards = [];
-let _buildSwapCards = [];
-// `ctl(card, compact)` overrides the add/remove control (land swaps).
-function _buildCardRows(cards, ctl) {
-  if (!ctl) _buildLastCards = cards || [];
-  const control = ctl || ((c, compact) => _addBtn(c.name, _buildHas(c.name), compact));
+// Land step: a nonbasic not yet in the deck can replace a basic.
+function _swapBtn(c, compact) {
+  if (_build.step !== _LAND_STEP || !_isLandType(c.type_line) || _BASIC_NAMES.has(c.name)) return "";
+  if (_buildHas(c.name) || !Object.keys(_build.deck).some((n) => _BASIC_NAMES.has(n))) return "";
+  const prod = (c.produced_mana || []).filter((x) => "WUBRG".includes(x)).join("");
+  return `<button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">${compact ? "⇄" : "swap for a basic"}</button>`;
+}
+function _buildCardRows(cards) {
+  _buildLastCards = cards || [];
+  const control = (c, compact) => _addBtn(c.name, _buildHas(c.name), compact) + _swapBtn(c, compact);
   if (!cards || !cards.length) return `<p class="empty">Nothing to suggest.</p>`;
   if (_buildPrefs.recView === "stack") {
     // Grouped by type like the decklist; the chosen sort holds within a group.
@@ -664,6 +670,7 @@ const _LAND_FACETS = [
   ["untapped", "conditional", "tapped"],
   ["colorless", "mono", "dual", "tri", "five"],
   ["utility"],
+  ["fetch"],
 ];
 const _buildLandSel = new Set();
 function _landFacetChipsHtml() {
@@ -1057,23 +1064,6 @@ async function _renderBuildStep6(body) {
     cutHtml = `<h3>Cut to 100 · ${total - 100} over</h3><div id="buildCutList">${_dlTypeGroups(entries, null)}</div>`;
   }
 
-  // Nonbasics from the manabase recommender: swapping one in pulls a basic
-  // so the land count holds at 38.
-  let swapHtml = `<p class="empty">Set a commander for nonbasic suggestions.</p>`;
-  if (_build.commander) {
-    try {
-      const mb = await _buildPost("/decks/manabase?land_count=38", { commander: _build.commander });
-      const names = (mb.nonbasics || []).map((c) => c.name).filter((n) => n && !_buildHas(n));
-      const res = names.length
-        ? await _buildPost("/cards/collection", { identifiers: names.map((name) => ({ name })) })
-        : { data: [] };
-      _buildSwapCards = res.data || [];
-      swapHtml = `<div id="buildSwapList">${_buildSwapRows()}</div>`;
-    } catch (err) {
-      swapHtml = `<p class="state-error" role="alert">Manabase: ${escapeHtml(err.message || "error")}</p>`;
-    }
-  }
-
   body.innerHTML = `
     <p class="build-slot-goals">lands ${lands} / 38 · ${etb.untapped || 0} untapped · ${etb.conditional || 0} cond. · ${etb.tapped || 0} tapped${curveNotes ? ` <span class="help">(curve over at ${escapeHtml(curveNotes)})</span>` : ""}</p>
     ${chartsHtml}
@@ -1081,18 +1071,8 @@ async function _renderBuildStep6(body) {
     <div id="buildSwapNote" class="help"></div>
     ${cutHtml}
     ${_landFacetChipsHtml()}
-    ${_buildSearchPanelHtml("t:land", true)}
-    <h3>Swap in a nonbasic</h3>
-    ${swapHtml}`;
+    ${_buildSearchPanelHtml("t:land", true)}`;
   await _runBuildSearch();
-}
-
-function _buildSwapRows() {
-  if (!_buildSwapCards.length) return `<p class="empty">All suggestions already in the deck.</p>`;
-  return _buildCardRows(_buildSwapCards, (c, compact) => {
-    const prod = (c.produced_mana || []).filter((x) => "WUBRG".includes(x)).join("");
-    return `<button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">${compact ? "⇄" : "swap in"}</button>`;
-  });
 }
 
 // Combos present in a deck + combos it's one card away from. `present`
@@ -1432,7 +1412,6 @@ buildPaneEl.addEventListener("click", async (e) => {
       if ($("#buildCutList")) await _renderBuildStep();
     } else {
       if ($("#bsResults") && _buildLastCards.length) $("#bsResults").innerHTML = _buildCardRows(_buildLastCards);
-      if ($("#buildSwapList")) $("#buildSwapList").innerHTML = _buildSwapRows();
     }
     return;
   }
@@ -1444,6 +1423,9 @@ buildPaneEl.addEventListener("click", async (e) => {
     const nm = add.dataset.buildAdd;
     const rowId = add.closest("[data-id]") && add.closest("[data-id]").dataset.id;
     _buildAdd(nm);
+    const row = add.closest("[data-id]");
+    const swap = row && row.querySelector("[data-build-swap]");
+    if (swap) swap.remove();
     add.outerHTML = _addBtn(nm, true, !!add.closest(".build-stack-card"));
     // Step 1: pull the added card's themes into the focus pool as suggestions.
     if (_build.step === 1) await _addFocusFromCard(rowId);

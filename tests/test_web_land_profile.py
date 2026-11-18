@@ -35,8 +35,17 @@ def test_land_step_reuses_the_recommendations_panel() -> None:
     assert '_buildSearchPanelHtml("t:land", true)' in step
     assert "_landFacetChipsHtml()" in step
     assert "_dlTypeGroups(" in step  # cut list: same list/stack rows as the deck
-    assert "_buildSwapRows()" in step  # nonbasic swaps: same rows with labels
-    assert "_buildCardRows(" in _fn(BUILD, "_buildSwapRows")
+    assert "Swap in a nonbasic" not in step and "/decks/manabase" not in step
+
+
+def test_land_recommendations_offer_swap_next_to_add() -> None:
+    rows = _fn(BUILD, "_buildCardRows")
+    assert "_swapBtn(" in rows
+    swap = _fn(BUILD, "_swapBtn")
+    assert "_LAND_STEP" in swap and "_BASIC_NAMES" in swap
+    assert "data-build-swap=" in swap and "data-build-swap-produces=" in swap
+    assert "produced_mana" in BUILD[BUILD.index("const _BUILD_LIST_PROJ") :][:200]
+    assert "_buildSwapRows" not in BUILD and "_buildSwapCards" not in BUILD
 
 
 def test_land_facets_filter_the_search() -> None:
@@ -65,3 +74,15 @@ def test_land_step_groups_lands_by_colours_like_card_types() -> None:
         assert f'"{label}' in BUILD
     assert "_landBucket(" in _fn(BUILD, "_dlTypeGroups")
     assert "_landBucket(" in _fn(BUILD, "_buildCardRows")
+
+
+def test_fetch_lands_get_their_own_group_and_label() -> None:
+    assert "fetch:" in CORE[CORE.index("const _LAND_UTIL_LABEL") :][:200]
+    bucket = _fn(BUILD, "_landBucket")
+    assert '"fetch"' in bucket and "Fetch lands" in BUILD
+    order = BUILD[BUILD.index("const _LAND_GROUPS") :][:200]
+    assert '["Fetch", ...' in order  # fetches lead the land groups
+
+
+def test_land_facets_offer_fetch() -> None:
+    assert "fetch" in BUILD[BUILD.index("const _LAND_FACETS") :][:800]

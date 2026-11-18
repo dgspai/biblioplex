@@ -162,7 +162,7 @@ function roleTags(labels) {
 // Land profile as visible chips: colours made, how it enters, utility kinds.
 const _LAND_COLOR_LABEL = { none: "no mana", colorless: "C", mono: "mono", dual: "dual", tri: "tri", four: "4c", five: "5c" };
 const _LAND_ETB_LABEL = { untapped: "untapped", tapped: "tapped", conditional: "cond." };
-const _LAND_UTIL_LABEL = { creature_land: "creature", sac_outlet: "sac", selection: "dig" };
+const _LAND_UTIL_LABEL = { fetch: "fetch", creature_land: "creature", sac_outlet: "sac", selection: "dig" };
 // `withRoles` false: the row already shows role tags, so skip those kinds.
 function landTags(p, withRoles = true) {
   if (!p) return "";
