@@ -33,11 +33,15 @@ class _Row:
         oracle_text: str,
         card_faces: Any = None,
         label_reasons: Any = None,
+        name: str | None = None,
+        type_line: str | None = None,
     ) -> None:
         self.id = id_
         self.oracle_text = oracle_text
         self.card_faces = card_faces
         self.label_reasons = label_reasons
+        self.name = name
+        self.type_line = type_line
 
 
 class _StubConn:
@@ -221,3 +225,14 @@ async def test_default_classify_threads_last_id_between_pages() -> None:
     assert conn.select_calls[0] in ("", "00000000-0000-0000-0000-000000000000")
     assert conn.select_calls[1] == "id-b"
     assert conn.select_calls[2] == "id-c"
+
+
+async def test_default_classify_passes_name_and_type_line() -> None:
+    """R41 gates ramp on a land's type_line; the self-name guard needs the name."""
+    from biblioplex.ingest.refresh import _CLASSIFY_SELECT_SQL
+
+    assert "name" in _CLASSIFY_SELECT_SQL and "type_line" in _CLASSIFY_SELECT_SQL
+    row = _Row("id-tower", "{T}: Add {G}.", name="Forest Tower", type_line="Land")
+    conn = _StubConn([row])
+    await default_classify(_StubEngine(conn))
+    assert conn.update_payloads[0][0]["labels"] == ["plan"]
