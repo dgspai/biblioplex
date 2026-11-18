@@ -51,3 +51,7 @@ def test_land_step_goal_line_uses_the_manabase_summary() -> None:
 
 def test_deck_stats_show_manabase() -> None:
     assert "_renderLandSummary(a.lands)" in _fn(DECKS, "_renderDeckStats")
+
+
+def test_rows_with_role_tags_do_not_repeat_roles_as_land_chips() -> None:
+    assert "landTags(c.land_profile, false)" in _fn(BUILD, "_buildCardRows")

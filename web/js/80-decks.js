@@ -846,7 +846,7 @@ async function _loadDeckSyncStrip(deckId) {
 
 // Manabase line: how the lands enter, what colours they make, and which do a job.
 function _renderLandSummary(l) {
-  if (!l) return "";
+  if (!l || !(l.unknown + Object.values(l.etb || {}).reduce((a, b) => a + b, 0))) return "";
   const colors = Object.entries(l.colors || {}).sort((x, y) => y[1] - x[1])
     .map(([k, n]) => `${_LAND_COLOR_LABEL[k] || k} ${n}`).join(" · ");
   const util = (l.utility || []).map((u) =>

@@ -1210,7 +1210,7 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 
 /* Land profile chips: colours made, how it enters, utility kinds. */
 .land-tags { display: inline-flex; flex-wrap: wrap; gap: 3px; margin-left: 4px; vertical-align: middle; }
-.land-tag { font-size: 0.62rem; font-weight: 600; line-height: 1; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; color: var(--fg-muted); }
+.land-tag { font-size: 0.62rem; font-weight: 600; line-height: 1; padding: 2px 4px; border: 1px solid var(--border); border-radius: 4px; color: var(--fg-muted); background: var(--bg); }
 .land-tag.land-untapped { color: var(--accent); border-color: currentColor; }
 .detail-land { margin: 0 0 8px; }
 .build-land-facets { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 4px; }

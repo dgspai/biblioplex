@@ -599,7 +599,7 @@ function _buildCardRows(cards, ctl) {
     for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
     return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
       `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
-        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels) + landTags(c.land_profile), ctl: control(c, true) })).join("")}</div>`
+        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels) + landTags(c.land_profile, false), ctl: control(c, true) })).join("")}</div>`
     ).join("")}</div>`;
   }
   return `<ul class="build-cards">${cards.map((c) => {
@@ -610,7 +610,7 @@ function _buildCardRows(cards, ctl) {
     const textMeta = [c.type_line, usd].filter(Boolean).map(escapeHtml).join(" · ");
     const meta = [cost, textMeta].filter(Boolean).join(" · ");
     return `<li data-id="${escapeHtml(c.id || "")}" data-preview="">
-      <span class="build-card-name">${escapeHtml(c.name)}</span>${_roleEdit(c.id, c.predicted_labels)}${landTags(c.land_profile)}
+      <span class="build-card-name">${escapeHtml(c.name)}</span>${_roleEdit(c.id, c.predicted_labels)}${landTags(c.land_profile, false)}
       <span class="help">${meta}</span>
       ${control(c, false)}</li>`;
   }).join("")}</ul>`;

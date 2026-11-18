@@ -163,12 +163,14 @@ function roleTags(labels) {
 const _LAND_COLOR_LABEL = { none: "no mana", colorless: "C", mono: "mono", dual: "dual", tri: "tri", four: "4c", five: "5c" };
 const _LAND_ETB_LABEL = { untapped: "untapped", tapped: "tapped", conditional: "cond." };
 const _LAND_UTIL_LABEL = { creature_land: "creature", sac_outlet: "sac", selection: "dig" };
-function landTags(p) {
+// `withRoles` false: the row already shows role tags, so skip those kinds.
+function landTags(p, withRoles = true) {
   if (!p) return "";
   const chips = [
     [_LAND_COLOR_LABEL[p.colors], ""],
     [_LAND_ETB_LABEL[p.etb], ` land-${p.etb}`],
-    ...(p.utility || []).map((u) => [_ROLE_CODE[u] || _LAND_UTIL_LABEL[u] || u, ""]),
+    ...(p.utility || []).filter((u) => withRoles || !_ROLE_CODE[u])
+      .map((u) => [_ROLE_CODE[u] || _LAND_UTIL_LABEL[u] || u, ""]),
   ];
   const tags = chips.filter(([t]) => t)
     .map(([t, cls]) => `<span class="land-tag${cls}">${escapeHtml(t)}</span>`).join("");
