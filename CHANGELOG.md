@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.15.0 (2026-11-18)
+
+### Features
+
+- **classify**: Round 2 rules: reminder text, removal and ramp families, pacify/steal
+  ([#32](https://github.com/dgspai/biblioplex/pull/32),
+  [`e6d7173`](https://github.com/dgspai/biblioplex/commit/e6d7173b197c9fab9bedb7b55f733dab1778ad1b))
+
+
 ## v0.14.0 (2026-11-18)
 
 ### Features
