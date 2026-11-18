@@ -456,3 +456,66 @@ def test_r36_fight_is_removal() -> None:
         "targeted_disrupt"
     }
     assert _labels("{2}: This creature fights another target creature you control.") == {"plan"}
+
+
+def test_r37_extra_land_drop_is_ramp() -> None:
+    assert _labels("You may play an additional land on each of your turns.") == {"ramp"}
+    assert _labels("You may play two additional lands this turn.") == {"ramp"}
+
+
+def test_r38_mana_multipliers_are_ramp() -> None:
+    assert _labels(
+        "Whenever enchanted land is tapped for mana, its controller adds an additional {G}."
+    ) == {"ramp"}
+    assert _labels(
+        "{T}, Sacrifice an artifact: Add an amount of {R} equal to the sacrificed artifact's "
+        "mana value."
+    ) == {"ramp"}
+    assert _labels("If you tap a permanent for mana, it produces twice as much of that mana.") == {
+        "ramp"
+    }
+
+
+def test_r2_counterspell_that_refunds_mana_stays_targeted_only() -> None:
+    assert _labels(
+        "Counter target spell. Add an amount of {C} equal to that spell's mana value."
+    ) == {"targeted_disrupt"}
+
+
+def test_r39_typed_land_fetch_is_ramp() -> None:
+    assert _labels("Search your library for a Forest card, reveal it, put it into your hand.") == {
+        "ramp"
+    }
+    assert _labels(
+        "Search your library for up to two Forest cards, put them onto the battlefield tapped."
+    ) == {"ramp"}
+
+
+def test_r39_fetchland_and_typecycling_are_not_ramp() -> None:
+    """R1: a fetchland is a land. Typecycling is an open question (not ramp)."""
+    assert _labels(
+        "{T}, Pay 1 life, Sacrifice this land: Search your library for a Forest or Plains card, "
+        "put it onto the battlefield, then shuffle."
+    ) == {"plan"}
+    assert _labels(
+        "Forestcycling {2} ({2}, Discard this card: Search your library for a Forest card.)"
+    ) == {"plan"}
+
+
+def test_r39_untap_land_ability_is_ramp_but_refund_is_not() -> None:
+    assert _labels("{T}: Untap target land.") == {"ramp"}
+    assert _labels("Counter target spell. Untap up to three lands.") == {"targeted_disrupt"}
+
+
+def test_r39_land_from_graveyard_to_battlefield_is_ramp() -> None:
+    assert _labels("When this creature enters, return target land card from your graveyard to the battlefield.") == {
+        "ramp"
+    }
+
+
+def test_r4_treasure_you_create_is_ramp_opponent_creates_is_not() -> None:
+    assert _labels("When this creature enters, create a Treasure token.") == {"ramp"}
+    assert _labels("{T}: Target opponent creates X Treasure tokens.") == {"plan"}
+    assert _labels(
+        "If an opponent would create a Treasure token beyond the first one, instead you draw a card."
+    ) == {"plan"}

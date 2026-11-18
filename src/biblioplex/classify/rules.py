@@ -56,14 +56,48 @@ RAMP_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ("ramp:rock", re.compile(r"add \{[wubrgc]\}", re.I), 1.0),
     ("ramp:add-mana-n", re.compile(r"add (one|two|three|four|five|x) mana", re.I), 1.0),
     ("ramp:land-fetch", re.compile(r"search your library for .{0,40}\bland\b", re.I), 0.95),
-    ("ramp:treasures", re.compile(r"\bcreate.{0,30}\btreasure\b", re.I), 0.85),
+    # R4: only when you create it ("opponent creates", "would create" don't ramp you).
+    ("ramp:treasures", re.compile(r"(?<!would )\bcreate\b.{0,30}\btreasure\b", re.I), 0.85),
     ("ramp:tap-add", re.compile(r"\{t\}: add\b", re.I), 0.9),
     ("ramp:cost-reduce", re.compile(r"spells you cast.{0,40}cost \{\d+\} less", re.I), 0.85),
     (
         "ramp:land-onto-battlefield",
         re.compile(
-            r"put (a|an additional|up to \w+) land cards? [^.]{0,40}onto the battlefield", re.I
+            r"put (a|an additional|up to \w+) land cards? [^.]{0,40}onto the battlefield|"
+            r"return (up to \w+ )?(target )?lands? cards? from your graveyard to the battlefield",
+            re.I,
         ),
+        0.85,
+    ),
+    ("ramp:extra-land-drop", re.compile(
+        r"play an additional land|may play (up to )?\w+ additional lands", re.I), 0.85),
+    (
+        "ramp:land-type-fetch",
+        # R39. Not a fetchland (R1: a land) and not typecycling (open question).
+        re.compile(
+            r"^(?!.*sacrifice this land)(?!.*cycling).*search your library for "
+            r"(a|an|up to \w+|up to x)( basic)? (plains|island|swamp|mountain|forest)"
+            r"( or (plains|island|swamp|mountain|forest))? cards?[^.]*"
+            r"(onto the battlefield|into your hand)",
+            re.I | re.S,
+        ),
+        0.9,
+    ),
+    (
+        "ramp:mana-amount",
+        # R38. A counterspell that refunds mana stays targeted-only (R2).
+        re.compile(
+            r"^(?!.*counter target).*(\badds? (an amount of|that much|an additional|"
+            r"one additional) (\{[wubrgcs]\}|one mana|mana|two mana)|"
+            r"produces twice as much|for mana, (it|that player|its controller) adds)",
+            re.I | re.S,
+        ),
+        0.85,
+    ),
+    (
+        "ramp:untap-land",
+        # Needs {T} in the cost: "Untap up to three lands" on a counterspell is a refund.
+        re.compile(r"\{t\}[^:\n]*:[^\n]{0,40}untap (target|another target) land", re.I),
         0.85,
     ),
     # R34: reminder text is stripped, so keywords whose only mana/land text sat in
@@ -344,6 +378,10 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:play-from-top": "Plays cards from the top of your library",
     "ca:tap-draw": "Tap ability that draws a card",
     "ca:clue-maker": "Investigates or makes Clue/Blood tokens",
+    "ramp:extra-land-drop": "Lets you play additional lands",
+    "ramp:land-type-fetch": "Searches for a Forest/Plains/etc. card",
+    "ramp:mana-amount": "Adds an amount of mana, or an additional mana",
+    "ramp:untap-land": "Taps to untap a land",
     "ramp:basic-landcycling": "Basic landcycling fetches a land",
     "ramp:powerstone": "Creates Powerstone tokens",
     "ca:cascade-engine": "Gives spells cascade, or discovers repeatedly",
