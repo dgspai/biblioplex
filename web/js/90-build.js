@@ -420,8 +420,16 @@ async function _ensureCardMeta(names) {
 // sit under Creatures.
 const _DECK_TYPE_ORDER = [
   "Commander", "Creatures", "Planeswalkers", "Instants", "Sorceries",
-  "Artifacts", "Enchantments", "Battles", "Lands", "Other",
+  "Artifacts", "Enchantments", "Battles",
+  "Untapped lands", "Conditional lands", "Tapped lands", "Lands", "Other",
 ];
+const _LAND_STEP = 6;
+const _LAND_ETB_GROUP = { untapped: "Untapped lands", conditional: "Conditional lands", tapped: "Tapped lands" };
+// On the land step, lands split by how they enter instead of one "Lands" group.
+function _landBucket(bucket, profile) {
+  if (bucket !== "Lands" || _build.step !== _LAND_STEP || !profile) return bucket;
+  return _LAND_ETB_GROUP[profile.etb] || bucket;
+}
 function _deckBucket(name) {
   if (name === _build.commander) return "Commander";
   return _typeBucket((_cardMetaCache[name.toLowerCase()] || {}).type_line);
@@ -470,7 +478,7 @@ function _dlRow(e, mark) {
 function _dlTypeGroups(entries, markFn) {
   const groups = {};
   for (const label of _DECK_TYPE_ORDER) groups[label] = [];
-  for (const e of entries) groups[_deckBucket(e.name)].push(e);
+  for (const e of entries) groups[_landBucket(_deckBucket(e.name), e.landProfile)].push(e);
   const stack = _buildPrefs.dlView === "stack";
   let html = "";
   for (const label of _DECK_TYPE_ORDER) {
@@ -596,7 +604,7 @@ function _buildCardRows(cards, ctl) {
   if (_buildPrefs.recView === "stack") {
     // Grouped by type like the decklist; the chosen sort holds within a group.
     const groups = {};
-    for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
+    for (const c of cards) (groups[_landBucket(_typeBucket(c.type_line), c.land_profile)] ||= []).push(c);
     return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
       `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
         _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels) + landTags(c.land_profile, false), ctl: control(c, true) })).join("")}</div>`
@@ -844,7 +852,7 @@ async function _renderBuildStep() {
     if (step === 1) _renderBuildStep1(body);
     else if (step === 2) await _renderBuildStep2(body);
     else if (step >= 3 && step <= 5) await _renderBuildStepSlots(body, BUILD_STEP_SLOTS[step]);
-    else if (step === 6) await _renderBuildStep6(body);
+    else if (step === _LAND_STEP) await _renderBuildStep6(body);
     else if (step === _REVIEW_STEP) await _renderBuildStep7(body);
     // Fill the commander theme chips in whichever step just rendered a
     // search panel (no-op on steps 1 and 7).
