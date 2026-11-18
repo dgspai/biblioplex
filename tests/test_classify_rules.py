@@ -519,3 +519,22 @@ def test_r4_treasure_you_create_is_ramp_opponent_creates_is_not() -> None:
     assert _labels(
         "If an opponent would create a Treasure token beyond the first one, instead you draw a card."
     ) == {"plan"}
+
+
+def test_r40_pacifism_style_aura_is_targeted() -> None:
+    assert _labels("Enchant creature\nEnchanted creature can't attack or block.") == {
+        "targeted_disrupt"
+    }
+    assert _labels(
+        "Enchant creature\nEnchanted creature doesn't untap during its controller's untap step."
+    ) == {"targeted_disrupt"}
+
+
+def test_r40_permanent_steal_is_targeted_threaten_is_not() -> None:
+    assert _labels("Gain control of target creature with mana value X or less.") == {
+        "targeted_disrupt"
+    }
+    assert _labels(
+        "Gain control of target creature until end of turn. Untap that creature. "
+        "It gains haste until end of turn."
+    ) == {"plan"}

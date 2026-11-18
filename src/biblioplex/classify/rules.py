@@ -275,6 +275,26 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         0.85,
     ),
     (
+        "targeted:pacify",
+        # R40: Pacifism-style auras neutralise one creature.
+        re.compile(
+            r"enchanted creature (can't attack or block|can't attack, block|"
+            r"doesn't untap during its controller's untap step)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:steal",
+        # R40: permanent control change; "until end of turn" (threaten) is not removal.
+        re.compile(
+            r"gain control of target (?!player)[^.\n]{0,50}(?<!until end of turn)(\.|$)"
+            r"(?![^.\n]*until end of turn)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
         "targeted:exile-that",
         # Dispatch: the exile refers back to an earlier "target creature".
         re.compile(r"\btarget creature\b[^\n]*\n[^\n]*\bexile that creature\.", re.I),
@@ -393,6 +413,8 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "targeted:shrink": "Gives a target creature -X/-X",
     "targeted:minus-counters": "Puts -1/-1 counters on a target creature",
     "targeted:damage-var": "Deals X or equal-to damage to a target",
+    "targeted:pacify": "Aura that stops a creature attacking, blocking or untapping",
+    "targeted:steal": "Gains permanent control of a target",
     "targeted:fight": "Fights or bites a target creature",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",
