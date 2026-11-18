@@ -42,3 +42,7 @@ def test_utility_kind() -> None:
 def test_unknown_value_is_rejected() -> None:
     with pytest.raises(UnsupportedOperatorError):
         _sql("land:quad")
+
+
+def test_fetch_kind() -> None:
+    assert "land_profile -> 'utility') ? 'fetch'" in _sql("land:fetch")

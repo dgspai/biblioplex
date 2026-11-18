@@ -65,3 +65,15 @@ def test_land_step_groups_lands_by_colours_like_card_types() -> None:
         assert f'"{label}' in BUILD
     assert "_landBucket(" in _fn(BUILD, "_dlTypeGroups")
     assert "_landBucket(" in _fn(BUILD, "_buildCardRows")
+
+
+def test_fetch_lands_get_their_own_group_and_label() -> None:
+    assert "fetch:" in CORE[CORE.index("const _LAND_UTIL_LABEL") :][:200]
+    bucket = _fn(BUILD, "_landBucket")
+    assert '"fetch"' in bucket and "Fetch lands" in BUILD
+    order = BUILD[BUILD.index("const _LAND_GROUPS") :][:200]
+    assert '["Fetch", ...' in order  # fetches lead the land groups
+
+
+def test_land_facets_offer_fetch() -> None:
+    assert "fetch" in BUILD[BUILD.index("const _LAND_FACETS") :][:800]

@@ -190,6 +190,7 @@ is:unowned is:wanted                  # your shopping list (after importing a wi
 otag:sweeper-one-sided id<=wb         # one-sided board wipes in Orzhov colours
 land:dual land:untapped id<=ub        # untapped Dimir duals
 land:utility c:g                      # green lands that do a job (removal, card advantage, creature lands...)
+land:fetch                            # lands that sacrifice to search for a land
 ```
 
 Results are scoped by `SEARCH_DEFAULT_FILTER`, which `.env.example` sets to `game:paper f:commander`. Full reference and tested examples: [docs/search-syntax.md](docs/search-syntax.md).

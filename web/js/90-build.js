@@ -420,7 +420,7 @@ const _LAND_COLOR_GROUP = {
   five: "5-color", four: "4-color", tri: "3-color", dual: "2-color",
   mono: "1-color", colorless: "Colorless", none: "No-mana",
 };
-const _LAND_GROUPS = Object.values(_LAND_COLOR_GROUP).map((c) => `${c} lands`);
+const _LAND_GROUPS = ["Fetch", ...Object.values(_LAND_COLOR_GROUP)].map((c) => `${c} lands`);
 // Display order + assignment precedence for the decklist sidebar. Lands
 // win over creature (Dryad Arbor is a land); artifact/enchantment creatures
 // sit under Creatures.
@@ -428,9 +428,10 @@ const _DECK_TYPE_ORDER = [
   "Commander", "Creatures", "Planeswalkers", "Instants", "Sorceries",
   "Artifacts", "Enchantments", "Battles", ..._LAND_GROUPS, "Lands", "Other",
 ];
-// On the land step, lands split by how many colours they make.
+// On the land step, lands split by how many colours they make; fetches first.
 function _landBucket(bucket, profile) {
   if (bucket !== "Lands" || _build.step !== _LAND_STEP || !profile) return bucket;
+  if ((profile.utility || []).includes("fetch")) return "Fetch lands";
   const c = _LAND_COLOR_GROUP[profile.colors];
   return c ? `${c} lands` : bucket;
 }
@@ -664,6 +665,7 @@ const _LAND_FACETS = [
   ["untapped", "conditional", "tapped"],
   ["colorless", "mono", "dual", "tri", "five"],
   ["utility"],
+  ["fetch"],
 ];
 const _buildLandSel = new Set();
 function _landFacetChipsHtml() {

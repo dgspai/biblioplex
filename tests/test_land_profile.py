@@ -83,3 +83,26 @@ def test_scry_riding_on_a_mana_ability_is_not_selection() -> None:
         "a creature type with your commander, scry 1."
     )
     assert _p(path, ["W", "U", "B", "R", "G"])["utility"] == []
+
+
+def test_fetch_lands() -> None:
+    wilds = (
+        "{T}, Sacrifice this land: Search your library for a basic land card, "
+        "put it onto the battlefield tapped, then shuffle."
+    )
+    assert _p(wilds, None)["utility"] == ["fetch"]
+    delta = (
+        "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or "
+        "Swamp card, put it onto the battlefield, then shuffle."
+    )
+    assert _p(delta, None)["utility"] == ["fetch"]
+    verge = (
+        "This land enters tapped.\n{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search "
+        "your library for a Forest card and a Plains card, put them onto the battlefield tapped."
+    )
+    assert _p(verge, ["C"])["utility"] == ["fetch"]
+    armory = (
+        "{T}: Add {W}.\n{1}{R}{R}{W}, {T}, Sacrifice this land: Search your library for "
+        "an Aura card and/or an Equipment card, reveal them, put them into your hand."
+    )
+    assert "fetch" not in _p(armory, ["W"])["utility"]
