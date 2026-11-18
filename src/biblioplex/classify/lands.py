@@ -20,7 +20,8 @@ _SAC_OUTLET = re.compile(
 )
 # Activated (cost-colon) dig only: a Temple's ETB scry is not a job.
 _SELECTION = re.compile(
-    r"^[^\n]*\{[^}\n]+\}[^:\n]*:[^\n]*\b(look at the top|scry \d|surveil \d)", re.I | re.M
+    r"^[^\n]*\{[^}\n]+\}[^:\n]*:(?!\s*add\b)[^\n]*\b(look at the top|scry \d|surveil \d)",
+    re.I | re.M,
 )
 _ROLES = ("ramp", "card_advantage", "targeted_disrupt", "mass_disrupt")
 

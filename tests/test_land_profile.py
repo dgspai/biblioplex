@@ -74,3 +74,12 @@ def test_modal_spell_land_profiles_its_land_face() -> None:
     assert land_profile(card, ["targeted_disrupt"]) == {
         "colors": "mono", "etb": "tapped", "utility": []
     }
+
+
+def test_scry_riding_on_a_mana_ability_is_not_selection() -> None:
+    path = (
+        "This land enters tapped.\n{T}: Add one mana of any color in your commander's "
+        "color identity. When that mana is spent to cast a creature spell that shares "
+        "a creature type with your commander, scry 1."
+    )
+    assert _p(path, ["W", "U", "B", "R", "G"])["utility"] == []
