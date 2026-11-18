@@ -230,18 +230,19 @@ def _tally(
             curve[_cmc_bucket(row.cmc)] += qty
             for c, n in _count_pips(row.mana_cost).items():
                 pips[c] += n * qty
-        cards_out.append(
-            {
-                "id": str(rid),
-                "name": row.name,
-                "qty": qty,
-                "predicted_labels": labels,
-                # So a client can reproduce the tally's land-exclusion: a land
-                # tagged e.g. "ramp" is counted as land, not ramp (above), and
-                # a slot drill-down must exclude it to match the shown count.
-                "is_land": _is_land(row),
-            }
-        )
+        out: dict[str, Any] = {
+            "id": str(rid),
+            "name": row.name,
+            "qty": qty,
+            "predicted_labels": labels,
+            # So a client can reproduce the tally's land-exclusion: a land
+            # tagged e.g. "ramp" is counted as land, not ramp (above), and
+            # a slot drill-down must exclude it to match the shown count.
+            "is_land": _is_land(row),
+        }
+        if out["is_land"]:
+            out["land_profile"] = getattr(row, "land_profile", None)
+        cards_out.append(out)
 
     return _Tally(
         counts=counts,
@@ -448,6 +449,26 @@ def _legality_body_entries(sections: DeckSections) -> list[DeckEntry]:
     return subtract_entries(sections.main, sections.commander)
 
 
+def _land_summary(cards: list[dict[str, Any]]) -> dict[str, Any]:
+    """Manabase at a glance: lands by how they enter and by colours made."""
+    etb = {"untapped": 0, "tapped": 0, "conditional": 0}
+    colors: dict[str, int] = {}
+    utility: list[dict[str, Any]] = []
+    unknown = 0
+    for c in cards:
+        if not c.get("is_land"):
+            continue
+        p = c.get("land_profile")
+        if not isinstance(p, dict):
+            unknown += c["qty"]
+            continue
+        etb[p["etb"]] = etb.get(p["etb"], 0) + c["qty"]
+        colors[p["colors"]] = colors.get(p["colors"], 0) + c["qty"]
+        if p["utility"]:
+            utility.append({"name": c["name"], "qty": c["qty"], "utility": p["utility"]})
+    return {"etb": etb, "colors": colors, "utility": utility, "unknown": unknown}
+
+
 async def _analyze_pipeline(decklist: str, conn: Any) -> dict[str, Any]:
     """Run the /decks/analyze pipeline against an already-open conn.
 
@@ -473,6 +494,7 @@ async def _analyze_pipeline(decklist: str, conn: Any) -> dict[str, Any]:
         "curve_targets": dict(_CURVE_TARGETS),
         "curve_deltas": _curve_deltas(t.curve),
         "pips": t.pips,
+        "lands": _land_summary(t.cards_out),
         "cards": t.cards_out,
         "unresolved": t.unresolved,
         "inventory_summary": inventory_summary,
