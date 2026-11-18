@@ -42,6 +42,7 @@ class _Row:
         self.label_reasons = label_reasons
         self.name = name
         self.type_line = type_line
+        self.produced_mana: list[str] | None = None
 
 
 class _StubConn:
@@ -236,3 +237,15 @@ async def test_default_classify_passes_name_and_type_line() -> None:
     conn = _StubConn([row])
     await default_classify(_StubEngine(conn))
     assert conn.update_payloads[0][0]["labels"] == ["plan"]
+
+
+async def test_default_classify_writes_land_profile() -> None:
+    land = _Row("id-land", "This land enters tapped.\n{T}: Add {G} or {W}.", type_line="Land")
+    land.produced_mana = ["G", "W"]
+    rock = _Row("id-rock", "{T}: Add {C}{C}.", type_line="Artifact")
+    rock.produced_mana = ["C"]
+    conn = _StubConn([land, rock])
+    await default_classify(_StubEngine(conn))
+    by_id = {p["id"]: p for p in conn.update_payloads[0]}
+    assert by_id["id-land"]["land"].obj == {"colors": "dual", "etb": "tapped", "utility": []}
+    assert by_id["id-rock"]["land"] is None

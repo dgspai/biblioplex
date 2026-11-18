@@ -119,6 +119,10 @@ _COMBO_HAS_SENTINEL = "has"
 # Whitelisted against the LABELS tuple so a typo (`pred:rmap`) surfaces
 # as a 422 instead of a silent empty result set.
 _PRED_KEYS = frozenset({"pred"})
+_LAND_KEYS = frozenset({"land"})
+_LAND_COLORS = frozenset({"none", "colorless", "mono", "dual", "tri", "four", "five"})
+_LAND_ETB = frozenset({"untapped", "tapped", "conditional"})
+_LAND_UTILITY_KINDS = frozenset({"creature_land", "sac_outlet", "selection", *_PRED_LABELS})
 
 _HAS_RAW_FIELD: dict[str, str] = {
     "indicator": "color_indicator",
@@ -203,6 +207,7 @@ ALL_KNOWN_KEYS: frozenset[str] = (
     | _OTAG_KEYS
     | _COMBO_KEYS
     | _PRED_KEYS
+    | _LAND_KEYS
     | _SET_KEYS
     | _YEAR_KEYS
     | _RELEASED_KEYS
@@ -369,6 +374,8 @@ def _compile_kv(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
         return _compile_combo(node, cards)
     if key in _PRED_KEYS:
         return _compile_pred(node, cards)
+    if key in _LAND_KEYS:
+        return _compile_land(node, cards)
     if key in _COMMANDER_KEYS:
         if node.op != ":":
             raise UnsupportedOperatorError(f"unsupported operator: commander{node.op}")
@@ -792,6 +799,24 @@ def _compile_pred(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
         raise UnsupportedOperatorError(f"unknown predicted label: {value}")
     target = sa.cast(postgresql.array([value]), postgresql.ARRAY(sa.Text))
     return cards.c.predicted_labels.op("@>")(target)
+
+
+def _compile_land(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
+    """`land:X` — a facet of the persisted ``land_profile`` (classify/lands.py)."""
+    if node.op != ":":
+        raise UnsupportedOperatorError(f"unsupported operator: land{node.op}")
+    value = node.value.strip().lower()
+    col = cards.c.land_profile
+    if value in _LAND_COLORS:
+        return col.op("->>")("colors") == value
+    if value in _LAND_ETB:
+        return col.op("->>")("etb") == value
+    if value in ("utility", "plain"):
+        n = sa.func.jsonb_array_length(col.op("->")("utility"))
+        return n > 0 if value == "utility" else n == 0
+    if value in _LAND_UTILITY_KINDS - {"plan"}:
+        return col.op("->")("utility").op("?")(value)
+    raise UnsupportedOperatorError(f"unknown land facet: {value}")
 
 
 def _compile_game(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:

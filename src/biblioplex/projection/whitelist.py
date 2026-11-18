@@ -46,6 +46,7 @@ TOP_LEVEL_FIELDS: frozenset[str] = frozenset(
         "image_uris",
         "keywords",
         "label_scores",
+        "land_profile",
         "lang",
         "layout",
         "legalities",

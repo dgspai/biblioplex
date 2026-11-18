@@ -145,6 +145,8 @@ CREATE TABLE IF NOT EXISTS cards (
     -- D15.3: per-label rule ids that fired. Shape: `{label: [rule_id, ...]}`.
     -- Sourced from `classify_by_rules_ex` alongside `label_scores`.
     label_reasons      jsonb       NOT NULL DEFAULT '{}'::jsonb,
+    -- Lands only: {colors, etb, utility} from classify/lands.py; NULL otherwise.
+    land_profile       jsonb,
 
     raw                jsonb       NOT NULL
 );
