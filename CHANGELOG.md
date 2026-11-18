@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.17.1 (2026-11-18)
+
+### Bug Fixes
+
+- **classify**: Family lands and Thawing Glaciers are fetches
+  ([#35](https://github.com/dgspai/biblioplex/pull/35),
+  [`5eae340`](https://github.com/dgspai/biblioplex/commit/5eae340e3011b3e2794e791e2d35f3294968b7c1))
+
+
 ## v0.17.0 (2026-11-18)
 
 ### Features
