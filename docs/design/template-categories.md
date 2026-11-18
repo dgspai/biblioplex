@@ -29,10 +29,19 @@ mana faster than the natural one-land-per-turn drop.
 
 **Edge rulings**
 
-- **R1 — Lands are never ramp.** Even multi-color or fetch lands count
-  as `land` (the 38-slot, excluded from the model output). The land
-  slot is structural; the ramp slot is for cards that *accelerate
-  beyond* the land drop.
+- **R1 — Lands are not ramp** (refined by R41). Lands count as `land`
+  (the 38-slot). The land slot is structural; the ramp slot is for
+  cards that *accelerate beyond* the land drop.
+- **R41 — Lands that beat the land drop are ramp.** A land is `ramp`
+  only when it nets more than one mana per land: a fixed 2+ mana from a
+  tap-only cost (Ancient Tomb, Tron, Mishra's Workshop), "for each" /
+  "equal to" mana (Gaea's Cradle, Cabal Coffers, Nykthos), two or more
+  basic lands fetched (Myriad Landscape), Treasures, untapping lands, or
+  cost reduction (Eye of Ugin). Never ramp: one-mana lands of any colour
+  (Command Tower, duals, shocks), 1-for-1 fetches (Evolving Wilds,
+  Polluted Delta), bounce lands and karoos (they return a land), and
+  filter lands that pay mana to make two. Gated on the face's
+  `type_line`, so an MDFC's spell face keeps its ramp.
 - **R2 — Counterspells that also add mana** (Mana Drain) → `targeted-disrupt`
   only. The primary function is the counter; the mana is a bonus, not
   the reason it's in the deck.

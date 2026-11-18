@@ -405,6 +405,7 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ramp:untap-land": "Taps to untap a land",
     "ramp:basic-landcycling": "Basic landcycling fetches a land",
     "ramp:powerstone": "Creates Powerstone tokens",
+    "ramp:land-big-mana": "Land that makes more than one mana",
     "ca:cascade-engine": "Gives spells cascade, or discovers repeatedly",
     "ca:impulse-engine": "Recurring look-at-top, put one into hand",
     "ramp:land-onto-battlefield": "Puts extra land cards onto the battlefield",
@@ -456,6 +457,35 @@ def _score_face_ex(text: str) -> tuple[dict[str, float], dict[str, list[str]]]:
 
 _REMINDER = re.compile(r"\([^)\n]*\)")
 
+# R41: a land is ramp only when it beats one-mana-per-land-drop.
+_LAND_RAMP_KEPT = frozenset({
+    "ramp:treasures", "ramp:untap-land", "ramp:mana-amount", "ramp:cost-reduce",
+    "ramp:extra-land-drop", "ramp:land-onto-battlefield", "ramp:powerstone",
+})
+# Fixed 2+ mana only from a tap-only cost: "{1}, {T}: Add {U}{B}" is a filter, not ramp.
+_LAND_BIG_MANA = re.compile(
+    r"(^|\n)\{t\}[^:\n{]{0,60}:\s*add ((\{[^}]+\}){2,}|(two|three|four|five|x) mana)|"
+    r"\badd (\{[^}]+\}){2,} instead\b|"
+    r"add [^.\n]{0,60}\b(for each|equal to)\b|\b(two|three) basic land cards\b",
+    re.I,
+)
+_BOUNCE_LAND = re.compile(
+    r"return (a|an untapped) [^.\n]{0,20}\byou control to its owner'?s hand", re.I
+)
+_RAMP_WEIGHT = {rid: w for rid, _, w in RAMP_PATTERNS}
+
+
+def _gate_land_ramp(text: str, scores: dict[str, float], reasons: dict[str, list[str]]) -> None:
+    kept = [rid for rid in reasons["ramp"] if rid in _LAND_RAMP_KEPT]
+    if _LAND_BIG_MANA.search(text) and not _BOUNCE_LAND.search(text):
+        kept.append("ramp:land-big-mana")
+    reasons["ramp"] = kept
+    scores["ramp"] = max((_RAMP_WEIGHT.get(rid, 0.9) for rid in kept), default=0.0)
+
+
+def _is_land(type_line: Any) -> bool:
+    return isinstance(type_line, str) and re.search(r"\bLand\b", type_line) is not None
+
 
 def _unname(text: str, name: Any) -> str:
     """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade.
@@ -478,21 +508,26 @@ def classify_by_rules_ex(
     rule pattern that matched (across all faces per R25). Dedup within
     a label preserves first-seen order.
     """
-    texts: list[str] = []
+    texts: list[tuple[str, bool]] = []
+    card_types = str(card.get("type_line") or "").split(" // ")
     faces = card.get("card_faces")
     if isinstance(faces, list) and faces:
-        for face in faces:
+        for i, face in enumerate(faces):
             if isinstance(face, dict):
                 t = _unname(face.get("oracle_text") or "", face.get("name"))
+                ft = face.get("type_line") or (card_types[i] if i < len(card_types) else "")
                 if t:
-                    texts.append(t)
+                    texts.append((t, _is_land(ft)))
     if not texts:
-        texts.append(_unname(card.get("oracle_text") or "", card.get("name")))
+        text = _unname(card.get("oracle_text") or "", card.get("name"))
+        texts.append((text, _is_land(card_types[0])))
 
     scores: dict[str, float] = {lab: 0.0 for lab in LABELS}
     reasons: dict[str, list[str]] = {lab: [] for lab in LABELS if lab != "plan"}
-    for text in texts:
+    for text, is_land in texts:
         face_scores, face_reasons = _score_face_ex(text)
+        if is_land:
+            _gate_land_ramp(text, face_scores, face_reasons)
         for lab, s in face_scores.items():
             if s > scores[lab]:
                 scores[lab] = s

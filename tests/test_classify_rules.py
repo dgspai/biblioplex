@@ -546,3 +546,69 @@ def test_r40_steal_auras_are_targeted() -> None:
     assert _labels("Enchant permanent\nYou control enchanted permanent.") == {
         "targeted_disrupt"
     }
+
+
+def _land(text: str, type_line: str = "Land") -> set[str]:
+    s = classify_by_rules({"oracle_text": text, "type_line": type_line})
+    return {k for k, v in s.items() if v >= 0.5}
+
+
+def test_r41_lands_that_make_normal_mana_are_not_ramp() -> None:
+    assert _land("{T}: Add one mana of any color in your commander's color identity.") == {
+        "plan"
+    }
+    assert _land("({T}: Add {B} or {R}.)", "Land — Swamp Mountain") == {"plan"}
+    assert _land(
+        "{T}, Pay 1 life, Sacrifice this land: Search your library for an Island or "
+        "Swamp card, put it onto the battlefield, then shuffle."
+    ) == {"plan"}
+
+
+def test_r41_bounce_lands_are_not_ramp() -> None:
+    assert _land(
+        "This land enters tapped.\nWhen this land enters, return a land you control "
+        "to its owner's hand.\n{T}: Add {G}{U}."
+    ) == {"plan"}
+    assert _land(
+        "When this land enters, sacrifice it unless you return an untapped Island "
+        "you control to its owner's hand.\n{T}: Add {C}{U}."
+    ) == {"plan"}
+    assert _land("{T}: Add {C}.\n{U/R}, {T}: Add {U}{U}, {U}{R}, or {R}{R}.") == {"plan"}
+    assert _land("{T}: Add {C}.\n{1}, {T}: Add two mana of different colors.") == {"plan"}
+
+
+def test_r41_lands_that_make_extra_mana_are_ramp() -> None:
+    assert _land("{T}: Add {C}{C}. This land deals 2 damage to you.") == {"ramp"}
+    assert _land("{T}: Add {G} for each creature you control.") == {"ramp"}
+    assert _land("{2}, {T}: Add {B} for each Swamp you control.") == {"ramp"}
+    assert _land(
+        "{T}: Add {C}. If you control an Urza's Mine and an Urza's Power-Plant, "
+        "add {C}{C}{C} instead.",
+        "Land — Urza's Tower",
+    ) == {"ramp"}
+    assert _land("{T}: Add three mana of any one color.") == {"ramp"}
+    assert _land(
+        "{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Search your library for up to "
+        "two basic land cards that share a land type, put them onto the battlefield "
+        "tapped, then shuffle."
+    ) == {"ramp"}
+    assert _land("{T}: Add {C}.\n{1}, {T}: Untap target land.") == {"ramp"}
+
+
+def test_r41_only_lands_are_gated() -> None:
+    assert _land("{T}: Add {C}.", "Artifact") == {"ramp"}
+    assert _labels("{T}: Add {C}.") == {"ramp"}  # no type_line: unchanged
+    mdfc = {
+        "type_line": "Creature — Human Warlock // Land",
+        "card_faces": [
+            {"name": "A", "type_line": "Creature — Human Warlock", "oracle_text": "Flying"},
+            {"name": "B", "type_line": "Land", "oracle_text": "{T}: Add {W}."},
+        ],
+    }
+    assert classify_by_rules(mdfc)["ramp"] == 0.0
+
+
+def test_r41_lands_keep_their_other_roles() -> None:
+    assert _land("When this land enters, exile target player's graveyard.\n{T}: Add {B}.") == {
+        "targeted_disrupt"
+    }
