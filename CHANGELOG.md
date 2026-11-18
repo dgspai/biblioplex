@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.14.0 (2026-11-18)
+
+### Features
+
+- **classify**: Learn from manual role overrides (protection, impulse engines, cascade)
+  ([#31](https://github.com/dgspai/biblioplex/pull/31),
+  [`baa1357`](https://github.com/dgspai/biblioplex/commit/baa1357391ce68c48a08e2a04cf306b5ea1b1997))
+
+
 ## v0.13.2 (2026-11-17)
 
 ### Bug Fixes
