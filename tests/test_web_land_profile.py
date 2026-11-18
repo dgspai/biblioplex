@@ -57,11 +57,11 @@ def test_rows_with_role_tags_do_not_repeat_roles_as_land_chips() -> None:
     assert "landTags(c.land_profile, false)" in _fn(BUILD, "_buildCardRows")
 
 
-def test_land_step_groups_lands_by_etb_and_colours_like_card_types() -> None:
+def test_land_step_groups_lands_by_colours_like_card_types() -> None:
     assert "_LAND_GROUPS" in BUILD[BUILD.index("const _DECK_TYPE_ORDER") :][:300]
     bucket = _fn(BUILD, "_landBucket")
-    assert "_LAND_STEP" in bucket and ".etb" in bucket and ".colors" in bucket
-    for label in ("Untapped", "Conditional", "Tapped", "2-color", "colorless"):
+    assert "_LAND_STEP" in bucket and ".colors" in bucket and ".etb" not in bucket
+    for label in ("5-color", "2-color", "Colorless", "No-mana"):
         assert f'"{label}' in BUILD
     assert "_landBucket(" in _fn(BUILD, "_dlTypeGroups")
     assert "_landBucket(" in _fn(BUILD, "_buildCardRows")

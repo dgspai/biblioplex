@@ -415,28 +415,24 @@ async function _ensureCardMeta(names) {
   }
 }
 
+const _LAND_STEP = 6;
+const _LAND_COLOR_GROUP = {
+  five: "5-color", four: "4-color", tri: "3-color", dual: "2-color",
+  mono: "1-color", colorless: "Colorless", none: "No-mana",
+};
+const _LAND_GROUPS = Object.values(_LAND_COLOR_GROUP).map((c) => `${c} lands`);
 // Display order + assignment precedence for the decklist sidebar. Lands
 // win over creature (Dryad Arbor is a land); artifact/enchantment creatures
 // sit under Creatures.
-const _LAND_STEP = 6;
-const _LAND_ETB_GROUP = { untapped: "Untapped", conditional: "Conditional", tapped: "Tapped" };
-const _LAND_COLOR_GROUP = {
-  five: "5-color", four: "4-color", tri: "3-color", dual: "2-color",
-  mono: "1-color", colorless: "colorless", none: "no-mana",
-};
-const _landGroup = (etb, colors) => `${_LAND_ETB_GROUP[etb]} ${_LAND_COLOR_GROUP[colors]} lands`;
-const _LAND_GROUPS = Object.keys(_LAND_ETB_GROUP)
-  .flatMap((etb) => Object.keys(_LAND_COLOR_GROUP).map((c) => _landGroup(etb, c)));
 const _DECK_TYPE_ORDER = [
   "Commander", "Creatures", "Planeswalkers", "Instants", "Sorceries",
   "Artifacts", "Enchantments", "Battles", ..._LAND_GROUPS, "Lands", "Other",
 ];
-// On the land step, lands split by how they enter and how many colours they
-// make instead of one "Lands" group.
+// On the land step, lands split by how many colours they make.
 function _landBucket(bucket, profile) {
   if (bucket !== "Lands" || _build.step !== _LAND_STEP || !profile) return bucket;
-  const g = _landGroup(profile.etb, profile.colors);
-  return _LAND_GROUPS.includes(g) ? g : bucket;
+  const c = _LAND_COLOR_GROUP[profile.colors];
+  return c ? `${c} lands` : bucket;
 }
 function _deckBucket(name) {
   if (name === _build.commander) return "Commander";
