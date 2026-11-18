@@ -121,9 +121,17 @@ are not CA. One-shot recursion of a single card is not CA.
 - **R30 — `{T}` abilities that draw** (Iron Lad, Diverging Destiny) →
   CA, a Rule 3 engine. Break-even tap loot or rummage stays `plan` (R5'), as does
   a draw that sacrifices the card (Mind Stone).
-- **R31 — Cascade and discover** (Bituminous Blast, Maelstrom Nexus,
-  discover N) → CA, not ramp. One cast yields two spells, net +1 card;
-  the free spell leaves no lasting mana, so it is not acceleration.
+- **R31 — Cascade and discover** (revised 2026-11-17). A one-shot
+  cascade or discover (Bloodbraid Elf, Bituminous Blast, "When this
+  enters, discover 3") → `plan`: one free spell is card flow, not an
+  enlarged hand. A *repeating* source — granting cascade to your spells
+  (Maelstrom Nexus, Zhulodok, Yidris) or a trigger/activated discover
+  (Caparocti Sunborn, Long-Range Sensor) — is a Rule 3 engine → CA.
+  Never ramp: the free spell leaves no lasting mana.
+- **R32 — Repeating impulse to hand** (Adaptive Omnitool, Harper
+  Recruiter, Firja). A recurring "look at the top N, put one into your
+  hand" trigger → CA, a Rule 3 engine. A one-shot ETB version stays
+  `plan` (R6/R10 math: net 0).
 
 ## 3. Targeted disruption
 
@@ -163,6 +171,12 @@ or resource. One card removed / countered / hated per cast.
   functionally removes one creature per player. Don't tag as mass.
 - **R15 — Modal removal** ("destroy target creature *or* enchantment")
   → `targeted-disrupt`. One target per cast regardless of mode.
+- **R33 — Protection is interaction.** Single-target protection or
+  redirection (Blossoming Defense, Mother of Runes, Spellskite, Swerve)
+  → `targeted-disrupt`. One-shot board protection (Teferi's Protection,
+  Heroic Intervention, Flawless Maneuver, Dawn's Truce) answers a single
+  moment → `targeted-disrupt` too, never `mass-disrupt`. Static keyword protection on a permanent (a creature
+  with hexproof, Swiftfoot Boots) stays `plan` — it never answers anything.
 
 ## 4. Mass disruption
 

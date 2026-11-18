@@ -281,13 +281,69 @@ def test_r30_tap_rummage_stays_plan() -> None:
     assert _labels("{T}, Discard a card: Draw a card.") == {"plan"}
 
 
-def test_r31_cascade_and_discover_are_ca_not_ramp() -> None:
-    """R31 — a free extra spell per cast is net +1 card; no lasting mana."""
-    assert _labels("Cascade") == {"card_advantage"}
-    assert _labels("When this creature enters, discover 3.") == {"card_advantage"}
+def test_r31_one_shot_cascade_and_discover_are_plan() -> None:
+    """R31 — a single free spell is card flow, not an enlarged hand."""
+    assert _labels("Cascade") == {"plan"}
+    assert _labels("When this creature enters, discover 3.") == {"plan"}
+
+
+def test_r31_granting_cascade_is_a_ca_engine() -> None:
+    """R31 — a repeating cascade source is a Rule 3 engine."""
     assert _labels("Nontoken creature spells you cast have cascade.") == {
         "card_advantage"
     }
+    assert _labels("The first spell you cast each turn has cascade.") == {
+        "card_advantage"
+    }
+    assert _labels(
+        "Whenever ~ attacks, you may tap two untapped creatures you control. "
+        "If you do, discover 3."
+    ) == {"card_advantage"}
+    assert _labels("{T}, Exile a creature card from your graveyard: Discover X.") == {
+        "card_advantage"
+    }
+    assert _labels(
+        "Colorless spells you cast from your hand with mana value 7 or greater "
+        'have "Cascade, cascade."'
+    ) == {"card_advantage"}
+    assert _labels("As you cast spells from your hand this turn, they gain cascade.") == {
+        "card_advantage"
+    }
+
+
+def test_r32_repeating_impulse_to_hand_is_ca() -> None:
+    """R32 — a recurring look-at-top-N, put-one-in-hand trigger is an engine."""
+    assert _labels(
+        "Whenever equipped creature attacks, look at the top six cards of your "
+        "library. You may reveal an artifact card from among them and put it "
+        "into your hand."
+    ) == {"card_advantage"}
+    assert _labels(
+        "When this creature enters, look at the top four cards of your library. "
+        "Put one of them into your hand."
+    ) == {"plan"}
+
+
+def test_r33_single_target_protection_is_targeted() -> None:
+    assert _labels(
+        "Target creature you control gets +2/+2 and gains hexproof until end of turn."
+    ) == {"targeted_disrupt"}
+    assert _labels("Change the target of target spell or ability with a single target.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r33_one_shot_board_protection_is_targeted_too() -> None:
+    """It answers one moment, not many permanents (Teferi's Protection)."""
+    assert _labels("All permanents you control phase out.") == {"targeted_disrupt"}
+    assert _labels("Creatures you control gain indestructible until end of turn.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r33_static_hexproof_is_not_protection() -> None:
+    assert _labels("Hexproof") == {"plan"}
+    assert _labels("Equipped creature has hexproof and haste.") == {"plan"}
 
 
 def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
