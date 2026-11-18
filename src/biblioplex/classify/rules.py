@@ -149,9 +149,12 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
 TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     (
         "targeted:destroy",
+        # R15: adjectives ("nonblack attacking creature") and "up to one" count; your own
+        # permanent (sacrifice outlets) does not.
         re.compile(
-            r"destroy target (creature|planeswalker|nonland|artifact|"
-            r"enchantment|permanent|land)",
+            r"destroy (up to \w+ )?target (?!player\b)([\w,-]+ ){0,3}?"
+            r"(creature|planeswalker|artifact|enchantment|permanent|land|battle)s?\b"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
             re.I,
         ),
         1.0,
@@ -177,10 +180,11 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
     ),
     (
         "targeted:bounce",
+        # R9: "creature CARD from your graveyard" is recursion, not bounce.
         re.compile(
-            r"return target (creature|nonland|permanent|artifact|enchantment) "
-            r".{0,60}(owner'?s? hand|hand)",
-            re.I | re.S,
+            r"return target (creature|nonland permanent|nonland|permanent|artifact|enchantment)"
+            r"(?! card)\b(?![^.\n]{0,60}graveyard)[^.\n]{0,80}hand",
+            re.I,
         ),
         0.85,
     ),
@@ -189,6 +193,49 @@ TARGETED_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         re.compile(
             r"deals? \d+ damage to (any target|target creature|"
             r"target creature or player|target creature, player, or planeswalker)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:shrink",
+        # R35: -X/-X on a target is removal; -N/-0 is a combat trick.
+        re.compile(
+            r"(target (\w+ ){0,3}creature|up to (one|two|three) target creatures?)"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)[^.\n]{0,60}gets? -(\d+|x)/-(?!0\b)(\d+|x)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:minus-counters",
+        re.compile(
+            r"put (a|an|two|three|four|x|\d+) -1/-1 counters? on (up to one )?target creature"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:damage-var",
+        # R36: burn whose amount is X / "damage equal to ..." (targeted:burn needs digits).
+        re.compile(
+            r"deals? (x|that much|damage equal to [^.]{3,60}) (damage )?to (any target|"
+            r"up to \w+ target creatures?|target creature|target (creature|planeswalker)"
+            r"( or planeswalker)?)(?![^.\n]{0,40}\byou (control|own)\b)|"
+            r"deals damage equal to [^.]{3,60} to (any target|target creature( or planeswalker)?)"
+            r"(?![^.\n]{0,40}\byou (control|own)\b)",
+            re.I,
+        ),
+        0.85,
+    ),
+    (
+        "targeted:fight",
+        re.compile(
+            r"target creature you control (fights|deals damage equal to (its|twice its) power to)"
+            r" (up to one )?(another )?target (creature|planeswalker) "
+            r"(you don't control|an opponent controls)|"
+            r"\bfights? (up to one )?(another )?target creature you don't control",
             re.I,
         ),
         0.85,
@@ -305,6 +352,10 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "targeted:exile-that": "Exiles a creature it targeted earlier",
     "targeted:protect": "One-shot protection or redirect",
     "targeted:destroy": "Destroys a single target",
+    "targeted:shrink": "Gives a target creature -X/-X",
+    "targeted:minus-counters": "Puts -1/-1 counters on a target creature",
+    "targeted:damage-var": "Deals X or equal-to damage to a target",
+    "targeted:fight": "Fights or bites a target creature",
     "targeted:exile": "Exiles a single target",
     "targeted:counter": "Counters a target spell",
     "targeted:edict": "Forces opponent to sacrifice",

@@ -387,3 +387,72 @@ def test_r34_clue_and_blood_makers_are_card_advantage() -> None:
     assert _labels("Whenever this creature attacks, it connives. (Draw a card, then discard a card.)") == {
         "plan"
     }
+
+
+def test_r15_destroy_with_adjectives_is_targeted() -> None:
+    assert _labels("Destroy target nonblack attacking creature.") == {"targeted_disrupt"}
+    assert _labels("Destroy up to one target creature.") == {"targeted_disrupt"}
+    assert _labels("Destroy target nonland, nontoken permanent an opponent controls.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r15_destroying_your_own_permanent_is_not_removal() -> None:
+    assert _labels("{T}: Destroy target permanent you own.") == {"plan"}
+    assert _labels("{B}: Destroy target artifact, creature, or land you control.") == {"plan"}
+
+
+def test_r9_graveyard_recursion_is_not_bounce() -> None:
+    """Raise Dead / Gravedigger return a card from the graveyard; that is plan."""
+    assert _labels("Return target creature card from your graveyard to your hand.") == {"plan"}
+    assert _labels(
+        "When this creature enters, return target creature card from your graveyard to your hand."
+    ) == {"plan"}
+
+
+def test_bounce_still_targeted() -> None:
+    assert _labels("Return target creature to its owner's hand.") == {"targeted_disrupt"}
+    assert _labels(
+        "Return target creature defending player controls with toughness 2 or less to its "
+        "owner's hand."
+    ) == {"targeted_disrupt"}
+    # Own-permanent save is protection (R33), still targeted.
+    assert _labels("Return target permanent you control to its owner's hand.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r35_minus_x_minus_x_is_removal() -> None:
+    assert _labels("Target creature gets -X/-X until end of turn.") == {"targeted_disrupt"}
+    assert _labels("When this creature enters, target creature an opponent controls gets -1/-1 until end of turn.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("Put three -1/-1 counters on target creature.") == {"targeted_disrupt"}
+
+
+def test_r35_minus_n_zero_and_own_creature_are_not_removal() -> None:
+    assert _labels("Target creature gets -3/-0 until end of turn.") == {"plan"}
+    assert _labels("When this creature enters, put a -1/-1 counter on target creature you control.") == {
+        "plan"
+    }
+    assert _labels("Target creature you control gets -1/-1 until end of turn.") == {"plan"}
+
+
+def test_r36_damage_equal_to_and_x_damage_are_removal() -> None:
+    assert _labels("~ deals X damage to any target.") == {"targeted_disrupt"}
+    assert _labels("When this creature enters, it deals damage equal to its power to any target.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("Target creature you control deals damage equal to its power to target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+
+
+def test_r36_fight_is_removal() -> None:
+    assert _labels("Target creature you control fights target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("When this creature enters, it fights up to one target creature you don't control.") == {
+        "targeted_disrupt"
+    }
+    assert _labels("{2}: This creature fights another target creature you control.") == {"plan"}
