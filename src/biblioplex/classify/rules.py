@@ -66,6 +66,10 @@ RAMP_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
         ),
         0.85,
     ),
+    # R34: reminder text is stripped, so keywords whose only mana/land text sat in
+    # the reminder are matched by name.
+    ("ramp:basic-landcycling", re.compile(r"\bbasic landcycling\b", re.I), 0.85),
+    ("ramp:powerstone", re.compile(r"\bcreate[^.]{0,30}powerstone", re.I), 0.85),
 ]
 
 CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
@@ -123,6 +127,12 @@ CA_PATTERNS: list[tuple[str, re.Pattern[str], float]] = [
             r"[^.]{0,60}\.[^.]{0,120}\binto your hand",
             re.I,
         ),
+        0.85,
+    ),
+    (
+        "ca:clue-maker",
+        # R34: Clue/Blood tokens are a draw for mana; the token text is reminder text.
+        re.compile(r"\binvestigate\b|\bcreates?\b[^.]{0,30}\b(clue|blood) tokens?", re.I),
         0.85,
     ),
     (
@@ -286,6 +296,9 @@ RULE_DESCRIPTIONS: dict[str, str] = {
     "ca:sac-feeder": "Sacrifice payoff draws multiple cards",
     "ca:play-from-top": "Plays cards from the top of your library",
     "ca:tap-draw": "Tap ability that draws a card",
+    "ca:clue-maker": "Investigates or makes Clue/Blood tokens",
+    "ramp:basic-landcycling": "Basic landcycling fetches a land",
+    "ramp:powerstone": "Creates Powerstone tokens",
     "ca:cascade-engine": "Gives spells cascade, or discovers repeatedly",
     "ca:impulse-engine": "Recurring look-at-top, put one into hand",
     "ramp:land-onto-battlefield": "Puts extra land cards onto the battlefield",
@@ -329,9 +342,18 @@ def _score_face_ex(text: str) -> tuple[dict[str, float], dict[str, list[str]]]:
     return scores, reasons
 
 
+_REMINDER = re.compile(r"\([^)\n]*\)")
+
+
 def _unname(text: str, name: Any) -> str:
-    """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade."""
-    return text.replace(name, "~") if isinstance(name, str) and name else text
+    """Swap a card's own name for ``~`` so "Plasma Cascade deals" isn't cascade.
+
+    Also drops parenthesised reminder text (R34): "({T}: Add {G}.)" on a basic-typed
+    land or "Draw a card" inside a token's reminder is not the card's own effect.
+    """
+    if isinstance(name, str) and name:
+        text = text.replace(name, "~")
+    return _REMINDER.sub("", text)
 
 
 def classify_by_rules_ex(

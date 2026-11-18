@@ -353,3 +353,37 @@ def test_card_name_in_its_own_text_never_fires_a_rule() -> None:
         "oracle_text": "Plasma Cascade deals 3 damage to any target.",
     }
     assert classify_by_rules(card)["card_advantage"] == 0.0
+
+
+def test_r34_reminder_text_is_not_classified() -> None:
+    """Parenthesised reminder text describes a keyword; it is not the card's own text."""
+    assert _labels("({T}: Add {B} or {R}.)\nThis land enters tapped.") == {"plan"}
+    assert _labels(
+        "Echo {G}{G} (At the beginning of your upkeep, sacrifice it unless you pay its echo "
+        "cost.)\nWhen this creature enters, draw a card."
+    ) == {"plan"}
+    assert _labels(
+        "Spells you cast have affinity for artifacts. (They cost {1} less to cast for each "
+        "artifact you control.)"
+    ) == {"plan"}
+
+
+def test_r34_basic_landcycling_and_powerstone_stay_ramp() -> None:
+    assert _labels(
+        "Basic landcycling {2} ({2}, Discard this card: Search your library for a basic land "
+        "card, reveal it, put it into your hand, then shuffle.)"
+    ) == {"ramp"}
+    assert _labels(
+        "When this creature enters, create a tapped Powerstone token. (It's an artifact with "
+        '"{T}: Add {C}. This mana can\'t be spent to cast a nonartifact spell.")'
+    ) == {"ramp"}
+
+
+def test_r34_clue_and_blood_makers_are_card_advantage() -> None:
+    assert _labels("When this creature enters, investigate. (Create a Clue token.)") == {
+        "card_advantage"
+    }
+    assert _labels("Whenever you cast a spell, create a Blood token.") == {"card_advantage"}
+    assert _labels("Whenever this creature attacks, it connives. (Draw a card, then discard a card.)") == {
+        "plan"
+    }
