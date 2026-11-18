@@ -23,8 +23,9 @@ _SELECTION = re.compile(
     r"^[^\n]*\{[^}\n]+\}[^:\n]*:(?!\s*add\b)[^\n]*\b(look at the top|scry \d|surveil \d)",
     re.I | re.M,
 )
+# An ability whose effect starts with the search, or the Family lands' ETB sacrifice.
 _FETCH = re.compile(
-    r"sacrifice this land[^:\n]*:\s*search your library for [^.\n]*?"
+    r"(:\s*|sacrifice it\. when you do,\s*)search your library for [^.\n]*?"
     r"\b(land|plains|island|swamp|mountain|forest) cards?\b",
     re.I,
 )
