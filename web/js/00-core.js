@@ -159,6 +159,21 @@ function roleTags(labels) {
     .map((l) => `<abbr class="role-tag pred-${l}" title="${l.replace(/_/g, " ")}">${_ROLE_CODE[l]}</abbr>`).join("");
   return tags ? `<span class="role-tags">${tags}</span>` : "";
 }
+// Land profile as visible chips: colours made, how it enters, utility kinds.
+const _LAND_COLOR_LABEL = { none: "no mana", colorless: "C", mono: "mono", dual: "dual", tri: "tri", four: "4c", five: "5c" };
+const _LAND_ETB_LABEL = { untapped: "untapped", tapped: "tapped", conditional: "cond." };
+const _LAND_UTIL_LABEL = { creature_land: "creature", sac_outlet: "sac", selection: "dig" };
+function landTags(p) {
+  if (!p) return "";
+  const chips = [
+    [_LAND_COLOR_LABEL[p.colors], ""],
+    [_LAND_ETB_LABEL[p.etb], ` land-${p.etb}`],
+    ...(p.utility || []).map((u) => [_ROLE_CODE[u] || _LAND_UTIL_LABEL[u] || u, ""]),
+  ];
+  const tags = chips.filter(([t]) => t)
+    .map(([t, cls]) => `<span class="land-tag${cls}">${escapeHtml(t)}</span>`).join("");
+  return `<span class="land-tags">${tags}</span>`;
+}
 const SIMILAR_PROJECTION =
   "id,name,type_line,similarity,image_uris.small,image_uris.normal,"
   + "card_faces.0.image_uris.small,card_faces.0.image_uris.normal";
@@ -717,6 +732,7 @@ function renderDetail(card, faceIdx, target) {
       </div>
     </div>
     <p class="typeline">${escapeHtml(view.type_line || "")}</p>
+    ${card.land_profile ? `<p class="detail-land">${landTags(card.land_profile)}</p>` : ""}
     ${_renderFaceImages(card, _detailFaceIdx)}
     <section class="printings" aria-label="Printings" hidden>
       <h3>Printings</h3>

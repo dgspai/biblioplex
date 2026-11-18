@@ -22,7 +22,7 @@ const BUILD_STEP_SLOTS = { 3: ["card_advantage"], 4: ["ramp"], 5: ["targeted_dis
 // Search projection for wizard card rows — base cols plus usd price so
 // rows can show cmc + $ (suggest/manabase already return full cards).
 const _BUILD_LIST_PROJ = LIST_PROJECTION_BASE
-  + ",prices.usd,oracle_text,image_uris.normal,card_faces.0.image_uris.normal";
+  + ",prices.usd,oracle_text,land_profile,image_uris.normal,card_faces.0.image_uris.normal";
 
 // A land counts as ramp only if it makes extra mana or puts more lands on
 // the battlefield — plain fixing/utility lands (Command Tower, Reliquary
@@ -455,7 +455,7 @@ function _dlRow(e, mark) {
     ? ` draggable="true" title="Drag onto a slot to recategorise"`
     : "";
   const dcls = drag ? " build-dl-draggable" : "";
-  const tags = e.isLand ? "" : _roleEdit(e.meta.id, e.labels);
+  const tags = e.isLand ? landTags(e.landProfile) : _roleEdit(e.meta.id, e.labels);
   if (_buildPrefs.dlView === "stack") {
     return _stackCard({ id: e.meta.id, name: e.name, img: e.meta.img, qty: e.qty, tags, ctl: rm, cls: cls + dcls, attrs: drag });
   }
@@ -484,18 +484,12 @@ function _dlTypeGroups(entries, markFn) {
   return stack ? `<div class="build-stacks">${html}</div>` : html;
 }
 
-async function _renderDeckPanel() {
-  const el = $("#buildDeckList");
-  if (!el) return;
-  await symbolsReady;  // so mana costs render as glyphs, not {2}{R} text
-  const names = Object.keys(_build.deck);
-  if (_build.commander) names.push(_build.commander);
-  const head = (n) => `<div class="build-decklist-head">Deck · ${n}${_viewToggle("dlView")}</div>`;
-  if (!names.length) { el.innerHTML = head(0); return; }
+// Decklist rows for `names`: cached metadata plus the latest analysis.
+// Lands carry their land profile instead of role tags.
+async function _deckEntries(names) {
   await _ensureCardMeta(names);
   const byName = {};
   for (const c of (_buildAnalysis && _buildAnalysis.cards) || []) byName[c.name.toLowerCase()] = c;
-  // Lands get no role tags: the scoreboard counts them by type, not label.
   const entries = names.map((name) => {
     const a = byName[name.toLowerCase()];
     return {
@@ -504,8 +498,21 @@ async function _renderDeckPanel() {
       meta: _cardMetaCache[name.toLowerCase()] || {},
       labels: a ? a.predicted_labels : null,
       isLand: a ? !!a.is_land : _isLandType((_cardMetaCache[name.toLowerCase()] || {}).type_line),
+      landProfile: a ? a.land_profile : null,
     };
   });
+  return { entries, byName };
+}
+
+async function _renderDeckPanel() {
+  const el = $("#buildDeckList");
+  if (!el) return;
+  await symbolsReady;  // so mana costs render as glyphs, not {2}{R} text
+  const names = Object.keys(_build.deck);
+  if (_build.commander) names.push(_build.commander);
+  const head = (n) => `<div class="build-decklist-head">Deck · ${n}${_viewToggle("dlView")}</div>`;
+  if (!names.length) { el.innerHTML = head(0); return; }
+  const { entries, byName } = await _deckEntries(names);
   const focus = _panelFocusSlots();
   const fills = (e) => _cardFillsSlots(e.name.toLowerCase(), focus, byName);
 
@@ -580,8 +587,11 @@ function _roleEdit(id, labels) {
 
 // Suggestion/search results with an add (or remove) control per card.
 let _buildLastCards = [];
-function _buildCardRows(cards) {
-  _buildLastCards = cards || [];
+let _buildSwapCards = [];
+// `ctl(card, compact)` overrides the add/remove control (land swaps).
+function _buildCardRows(cards, ctl) {
+  if (!ctl) _buildLastCards = cards || [];
+  const control = ctl || ((c, compact) => _addBtn(c.name, _buildHas(c.name), compact));
   if (!cards || !cards.length) return `<p class="empty">Nothing to suggest.</p>`;
   if (_buildPrefs.recView === "stack") {
     // Grouped by type like the decklist; the chosen sort holds within a group.
@@ -589,7 +599,7 @@ function _buildCardRows(cards) {
     for (const c of cards) (groups[_typeBucket(c.type_line)] ||= []).push(c);
     return `<div class="build-stacks">${_DECK_TYPE_ORDER.filter((l) => groups[l]).map((l) =>
       `<div class="build-stack"><div class="build-dl-title">${l} · ${groups[l].length}</div>${groups[l].map((c) =>
-        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels), ctl: _addBtn(c.name, _buildHas(c.name), true) })).join("")}</div>`
+        _stackCard({ id: c.id, name: c.name, img: _cardImg(c), tags: _roleEdit(c.id, c.predicted_labels) + landTags(c.land_profile), ctl: control(c, true) })).join("")}</div>`
     ).join("")}</div>`;
   }
   return `<ul class="build-cards">${cards.map((c) => {
@@ -600,9 +610,9 @@ function _buildCardRows(cards) {
     const textMeta = [c.type_line, usd].filter(Boolean).map(escapeHtml).join(" · ");
     const meta = [cost, textMeta].filter(Boolean).join(" · ");
     return `<li data-id="${escapeHtml(c.id || "")}" data-preview="">
-      <span class="build-card-name">${escapeHtml(c.name)}</span>${_roleEdit(c.id, c.predicted_labels)}
+      <span class="build-card-name">${escapeHtml(c.name)}</span>${_roleEdit(c.id, c.predicted_labels)}${landTags(c.land_profile)}
       <span class="help">${meta}</span>
-      ${_addBtn(c.name, _buildHas(c.name), false)}</li>`;
+      ${control(c, false)}</li>`;
   }).join("")}</ul>`;
 }
 
@@ -637,6 +647,25 @@ function _buildSearchPanelHtml(slotPred, open) {
   </details>`;
 }
 
+// Land-step facet chips: OR within a group, AND across groups.
+const _LAND_FACETS = [
+  ["untapped", "conditional", "tapped"],
+  ["colorless", "mono", "dual", "tri", "five"],
+  ["utility"],
+];
+const _buildLandSel = new Set();
+function _landFacetChipsHtml() {
+  const label = { conditional: "cond.", colorless: "C", five: "5c" };
+  return `<div class="build-land-facets" role="group" aria-label="Land filters">${_LAND_FACETS.map((g) => g.map((f) =>
+    `<button type="button" class="chip" data-land-facet="${f}" aria-pressed="${_buildLandSel.has(f)}">${label[f] || f}</button>`
+  ).join("")).join('<span class="build-land-sep"></span>')}</div>`;
+}
+function _landFacetQuery() {
+  return _LAND_FACETS.map((g) => g.filter((f) => _buildLandSel.has(f)).map((f) => `land:${f}`))
+    .filter((terms) => terms.length)
+    .map((terms) => (terms.length > 1 ? `(${terms.join(" or ")})` : terms[0]));
+}
+
 async function _runBuildSearch() {
   const body = $(".build-search-body");
   const out = $("#bsResults");
@@ -656,6 +685,7 @@ async function _runBuildSearch() {
   }
   const slotChk = $("#bsSlot");
   if (slotPred && (!slotChk || slotChk.checked)) parts.push(slotPred);
+  if (slotPred === "t:land") for (const f of _landFacetQuery()) parts.push(f);
   // Selected commander themes (union) bias the search toward on-theme cards.
   if (_buildOtagSel.size) {
     const tags = Array.from(_buildOtagSel).map((t) => `otag:"${t}"`);
@@ -983,80 +1013,74 @@ function _refreshSlotGoals() {
 }
 
 async function _renderBuildStep6(body) {
-  // Step 6's land count / curve come from analysis, not a per-step fetch —
-  // refresh it first so the line is never stale (e.g. right after a bulk
-  // mana-base add). Steps 3-5 read fresh deltas from /decks/suggest, so
-  // only this step needs it.
+  // Land count / curve / manabase come from analysis — refresh it first so
+  // the goal line is never stale (e.g. right after a bulk basics fill).
   await _buildAnalyze();
   const a = _buildAnalysis;
   const lands = (a && a.counts && a.counts.land) || 0;
+  const etb = (a && a.lands && a.lands.etb) || {};
   const cd = (a && a.curve_deltas) || {};
   const curveNotes = Object.keys(cd).filter((k) => cd[k] > 0)
     .map((k) => `MV${k} +${cd[k]}`).join(", ");
   const total = _buildCount();
 
   // Two mini charts: colored pips the deck NEEDS vs mana sources it HAS.
-  // Await the symbology fetch so the {W}/{U}/… labels render as the mana
-  // glyphs, not literal text (local API calls otherwise win the race on a
-  // fresh load and the chart paints before symbolMap is populated).
+  // Await the symbology fetch so the {W}/{U}/… labels render as glyphs.
   await symbolsReady;
   const pips = (a && a.pips) || {};
   const sources = await _buildManaSources();
   const chartsHtml = _renderManaRadar(pips, sources);
 
-  // Basics currently in the deck, each with a −1 control.
-  const basicsIn = Object.keys(_build.deck)
-    .filter((n) => _BASIC_NAMES.has(n))
-    .map((n) =>
-      `<li><span class="build-card-name">${escapeHtml(n)}</span> ×${_build.deck[n]}
-        <button type="button" class="build-rm" data-build-basic-minus="${escapeHtml(n)}">−1</button></li>`
-    ).join("");
-
-  // Preview the pip-weighted fill that would take the deck to 38 lands.
   const need = Math.max(0, 38 - lands);
   const alloc = _pipBasicAllocation(need);
   const allocTxt = Object.keys(alloc).map((n) => `${alloc[n]} ${n}`).join(", ");
-
-  let cutHtml = "";
-  if (total > 100) {
-    const rows = Object.keys(_build.deck).map((name) =>
-      `<li><span class="build-card-name">${escapeHtml(name)}</span> ×${_build.deck[name]}
-        <button type="button" class="build-rm" data-build-remove="${escapeHtml(name)}">remove</button></li>`
-    ).join("");
-    cutHtml = `<h3>Cut to 100 (${total} now, ${total - 100} over)</h3><ul class="build-cards">${rows}</ul>`;
-  }
-
-  // Nonbasics from the manabase recommender become swap candidates: adding
-  // one pulls a basic so the land count holds at 38.
-  let mbHtml = `<p class="empty">Set a commander for nonbasic suggestions.</p>`;
-  if (_build.commander) {
-    try {
-      const mb = await _buildPost("/decks/manabase?land_count=38", { commander: _build.commander });
-      const nb = (mb.nonbasics || []).filter((c) => c.name && !_buildHas(c.name)).map((c) => {
-        const prod = (c.produced_mana || []).filter((x) => "WUBRG".includes(x)).join("");
-        return `<li data-id="${escapeHtml(c.id || "")}" data-preview=""><span class="build-card-name">${escapeHtml(c.name)}</span>
-          <button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">swap in</button></li>`;
-      }).join("");
-      mbHtml = `<ul class="build-cards">${nb || '<li class="empty">All suggestions already in the deck.</li>'}</ul>`;
-    } catch (err) {
-      mbHtml = `<p class="state-error" role="alert">Manabase: ${escapeHtml(err.message || "error")}</p>`;
-    }
-  }
-
   const fillLabel = need > 0
     ? `Fill to 38 lands with basics${allocTxt ? " — " + escapeHtml(allocTxt) : ""}`
     : "Already at 38 lands";
+
+  // Over 100: the deck's own rows (list/stack, labels, × to cut one).
+  let cutHtml = "";
+  if (total > 100) {
+    const { entries } = await _deckEntries(Object.keys(_build.deck));
+    cutHtml = `<h3>Cut to 100 · ${total - 100} over</h3><div id="buildCutList">${_dlTypeGroups(entries, null)}</div>`;
+  }
+
+  // Nonbasics from the manabase recommender: swapping one in pulls a basic
+  // so the land count holds at 38.
+  let swapHtml = `<p class="empty">Set a commander for nonbasic suggestions.</p>`;
+  if (_build.commander) {
+    try {
+      const mb = await _buildPost("/decks/manabase?land_count=38", { commander: _build.commander });
+      const names = (mb.nonbasics || []).map((c) => c.name).filter((n) => n && !_buildHas(n));
+      const res = names.length
+        ? await _buildPost("/cards/collection", { identifiers: names.map((name) => ({ name })) })
+        : { data: [] };
+      _buildSwapCards = res.data || [];
+      swapHtml = `<div id="buildSwapList">${_buildSwapRows()}</div>`;
+    } catch (err) {
+      swapHtml = `<p class="state-error" role="alert">Manabase: ${escapeHtml(err.message || "error")}</p>`;
+    }
+  }
+
   body.innerHTML = `
-    <p class="help">Lands: <strong>${lands}</strong> / 38 mandate.${curveNotes ? " Curve over target at " + escapeHtml(curveNotes) + "." : ""}</p>
+    <p class="build-slot-goals">lands ${lands} / 38 · ${etb.untapped || 0} untapped · ${etb.conditional || 0} cond. · ${etb.tapped || 0} tapped${curveNotes ? ` <span class="help">(curve over at ${escapeHtml(curveNotes)})</span>` : ""}</p>
     ${chartsHtml}
-    <h3>Basic lands</h3>
     <button type="button" id="buildFillBasics" ${need > 0 && allocTxt ? "" : "disabled"}>${fillLabel}</button>
-    ${basicsIn ? `<ul class="build-cards">${basicsIn}</ul>` : ""}
     <div id="buildSwapNote" class="help"></div>
     ${cutHtml}
+    ${_landFacetChipsHtml()}
+    ${_buildSearchPanelHtml("t:land", true)}
     <h3>Swap in a nonbasic</h3>
-    ${mbHtml}
-    ${_buildSearchPanelHtml("t:land")}`;
+    ${swapHtml}`;
+  await _runBuildSearch();
+}
+
+function _buildSwapRows() {
+  if (!_buildSwapCards.length) return `<p class="empty">All suggestions already in the deck.</p>`;
+  return _buildCardRows(_buildSwapCards, (c, compact) => {
+    const prod = (c.produced_mana || []).filter((x) => "WUBRG".includes(x)).join("");
+    return `<button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">${compact ? "⇄" : "swap in"}</button>`;
+  });
 }
 
 // Combos present in a deck + combos it's one card away from. `present`
@@ -1377,14 +1401,27 @@ buildPaneEl.addEventListener("click", async (e) => {
   const roleBtn = e.target.closest("[data-role-edit]");
   if (roleBtn) { _openRolePop(roleBtn); return; }
   if (e.target.closest("#bsGo")) { await _runBuildSearch(); return; }
+  const facet = e.target.closest("[data-land-facet]");
+  if (facet) {
+    const f = facet.dataset.landFacet;
+    if (!_buildLandSel.delete(f)) _buildLandSel.add(f);
+    facet.setAttribute("aria-pressed", String(_buildLandSel.has(f)));
+    await _runBuildSearch();
+    return;
+  }
   const view = e.target.closest("[data-build-view]");
   if (view) {
     const key = view.dataset.buildView;
     _buildPrefs[key] = view.dataset.v;
     _saveBuildPrefs();
     for (const b of buildPaneEl.querySelectorAll(`[data-build-view="${key}"]`)) b.setAttribute("aria-pressed", String(b.dataset.v === view.dataset.v));
-    if (key === "dlView") await _renderDeckPanel();
-    else if ($("#bsResults") && _buildLastCards.length) $("#bsResults").innerHTML = _buildCardRows(_buildLastCards);
+    if (key === "dlView") {
+      await _renderDeckPanel();
+      if ($("#buildCutList")) await _renderBuildStep();
+    } else {
+      if ($("#bsResults") && _buildLastCards.length) $("#bsResults").innerHTML = _buildCardRows(_buildLastCards);
+      if ($("#buildSwapList")) $("#buildSwapList").innerHTML = _buildSwapRows();
+    }
     return;
   }
   // Add/remove swap the clicked button IN PLACE (not a full step re-render)
