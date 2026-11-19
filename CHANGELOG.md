@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.18.0 (2026-11-19)
+
+### Features
+
+- Mana-base targets on the land step, mobile fixes
+  ([#36](https://github.com/dgspai/biblioplex/pull/36),
+  [`171831c`](https://github.com/dgspai/biblioplex/commit/171831cf62808a63b30a0b38aa6347487bff590c))
+
+
 ## v0.17.1 (2026-11-18)
 
 ### Bug Fixes
