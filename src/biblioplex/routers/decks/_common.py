@@ -240,8 +240,9 @@ def _tally(
             # a slot drill-down must exclude it to match the shown count.
             "is_land": _is_land(row),
         }
-        if out["is_land"]:
-            out["land_profile"] = getattr(row, "land_profile", None)
+        profile = getattr(row, "land_profile", None)
+        if out["is_land"] or profile:  # spell // land MDFCs keep their land face
+            out["land_profile"] = profile
         cards_out.append(out)
 
     return _Tally(
@@ -449,24 +450,54 @@ def _legality_body_entries(sections: DeckSections) -> list[DeckEntry]:
     return subtract_entries(sections.main, sections.commander)
 
 
+_BASIC_NAME = re.compile(r"^(Snow-Covered )?(Plains|Island|Swamp|Mountain|Forest|Wastes)$")
+_CATEGORY_BY_COLORS = {
+    "five": "rainbow", "four": "rainbow", "tri": "tri", "dual": "dual",
+    "mono": "utility", "colorless": "colorless", "none": "colorless",
+}
+# Karsten: a spell // land MDFC is ~0.38 of a land if its land enters tapped, ~0.74 if it can pay.
+_MDFC_LAND_WEIGHT = {"tapped": 0.38, "conditional": 0.74, "untapped": 0.74}
+
+
+def _land_category(name: str, p: dict[str, Any]) -> str:
+    if _BASIC_NAME.match(name):
+        return "basic"
+    if "fetch" in p["utility"]:
+        return "fetch"
+    return _CATEGORY_BY_COLORS[p["colors"]]
+
+
 def _land_summary(cards: list[dict[str, Any]]) -> dict[str, Any]:
-    """Manabase at a glance: lands by how they enter and by colours made."""
+    """Manabase at a glance: how lands enter, colours made, mana-base categories."""
     etb = {"untapped": 0, "tapped": 0, "conditional": 0}
     colors: dict[str, int] = {}
+    categories = dict.fromkeys(
+        ("basic", "fetch", "dual", "tri", "rainbow", "utility", "colorless"), 0
+    )
     utility: list[dict[str, Any]] = []
-    unknown = 0
+    unknown = taplands = 0
+    mdfc = 0.0
     for c in cards:
-        if not c.get("is_land"):
-            continue
         p = c.get("land_profile")
+        if not c.get("is_land"):
+            if isinstance(p, dict):
+                mdfc += _MDFC_LAND_WEIGHT[p["etb"]] * c["qty"]
+            continue
         if not isinstance(p, dict):
             unknown += c["qty"]
             continue
         etb[p["etb"]] = etb.get(p["etb"], 0) + c["qty"]
         colors[p["colors"]] = colors.get(p["colors"], 0) + c["qty"]
+        categories[_land_category(c["name"], p)] += c["qty"]
+        # Taplands that pay for it (tri/rainbow fixing, a real job) don't count.
+        if p["etb"] == "tapped" and not p["utility"] and p["colors"] not in ("tri", "four", "five"):
+            taplands += c["qty"]
         if p["utility"]:
             utility.append({"name": c["name"], "qty": c["qty"], "utility": p["utility"]})
-    return {"etb": etb, "colors": colors, "utility": utility, "unknown": unknown}
+    return {
+        "etb": etb, "colors": colors, "categories": categories, "taplands": taplands,
+        "mdfc": round(mdfc, 2), "utility": utility, "unknown": unknown,
+    }
 
 
 async def _analyze_pipeline(decklist: str, conn: Any) -> dict[str, Any]:
