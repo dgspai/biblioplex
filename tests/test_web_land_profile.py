@@ -110,3 +110,28 @@ def test_land_step_opens_on_the_biggest_gap() -> None:
     assert "_LAND_GAP_FACETS" in gap and "_TAPLAND_CAP" in gap
     step = _fn(BUILD, "_renderBuildStep6")
     assert "_buildLandGapFacets(" in step
+
+
+CSS = (WEB / "style.css").read_text()
+
+
+def test_list_rows_wrap_so_controls_stay_on_screen() -> None:
+    rule = CSS[CSS.index(".build-cards li {") :][:200]
+    assert "flex-wrap: wrap" in rule
+    assert '"⇄ swap"' in _fn(BUILD, "_swapBtn")
+
+
+def test_scoreboard_land_tile_uses_the_land_target() -> None:
+    board = _fn(BUILD, "_renderBuildScoreboard")
+    assert "land: _buildLandTarget()" in board
+
+
+def test_land_step_ignores_commander_themes() -> None:
+    search = _fn(BUILD, "_runBuildSearch")
+    assert 'slotPred !== "t:land"' in search[search.index("_buildOtagSel.size") - 60 :][:200]
+    assert "_LAND_STEP" in _fn(BUILD, "_renderThemeChips")
+
+
+def test_stack_buttons_are_tappable() -> None:
+    rule = CSS[CSS.index(".build-stack-qty, .build-stack-ctl button {") :][:300]
+    assert "min-height: 28px" in rule and "min-width: 28px" in rule

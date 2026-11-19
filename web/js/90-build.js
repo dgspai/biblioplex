@@ -623,7 +623,11 @@ function _renderBuildScoreboard() {
   const bracket = bl ? ` · <span title="Rough estimate of the 1-5 power bracket">${bl}</span>` : "";
   el.innerHTML = `
     <p class="help">${plural(_buildCount(), "card")} (incl. commander) · ${lands} lands / ${_buildLandTarget()}${_build.commander ? " · " + escapeHtml(_build.commander) : ""}${bracket}</p>
-    ${_renderDeckSlots(a, _build.step === _REVIEW_STEP)}
+    ${_renderDeckSlots({
+      ...a,
+      targets: { ...a.targets, land: _buildLandTarget() },
+      deltas: { ...a.deltas, land: lands - _buildLandTarget() },
+    }, _build.step === _REVIEW_STEP)}
     ${_renderDeckCurve(a.curve, _CURVE_TARGET_MAP)}`;
 }
 
@@ -673,7 +677,7 @@ function _swapBtn(c, compact) {
   if (_build.step !== _LAND_STEP || !_isLandType(c.type_line) || _BASIC_NAMES.has(c.name)) return "";
   if (_buildHas(c.name) || !Object.keys(_build.deck).some((n) => _BASIC_NAMES.has(n))) return "";
   const prod = (c.produced_mana || []).filter((x) => "WUBRG".includes(x)).join("");
-  return `<button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">${compact ? "⇄" : "swap for a basic"}</button>`;
+  return `<button type="button" class="build-add" data-build-swap="${escapeHtml(c.name)}" data-build-swap-produces="${prod}">${compact ? "⇄" : "⇄ swap"}</button>`;
 }
 function _buildCardRows(cards) {
   _buildLastCards = cards || [];
@@ -772,7 +776,7 @@ async function _runBuildSearch() {
   if (slotPred && (!slotChk || slotChk.checked)) parts.push(slotPred);
   if (slotPred === "t:land") for (const f of _landFacetQuery()) parts.push(f);
   // Selected commander themes (union) bias the search toward on-theme cards.
-  if (_buildOtagSel.size) {
+  if (_buildOtagSel.size && slotPred !== "t:land") {
     const tags = Array.from(_buildOtagSel).map((t) => `otag:"${t}"`);
     parts.push(tags.length > 1 ? `(${tags.join(" or ")})` : tags[0]);
   }
@@ -999,7 +1003,8 @@ async function _renderBuildStep2(body) {
 async function _renderThemeChips() {
   const el = $("#buildThemes");
   if (!el) return;
-  if (!_build.commander) { el.innerHTML = ""; return; }
+  // Lands don't carry commander themes; on the land step they only hide results.
+  if (!_build.commander || _build.step === _LAND_STEP) { el.innerHTML = ""; return; }
   if (_buildCmdTagsFor !== _build.commander) {
     if (!_buildCmdCard || _buildCmdCard.name !== _build.commander) {
       _buildCmdCard = await api(`/cards/named?exact=${encodeURIComponent(_build.commander)}`).catch(() => null);

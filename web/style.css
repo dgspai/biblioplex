@@ -1134,7 +1134,7 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .is-auto::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 5px; border-radius: 50%; background: currentColor; vertical-align: middle; }
 .role-pop .role-opt { font-size: 0.8rem; letter-spacing: 0; padding: 6px 10px; min-height: 32px; border-radius: 999px; cursor: pointer; }
 .role-pop .role-opt[aria-pressed="false"] { background: none; color: var(--fg-muted); border-color: var(--border); }
-.build-stack-qty, .build-stack-ctl button { background: rgb(0 0 0 / 0.75); color: #fff; border: none; border-radius: 999px; font-size: 0.8rem; line-height: 1; padding: 4px 8px; min-width: 26px; }
+.build-stack-qty, .build-stack-ctl button { background: rgb(0 0 0 / 0.75); color: #fff; border: none; border-radius: 999px; font-size: 0.8rem; line-height: 1; padding: 4px 8px; min-width: 28px; min-height: 28px; }
 .build-stack-ctl button { cursor: pointer; opacity: 1; }
 .build-stack-ctl .build-rm { background: var(--accent); color: var(--accent-fg); }
 .build-stack-ctl .build-dl-rm:hover { background: var(--error-fg); color: #fff; }
@@ -1165,9 +1165,9 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-paste textarea { width: 100%; font-family: monospace; }
 .build-otags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.5rem 0; }
 .build-cards { list-style: none; padding: 0; margin: 0.4rem 0; }
-.build-cards li { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
+.build-cards li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.5rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border); }
 .build-card-name { font-weight: 600; }
-.build-cards .help { flex: 1; }
+.build-cards .help { flex: 1 1 8rem; min-width: 0; }
 .build-add, .build-rm { white-space: nowrap; }
 .build-rm { color: var(--fg-muted); }
 /* Step 6 radar: colour NEED (pips) vs HAVE (sources), overlaid. */
