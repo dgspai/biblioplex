@@ -280,6 +280,48 @@ async def list_sets(
     )
 
 
+@router.get(
+    "/types",
+    summary="List type-line words with hit counts",
+    description=(
+        "Every word in a card type line (card types, supertypes, subtypes) "
+        "with ``{type, count}``, most common first. Backs ``t:`` autocomplete. "
+        "Bounded universe (~1k words), so the whole catalog comes in one payload."
+    ),
+    responses={422: _ERROR_RESPONSE},
+)
+async def list_types(
+    request: Request,
+    engine: _Engine = Depends(get_read_engine),
+) -> Any:
+    epoch = request.app.state.refresh_status.epoch()
+    etag = _catalog_etag("types", epoch)
+    if request.headers.get("If-None-Match") == etag:
+        return Response(status_code=304, headers=_cache_headers(etag))
+
+    stmt = text(
+        "SELECT type, count(*) AS count FROM ("
+        "  SELECT DISTINCT oracle_id, word AS type "
+        "  FROM cards, regexp_split_to_table(type_line, '[[:space:]—/]+') AS word "
+        "  WHERE word <> ''"
+        ") t "
+        "GROUP BY type "
+        "ORDER BY count(*) DESC, type ASC"
+    )
+    async with engine.connect() as conn:  # type: ignore[attr-defined]
+        rows = (await conn.execute(stmt)).mappings().all()
+
+    body = {
+        "object": "list",
+        "data": [{"type": r["type"], "count": int(r["count"])} for r in rows],
+    }
+    return Response(
+        content=_json_bytes(body),
+        media_type="application/json",
+        headers=_cache_headers(etag),
+    )
+
+
 def _json_bytes(obj: Any) -> bytes:
     """Serialize with the stdlib — no Pydantic round-trip.
 
