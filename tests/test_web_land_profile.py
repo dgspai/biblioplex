@@ -55,7 +55,8 @@ def test_land_facets_filter_the_search() -> None:
 
 
 def test_land_step_goal_line_uses_the_manabase_summary() -> None:
-    assert "a.lands" in _fn(BUILD, "_renderBuildStep6")
+    assert "_buildLandGoalsHtml()" in _fn(BUILD, "_renderBuildStep6")
+    assert "_buildAnalysis.lands" in _fn(BUILD, "_buildLandGoalsHtml")
 
 
 def test_deck_stats_show_manabase() -> None:
@@ -86,3 +87,26 @@ def test_fetch_lands_get_their_own_group_and_label() -> None:
 
 def test_land_facets_offer_fetch() -> None:
     assert "fetch" in BUILD[BUILD.index("const _LAND_FACETS") :][:800]
+
+
+def test_land_target_follows_curve_and_commander_cost() -> None:
+    body = _fn(BUILD, "_buildLandTarget")
+    assert "2.5" in body and "3.5" in body and "34" in body and "37" in body and "39" in body
+    assert ".cmc" in body and "40" in body
+    assert "/ 38" not in BUILD and "38 - lands" not in BUILD  # no hardcoded land count left
+
+
+def test_land_mix_targets_by_colour_count() -> None:
+    mix = BUILD[BUILD.index("const _LAND_MIX") :][:700]
+    for n in range(1, 6):
+        assert f"{n}: {{" in mix
+    assert "_TAPLAND_CAP = 6" in BUILD
+    goals = _fn(BUILD, "_buildLandGoalsHtml")
+    assert "categories" in goals and "taplands" in goals and "mdfc" in goals
+
+
+def test_land_step_opens_on_the_biggest_gap() -> None:
+    gap = _fn(BUILD, "_buildLandGapFacets")
+    assert "_LAND_GAP_FACETS" in gap and "_TAPLAND_CAP" in gap
+    step = _fn(BUILD, "_renderBuildStep6")
+    assert "_buildLandGapFacets(" in step

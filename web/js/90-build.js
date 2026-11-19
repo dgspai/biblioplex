@@ -13,7 +13,7 @@ const BUILD_STEPS = [
   { title: "Card advantage", blurb: "12 NET-POSITIVE draw pieces — cantrips that replace themselves don't count. Velocity finds your lands and answers." },
   { title: "Ramp", blurb: "10-12 pieces, 2-mana priority, to deploy multiple spells per turn cycle." },
   { title: "Interaction", blurb: "12 targeted + 6 mass. Disrupt opponents before they reach their win conditions." },
-  { title: "Lands & cutting", blurb: "Secure the 38-land mandate, shape the curve toward an MV2 peak, and cut to exactly 100." },
+  { title: "Lands & cutting", blurb: "Hit the land target for your curve and colours, shape the curve toward an MV2 peak, and cut to exactly 100." },
   { title: "Review", blurb: "The whole build at a glance: goldfish the turn-7 test, check the colour balance, resolve anything the tally couldn't, then save. Click a slot to split the decklist into what fills it and what doesn't." },
 ];
 // The final step doubles as the turn-7 goldfish test and the read-only review.
@@ -416,6 +416,74 @@ async function _ensureCardMeta(names) {
 }
 
 const _LAND_STEP = 6;
+// Mana-base model for 37 lands by commander colour count; basics absorb a
+// different land target. Categories match the analysis `lands.categories`.
+const _LAND_MIX = {
+  1: { basic: 27, fetch: 0, dual: 0, tri: 0, rainbow: 0, utility: 4, colorless: 6 },
+  2: { basic: 15, fetch: 3, dual: 12, tri: 0, rainbow: 2, utility: 2, colorless: 3 },
+  3: { basic: 10, fetch: 4, dual: 13, tri: 2, rainbow: 4, utility: 2, colorless: 2 },
+  4: { basic: 6, fetch: 7, dual: 14, tri: 3, rainbow: 4, utility: 1, colorless: 2 },
+  5: { basic: 5, fetch: 8, dual: 12, tri: 5, rainbow: 5, utility: 1, colorless: 1 },
+};
+const _TAPLAND_CAP = 6;
+const _LAND_GAP_FACETS = {
+  fetch: ["fetch"], dual: ["dual"], tri: ["tri"], rainbow: ["five"],
+  utility: ["mono", "utility"], colorless: ["colorless"],
+};
+// Land count from the nonland curve's average MV; a 5+ MV commander wants more.
+function _buildLandTarget() {
+  const curve = (_buildAnalysis && _buildAnalysis.curve) || {};
+  let n = 0, sum = 0;
+  for (const [mv, q] of Object.entries(curve)) { n += q; sum += q * parseInt(mv, 10); }
+  const avg = n ? sum / n : 3;
+  const t = avg < 2.5 ? 34 : avg <= 3.5 ? 37 : 39;
+  const cmc = (_buildCmdCard && _buildCmdCard.cmc) || 0;
+  return cmc >= 5 ? Math.max(t, 40) : t;
+}
+// Lands so far, with spell // land MDFCs as part of a land.
+function _buildLandsHave() {
+  const a = _buildAnalysis || {};
+  return ((a.counts && a.counts.land) || 0) + ((a.lands && a.lands.mdfc) || 0);
+}
+function _buildLandMix() {
+  const n = ((_buildCmdCard && _buildCmdCard.color_identity) || []).length;
+  const mix = { ..._LAND_MIX[Math.min(5, Math.max(1, n))] };
+  mix.basic += _buildLandTarget() - 37;
+  return mix;
+}
+function _buildLandGoalsHtml() {
+  const l = (_buildAnalysis && _buildAnalysis.lands) || {};
+  const have = l.categories || {};
+  const mix = _buildLandMix();
+  const fmt = (x) => (Number.isInteger(x) ? String(x) : x.toFixed(1));
+  const cats = Object.keys(mix).filter((k) => mix[k] || have[k])
+    .map((k) => `<span class="${(have[k] || 0) < mix[k] ? "land-short" : ""}">${k} ${have[k] || 0}/${mix[k]}</span>`)
+    .join(" · ");
+  const tapped = l.taplands || 0;
+  const mdfc = l.mdfc ? ` <span class="help">(MDFCs ${fmt(l.mdfc)})</span>` : "";
+  return `<p class="build-slot-goals">lands ${fmt(_buildLandsHave())} / ${_buildLandTarget()}${mdfc} · `
+    + `<span class="${tapped > _TAPLAND_CAP ? "land-short" : ""}">taplands ${tapped} / ≤${_TAPLAND_CAP}</span></p>`
+    + `<p class="build-land-mix">${cats}</p>`;
+}
+// Facets for the category furthest under target; untapped only when over the tapland cap.
+function _buildLandGapFacets() {
+  const l = (_buildAnalysis && _buildAnalysis.lands) || {};
+  const have = l.categories || {};
+  const mix = _buildLandMix();
+  let best = null, gap = 0;
+  for (const k of Object.keys(_LAND_GAP_FACETS)) {
+    const g = mix[k] - (have[k] || 0);
+    if (g > gap) { gap = g; best = k; }
+  }
+  const out = best ? [..._LAND_GAP_FACETS[best]] : [];
+  if ((l.taplands || 0) > _TAPLAND_CAP) out.push("untapped", "conditional");
+  return out;
+}
+async function _ensureCmdCard() {
+  if (_build.commander && (!_buildCmdCard || _buildCmdCard.name !== _build.commander)) {
+    _buildCmdCard = await api(`/cards/named?exact=${encodeURIComponent(_build.commander)}`).catch(() => null);
+  }
+}
 const _LAND_COLOR_GROUP = {
   five: "5-color", four: "4-color", tri: "3-color", dual: "2-color",
   mono: "1-color", colorless: "Colorless", none: "No-mana",
@@ -554,7 +622,7 @@ function _renderBuildScoreboard() {
   const bl = bracketLabel(_buildBracket, _buildCount());
   const bracket = bl ? ` · <span title="Rough estimate of the 1-5 power bracket">${bl}</span>` : "";
   el.innerHTML = `
-    <p class="help">${plural(_buildCount(), "card")} (incl. commander) · ${lands} lands / 38${_build.commander ? " · " + escapeHtml(_build.commander) : ""}${bracket}</p>
+    <p class="help">${plural(_buildCount(), "card")} (incl. commander) · ${lands} lands / ${_buildLandTarget()}${_build.commander ? " · " + escapeHtml(_build.commander) : ""}${bracket}</p>
     ${_renderDeckSlots(a, _build.step === _REVIEW_STEP)}
     ${_renderDeckCurve(a.curve, _CURVE_TARGET_MAP)}`;
 }
@@ -695,9 +763,7 @@ async function _runBuildSearch() {
   if (q) parts.push(q);
   if ($("#bsLegal") && $("#bsLegal").checked) {
     parts.push("f:commander");
-    if (_build.commander && (!_buildCmdCard || _buildCmdCard.name !== _build.commander)) {
-      _buildCmdCard = await api(`/cards/named?exact=${encodeURIComponent(_build.commander)}`).catch(() => null);
-    }
+    await _ensureCmdCard();
     const ci = (_buildCmdCard && _buildCmdCard.color_identity || []).join("").toLowerCase();
     // Empty identity = colourless commander: `id<=c` (cardinality 0), not "no filter".
     if (_buildCmdCard) parts.push(ci ? `id<=${ci}` : "id<=c");
@@ -855,15 +921,18 @@ function _renderBuild() {
   _scheduleBuildAnalyze();
 }
 
+let _buildPrevStep = null;
 async function _renderBuildStep() {
   const body = $("#buildStepBody");
   if (!body) return;
   const step = _build.step;
+  const entering = step !== _buildPrevStep;
+  _buildPrevStep = step;
   try {
     if (step === 1) _renderBuildStep1(body);
     else if (step === 2) await _renderBuildStep2(body);
     else if (step >= 3 && step <= 5) await _renderBuildStepSlots(body, BUILD_STEP_SLOTS[step]);
-    else if (step === _LAND_STEP) await _renderBuildStep6(body);
+    else if (step === _LAND_STEP) await _renderBuildStep6(body, entering);
     else if (step === _REVIEW_STEP) await _renderBuildStep7(body);
     // Fill the commander theme chips in whichever step just rendered a
     // search panel (no-op on steps 1 and 7).
@@ -1031,13 +1100,16 @@ function _refreshSlotGoals() {
   if (el && slots) el.innerHTML = _buildSlotGoalsHtml(slots);
 }
 
-async function _renderBuildStep6(body) {
+async function _renderBuildStep6(body, entering) {
   // Land count / curve / manabase come from analysis — refresh it first so
   // the goal line is never stale (e.g. right after a bulk basics fill).
-  await _buildAnalyze();
+  await Promise.all([_buildAnalyze(), _ensureCmdCard()]);
   const a = _buildAnalysis;
-  const lands = (a && a.counts && a.counts.land) || 0;
-  const etb = (a && a.lands && a.lands.etb) || {};
+  if (entering) {
+    _buildLandSel.clear();
+    for (const f of _buildLandGapFacets()) _buildLandSel.add(f);
+  }
+  const target = _buildLandTarget();
   const cd = (a && a.curve_deltas) || {};
   const curveNotes = Object.keys(cd).filter((k) => cd[k] > 0)
     .map((k) => `MV${k} +${cd[k]}`).join(", ");
@@ -1050,12 +1122,12 @@ async function _renderBuildStep6(body) {
   const sources = await _buildManaSources();
   const chartsHtml = _renderManaRadar(pips, sources);
 
-  const need = Math.max(0, 38 - lands);
+  const need = Math.max(0, Math.round(target - _buildLandsHave()));
   const alloc = _pipBasicAllocation(need);
   const allocTxt = Object.keys(alloc).map((n) => `${alloc[n]} ${n}`).join(", ");
   const fillLabel = need > 0
-    ? `Fill to 38 lands with basics${allocTxt ? " — " + escapeHtml(allocTxt) : ""}`
-    : "Already at 38 lands";
+    ? `Fill to ${target} lands with basics${allocTxt ? " — " + escapeHtml(allocTxt) : ""}`
+    : `Already at ${target} lands`;
 
   // Over 100: the deck's own rows (list/stack, labels, × to cut one).
   let cutHtml = "";
@@ -1065,7 +1137,7 @@ async function _renderBuildStep6(body) {
   }
 
   body.innerHTML = `
-    <p class="build-slot-goals">lands ${lands} / 38 · ${etb.untapped || 0} untapped · ${etb.conditional || 0} cond. · ${etb.tapped || 0} tapped${curveNotes ? ` <span class="help">(curve over at ${escapeHtml(curveNotes)})</span>` : ""}</p>
+    ${_buildLandGoalsHtml()}${curveNotes ? `<p class="help">Curve over at ${escapeHtml(curveNotes)}</p>` : ""}
     ${chartsHtml}
     <button type="button" id="buildFillBasics" ${need > 0 && allocTxt ? "" : "disabled"}>${fillLabel}</button>
     <div id="buildSwapNote" class="help"></div>
@@ -1177,7 +1249,7 @@ async function _renderReviewSummary() {
   if (!el2) return;  // navigated away while tallying sources
   el2.innerHTML = `
     <div class="build-review-block"><h3>Colour balance</h3>
-      <p class="help">Mana base: <strong>${lands}</strong> / 38 lands.</p>
+      <p class="help">Mana base: <strong>${lands}</strong> / ${_buildLandTarget()} lands.</p>
       ${_renderManaRadar(a.pips || {}, sources)}</div>
     ${unresolved}
     ${invBlock}`;
@@ -1440,8 +1512,7 @@ buildPaneEl.addEventListener("click", async (e) => {
   }
   // Step 6: pip-weighted basic fill, per-basic decrement, and swap-in.
   if (e.target.closest("#buildFillBasics")) {
-    const lands = (_buildAnalysis && _buildAnalysis.counts && _buildAnalysis.counts.land) || 0;
-    const alloc = _pipBasicAllocation(Math.max(0, 38 - lands));
+    const alloc = _pipBasicAllocation(Math.max(0, Math.round(_buildLandTarget() - _buildLandsHave())));
     for (const n of Object.keys(alloc)) _build.deck[n] = (_build.deck[n] || 0) + alloc[n];
     _saveBuild();
     await _renderBuildStep();
