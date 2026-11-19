@@ -106,3 +106,34 @@ def test_fetch_lands() -> None:
         "an Aura card and/or an Equipment card, reveal them, put them into your hand."
     )
     assert "fetch" not in _p(armory, ["W"])["utility"]
+
+
+def test_fetch_lands_that_sacrifice_on_entry_or_return_to_hand() -> None:
+    family = (
+        "When this land enters, sacrifice it. When you do, search your library for a "
+        "basic Forest, Plains, or Island card, put it onto the battlefield tapped, then "
+        "shuffle and you gain 1 life."
+    )
+    assert _p(family, None)["utility"] == ["fetch"]
+    glaciers = (
+        "This land enters tapped.\n{1}, {T}: Search your library for a basic land card, "
+        "put that card onto the battlefield tapped, then shuffle. Return this land to "
+        "its owner's hand at the beginning of the next cleanup step."
+    )
+    assert _p(glaciers, None)["utility"] == ["fetch"]
+
+
+def test_lands_that_only_let_a_search_happen_are_not_fetches() -> None:
+    demolition = (
+        "{T}: Add {C}.\n{2}, {T}, Sacrifice this land: Destroy target nonbasic land an "
+        "opponent controls. That land's controller may search their library for a basic "
+        "land card, put it onto the battlefield, then shuffle. You may search your library "
+        "for a basic land card, put it onto the battlefield, then shuffle."
+    )
+    assert "fetch" not in _p(demolition, ["C"])["utility"]
+    flagstones = (
+        "{T}: Add {W}.\nWhen this land is put into a graveyard from the battlefield, you "
+        "may search your library for a Plains card, put it onto the battlefield tapped, "
+        "then shuffle."
+    )
+    assert "fetch" not in _p(flagstones, ["W"])["utility"]
