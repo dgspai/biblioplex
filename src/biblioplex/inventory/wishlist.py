@@ -20,6 +20,7 @@ from typing import Any
 
 from sqlalchemy import text
 
+from biblioplex.dsl.card_list_filter import card_list_where
 from biblioplex.inventory.deckbox import ParsedDeckboxItem
 from biblioplex.inventory.service import _Connection, resolve_card_names
 
@@ -164,11 +165,8 @@ async def list_wishlist(
     """Paginated wishlist listing. Each row carries `owned_quantity` so the
     UI can strike through entries the user has since acquired."""
     offset = (max(1, page) - 1) * limit
-    where_clause = ""
     params: dict[str, Any] = {"limit": limit, "offset": offset}
-    if q and q.strip():
-        where_clause = "WHERE w.card_name ILIKE :q "
-        params["q"] = f"%{q.strip()}%"
+    where_clause = await card_list_where(conn, q, "w", "wishlist", params)
 
     total = int(
         (

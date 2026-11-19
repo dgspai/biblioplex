@@ -207,7 +207,14 @@ async def upload_deckbox_inventory(
     ),
 )
 async def list_inventory_cards(
-    q: str | None = Query(default=None, description="Optional card name search filter"),
+    q: str | None = Query(
+        default=None,
+        description=(
+            "Card name text, or search syntax when it uses a search key "
+            "(e.g. `t:artifact usd<2`). Queries that fail to parse fall back to name text."
+        ),
+        examples=["sol", "t:artifact usd<2"],
+    ),
     page: int = Query(default=1, ge=1, description="Page number (1-indexed)"),
     limit: int = Query(default=50, ge=1, le=200, description="Items per page"),
     engine: _Engine = Depends(get_read_engine),
