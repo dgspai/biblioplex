@@ -64,6 +64,7 @@
         <option value="desc">desc ↓</option>
       </select>
       <button type="submit" class="visually-hidden">Search</button>
+      <button type="button" class="icon-btn" data-filter-for="q" aria-label="Advanced filter" title="Advanced filter"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg></button>
       <button type="button" id="randomBtn" class="icon-btn" title="Random card" aria-label="Random card"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="2" y="2" width="12" height="12" rx="2.5"/><circle cx="5.5" cy="5.5" r=".9" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r=".9" fill="currentColor" stroke="none"/><circle cx="10.5" cy="10.5" r=".9" fill="currentColor" stroke="none"/></svg></button>
       <a href="https://github.com/dgspai/biblioplex/blob/main/docs/search-syntax.md" target="_blank" rel="noopener" class="icon-btn" aria-label="Search syntax" title="Search syntax"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.5"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.6 1.8c-.5.2-.8.6-.8 1.1v.4"/><circle cx="8" cy="11.6" r=".5" fill="currentColor"/></svg></a>
     </form>
@@ -149,6 +150,7 @@
     <form id="inventorySearchForm" class="cards-filters inv-search" role="search">
       <label for="invQ" class="visually-hidden">Filter owned cards</label>
       <input id="invQ" type="search" placeholder="Filter" autocomplete="off">
+      <button type="button" class="icon-btn" data-filter-for="invQ" aria-label="Advanced filter" title="Advanced filter"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg></button>
       <button type="submit" class="visually-hidden">Filter</button>
       <div id="invSummary" class="inv-summary"></div>
     </form>
@@ -172,6 +174,7 @@
     <form id="wishlistSearchForm" class="cards-filters inv-search" role="search">
       <label for="wlQ" class="visually-hidden">Filter wanted cards</label>
       <input id="wlQ" type="search" placeholder="Filter" autocomplete="off">
+      <button type="button" class="icon-btn" data-filter-for="wlQ" aria-label="Advanced filter" title="Advanced filter"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg></button>
       <button type="submit" class="visually-hidden">Filter</button>
       <div id="wlSummary" class="inv-summary"></div>
     </form>
@@ -388,6 +391,19 @@
     </footer>
   </section>
   </div>
+
+  <dialog id="filterDialog" class="filter-dialog" aria-labelledby="filterH">
+    <div class="dialog-head">
+      <h2 id="filterH">Filter</h2>
+      <button type="button" class="icon-btn" data-close-dialog aria-label="Close">✕</button>
+    </div>
+    <div id="filterFields"></div>
+    <div class="filter-foot">
+      <output id="filterPreview" class="filter-preview" aria-label="Query"></output>
+      <button type="button" id="filterClear" class="btn">Clear</button>
+      <button type="button" id="filterApply" class="btn btn--primary">Apply</button>
+    </div>
+  </dialog>
 
   <script src="helpers.js"></script>
   <script src="app.js"></script>
