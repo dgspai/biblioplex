@@ -1,6 +1,6 @@
 # Todo
 
-Tracking ledger for [`tech_spec.md`](../tech_spec.md), driven by the cycle in [`process.md`](./process.md). One commit per `D#.#`. Move rows between sections — never mark in place. Shipped rows are archived in [`docs/changelog.md`](../../changelog.md).
+Tracking ledger for [`tech_spec.md`](../tech_spec.md), driven by the cycle in [`process.md`](./process.md). One commit per `D#.#`. Move rows between sections — never mark in place. Shipped rows are archived in [`history.md`](./history.md).
 
 ---
 
@@ -245,7 +245,7 @@ _(nothing in flight.)_
 
 ## Done
 
-_Older shipped rows archived to [`docs/changelog.md`](../../changelog.md) — first pass 2026-07-08 (D16.14), second pass 2026-08-20 (D19.1-D19.31 + the remaining M14-M18 rows). What stays here is the current session's work._
+_Older shipped rows archived to [`history.md`](./history.md) — first pass 2026-07-08 (D16.14), second pass 2026-08-20 (D19.1-D19.31 + the remaining M14-M18 rows). What stays here is the current session's work._
 
 ### M16 · Ops / infra
 

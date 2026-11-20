@@ -294,4 +294,33 @@
 
 ## v0.1.0 (2026-11-10)
 
-- Initial Release
+First public release.
+
+**First run**
+- A fresh install downloads card data on first boot. An interrupted first ingest resumes on the next start.
+- The UI shows refresh progress ("N of M steps"), re-runs your search when cards are ready, and says when data is still downloading.
+- Commander Spellbook combos are enabled by default.
+- The embedding model loads from the local cache; HuggingFace is only contacted when it isn't cached.
+
+**Web UI**
+- Design tokens, one field and button system, consistent page widths, dark-mode inputs.
+- Empty and error states with a next step, SVG icons, and an About line with repo and bug-report links.
+- Plain-language copy throughout (no tracker IDs or git jargon), plural and number formatting.
+- Deep links keep `?q=` and `?tab=` for every tab; the combos deep link filters on load.
+- Deck builder: resolves the commander when set, filters colourless commanders to colourless cards, and keeps the stored commander and sideboard when editing a saved deck.
+
+**Correctness**
+- Searches and card views are always fresh (no ETag/304), so collection, wishlist and label changes show up immediately.
+- Request-validation errors use the Scryfall error envelope.
+- MCP tools carry `readOnlyHint` / `destructiveHint` annotations.
+
+**Security**
+- Compose binds to `127.0.0.1` by default (`BIND_ADDR`).
+- CORS is off by default, and cross-site POST/PUT/DELETE requests are rejected by an Origin check.
+- `SECURITY.md` documents the threat model and a reverse-proxy recipe.
+
+**Project**
+- README rewritten for players, AI tinkerers and self-hosters; reference docs split into `docs/`.
+- `CONTRIBUTING.md`, issue and PR templates, GitHub Actions CI, and a Markdown link checker in `make check`.
+
+**Upgrading an existing install:** rebuild both images (`docker compose up -d --build`; nginx config changed). If your `.env` sets `CORS_ORIGINS=*`, clear it to enable the Origin check. No schema changes.
