@@ -122,6 +122,7 @@ def _near_combo_row(
     prereqs: str | None = None,
     steps: str | None = None,
     results: list[str] | None = None,
+    gap_owned: list[bool] | None = None,
 ) -> Any:
     return SimpleNamespace(
         combo_id=combo_id,
@@ -130,6 +131,7 @@ def _near_combo_row(
         results=results or [],
         gap_names=gap_names,
         gap_ids=gap_ids,
+        gap_owned=gap_owned if gap_owned is not None else [False] * len(gap_names),
         missing_count=missing_count,
         in_names=in_names,
     )
@@ -169,7 +171,7 @@ async def test_envelope_shape(app: FastAPI) -> None:
     assert combo["missing"] == 1
     assert combo["in_deck"] == ["Isochron Scepter"]
     assert combo["gap"] == [
-        {"name": "Dramatic Reversal", "id": "bbbbbbbb-0000-0000-0000-000000000002"}
+        {"name": "Dramatic Reversal", "id": "bbbbbbbb-0000-0000-0000-000000000002", "owned": False}
     ]
     assert combo["results"] == ["Infinite mana"]
 
@@ -387,3 +389,41 @@ async def test_colorless_commander_bounds_to_colorless(app: FastAPI) -> None:
     decklist = "Commander\n1 Kozilek, the Great Distortion"
     params = await _combos_params(app, resolve_rows, decklist)
     assert params["ci"] == []
+
+
+async def _near_call(app: FastAPI, url: str, combo_rows: list[Any] | None = None) -> tuple[Any, str, Any]:
+    conn = _FakeConn(
+        resolve_rows=[_resolve_row("A", "aaaaaaaa-0000-0000-0000-000000000001")],
+        combo_rows=combo_rows or [],
+    )
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(conn)
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        r = await ac.post(url, json={"decklist": "1 A"})
+    sql, params = next((sql, params) for sql, params in conn.executed if "combos" in sql)
+    return r, sql, params
+
+
+@pytest.mark.asyncio
+async def test_gap_cards_say_whether_you_own_them(app: FastAPI) -> None:
+    row = _near_combo_row(
+        combo_id="c1", missing_count=2, gap_names=["B", "C"], gap_ids=["b", "c"],
+        in_names=["A"], gap_owned=[True, False],
+    )
+    r, sql, _ = await _near_call(app, "/decks/near-combos?missing=2", [row])
+    assert r.json()["combos"][0]["gap"] == [
+        {"name": "B", "id": "b", "owned": True},
+        {"name": "C", "id": "c", "owned": False},
+    ]
+    # Owned means in inventory with quantity > 0, the is:owned rule.
+    assert "inventory" in sql and "quantity > 0" in sql
+
+
+@pytest.mark.asyncio
+async def test_owned_filter_is_opt_in(app: FastAPI) -> None:
+    _, sql, params = await _near_call(app, "/decks/near-combos")
+    assert params["owned"] is None
+    _, _, params = await _near_call(app, "/decks/near-combos?owned=true")
+    assert params["owned"] is True
+    _, _, params = await _near_call(app, "/decks/near-combos?owned=false")
+    assert params["owned"] is False
+    assert "gap.all_owned = CAST(:owned AS boolean)" in sql
