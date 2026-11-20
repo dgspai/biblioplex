@@ -227,7 +227,7 @@ Compose publishes ports 8000 (API) and 8080 (web) on `127.0.0.1` only. The REST 
 - [Architecture notes](docs/architecture.md): ingest pipeline, data sources, similarity evaluation, limitations
 - [Development](docs/development.md): local dev and the smoke test
 - [EDH deckbuilding guide](docs/edh-guide.md) and [bracket estimate](docs/deck-bracket.md): the method behind the deck tools
-- [Changelog](docs/changelog.md)
+- [Changelog](CHANGELOG.md): written by the release job; upgrade steps are under "Additional Release Information"
 
 ## Contributing
 

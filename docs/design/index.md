@@ -1,7 +1,7 @@
 # Design notes
 
 Historical design notes and experiment write-ups. Not user documentation; for that see
-the [README](../../README.md), [EDH guide](../edh-guide.md) and [changelog](../changelog.md).
+the [README](../../README.md), [EDH guide](../edh-guide.md) and [changelog](../../CHANGELOG.md).
 
 | File | What it is |
 |---|---|
