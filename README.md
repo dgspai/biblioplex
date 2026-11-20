@@ -31,7 +31,7 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 
 ## Who it's for
 
-- **For AI tinkerers:** an MCP server with 77 tools over search, your collection and your decks; vector similarity over oracle text (MiniLM embeddings in pgvector); and a rules classifier that labels cards by deckbuilding role (ramp, card advantage, targeted or mass disruption, plan), searchable with `pred:`.
+- **For AI tinkerers:** an MCP server with 79 tools over search, your collection and your decks; vector similarity over oracle text (MiniLM embeddings in pgvector); and a rules classifier that labels cards by deckbuilding role (ramp, card advantage, targeted or mass disruption, plan), searchable with `pred:`.
 - **For self-hosters:** one compose file, runs on CPU, and your collection and decks stay in your own Postgres. After the first sync, normal use makes no calls to Scryfall's API beyond three small catalog lookups at startup.
 - **For players:** a web UI for your collection and wishlist, deck import from Moxfield, Archidekt and Deckbox, "what should I buy next", a Commander bracket estimate, and combos from Commander Spellbook.
 
@@ -39,15 +39,20 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 
 **Search**
 - Search about 34,600 unique cards with Scryfall syntax, plus `pred:`, `land:`, `has:combo`, `combo:`, `edhrec<` and ownership operators.
+- Build a query without the syntax: a filter popup on every card list (Cards, Inventory, Wishlist, Build), with autocomplete for names, types, tags, keywords and sets.
 - Find similar cards by embedding, or substitutes that keep a card's deck role.
 - Inspect each card's oracle tags, related cards, combos and predicted role labels; see why a label applies and override it.
 - See every printing of a card and how many of each you own.
+- Read each land's profile: colours it makes, how it enters (untapped, conditional, tapped) and its job (fetch, utility, creature land), searchable with `land:`.
+- From any card's detail, add it to the deck you're building, start a new deck with it, or open it on EDHREC.
 - Match names despite typos, with autocomplete and a random-card button.
 
 **Collection**
 - Import your inventory and wishlist from a Deckbox CSV, replacing or merging; set single-card quantities by hand.
 - Track card counts, estimated value and import history, and re-download any past import.
 - Filter any search by what you own (`in:inventory`, `owned:0`) or want (`is:wanted`).
+- Filter the inventory and wishlist with the same search syntax as Cards; plain names still work.
+- See the exact printing you own and colour-coded role tags on every row.
 
 **Decks**
 - Import Moxfield, Archidekt and Deckbox exports (plain text, Arena, MTGO, CSV or the Deckbox print view); the format is detected from the content.
@@ -55,11 +60,12 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 - Evaluate a deck against an EDH template (12 ramp, 12 card advantage, 12 targeted, 6 mass disruption, 30 plan, 38 lands) with a mana curve, improvement tips and a 1–5 bracket estimate. The bracket is a heuristic: 2 or more detected combos give bracket 5 even in casual decks ([details](docs/deck-bracket.md)).
 - List the combos in a deck and the ones it is a card away from.
 - Ask "what should I buy next?" across all your decks, with a budget and a card limit.
-- Build a deck step by step in the Deck Building tab, from commander to lands.
+- Build a deck step by step in the Deck Building tab, from commander to lands: theme chips with deck / owned / in-colours counts, card-type filters, list or stack view, and role tags you tap to correct.
+- Size the mana base to the deck: a land target from the curve and commander cost (34–40), per-category targets by colour count (basics, fetches, duals, tris…), a cap on taplands, and one-tap swaps of a basic for a better land.
 - Analyse mana base, legality, upgrades, price, goldfish turns and opening hands; compare, diff and export lists for Arena or MTGO.
 
 **AI and API**
-- Expose the API as 77 MCP tools at `/mcp` (everything except the refresh trigger and the liveness probe), with optional bearer-token auth.
+- Expose the API as 79 MCP tools at `/mcp` (everything except the refresh trigger and the liveness probe), with optional bearer-token auth.
 - Return Scryfall-shaped JSON: card bodies are Scryfall's own payload (plus role labels) and every error, including request-validation failures, uses Scryfall's envelope.
 - Browse the live OpenAPI schema at `http://localhost:8000/docs`.
 
@@ -71,15 +77,17 @@ It is opinionated and built for one user: me, and maybe you, if your workflow lo
 | Deck scoreboard: slots, curve, bracket, combos | Evaluation against the EDH template |
 | ![Deck Building tab on the ramp step](docs/images/deck-builder.png) | ![Inventory in the light theme](docs/images/inventory-light.png) |
 | Deck Building, ramp step | Inventory (light theme) |
-| ![Commander Spellbook combo browser](docs/images/combos.png) | |
-| Combo browser | |
+| ![Advanced filter popup building a query for legendary red-green ramp dragons](docs/images/filter-popup.png) | ![Lands and cutting step with land target and category targets](docs/images/build-lands.png) |
+| Advanced filter | Deck Building, lands step: targets by curve and colours |
+| ![Watery Grave detail with its land profile and the build and EDHREC actions](docs/images/card-detail-land.png) | ![Commander Spellbook combo browser](docs/images/combos.png) |
+| Land detail: profile, + build, EDHREC | Combo browser |
 
 On a phone, the sidebar becomes a bottom tab bar and each list opens its detail on top, with a Back button:
 
-| | | | |
-|---|---|---|---|
-| <img src="docs/images/mobile-search.png" alt="Phone: search results with the bottom tab bar" width="200"> | <img src="docs/images/mobile-card.png" alt="Phone: card detail over the result list" width="200"> | <img src="docs/images/mobile-deck.png" alt="Phone: deck scoreboard and mana curve" width="200"> | <img src="docs/images/mobile-inventory-light.png" alt="Phone: inventory card detail in the light theme" width="200"> |
-| Search | Card detail | Deck | Inventory (light theme) |
+| | | | | |
+|---|---|---|---|---|
+| <img src="docs/images/mobile-search.png" alt="Phone: search results with the bottom tab bar" width="200"> | <img src="docs/images/mobile-card.png" alt="Phone: card detail over the result list" width="200"> | <img src="docs/images/mobile-filter.png" alt="Phone: the filter popup full-screen, with role and land chips selected" width="200"> | <img src="docs/images/mobile-deck.png" alt="Phone: deck scoreboard and mana curve" width="200"> | <img src="docs/images/mobile-inventory-light.png" alt="Phone: inventory card detail in the light theme" width="200"> |
+| Search | Card detail | Filter | Deck | Inventory (light theme) |
 
 ## Install
 
@@ -153,7 +161,7 @@ On a Ryzen 9 3900XT (12 cores, measured 2026-10-03) the first boot took about 5.
 
 ## How to use
 
-1. **Cards**: search with [Scryfall syntax](docs/search-syntax.md) and open a card for its details, roles, similar cards and combos.
+1. **Cards**: search with [Scryfall syntax](docs/search-syntax.md), or build the query with the filter button next to the search box, and open a card for its details, roles, similar cards and combos.
 2. **Settings → Import from Deckbox**: upload your inventory and wishlist CSVs.
 3. **Decks → Import**: upload or paste a Moxfield, Archidekt or Deckbox export. Open a deck for its evaluation, bracket, combos and cost to finish; **Buy next** plans purchases across all decks.
 4. **Decks → Build**: build a Commander deck step by step, from commander to lands.
@@ -169,7 +177,7 @@ With the stack running, add the server to Claude Code:
 claude mcp add --transport http biblioplex http://localhost:8000/mcp
 ```
 
-Other clients take the same URL as a streamable-HTTP server. **20 of the 77 tools write data** (decks, collection, wishlist), so set `MCP_AUTH_TOKEN` in `.env` (`openssl rand -hex 32`) and pass `--header "Authorization: Bearer $MCP_AUTH_TOKEN"` whenever anything but you can reach the API. Then try:
+Other clients take the same URL as a streamable-HTTP server. **20 of the 79 tools write data** (decks, collection, wishlist), so set `MCP_AUTH_TOKEN` in `.env` (`openssl rand -hex 32`) and pass `--header "Authorization: Bearer $MCP_AUTH_TOKEN"` whenever anything but you can reach the API. Then try:
 
 - "Which Commander-legal red-green ramp creatures do I already own, and which is most played?"
 - "Evaluate my <deck name> deck: bracket, combos in it, combos one card away, and what to add for card advantage."
@@ -193,7 +201,7 @@ land:utility c:g                      # green lands that do a job (removal, card
 land:fetch                            # lands that sacrifice to search for a land
 ```
 
-Results are scoped by `SEARCH_DEFAULT_FILTER`, which `.env.example` sets to `game:paper f:commander`. Full reference and tested examples: [docs/search-syntax.md](docs/search-syntax.md).
+The Inventory and Wishlist filters take the same syntax. Results are scoped by `SEARCH_DEFAULT_FILTER`, which `.env.example` sets to `game:paper f:commander`. Full reference and tested examples: [docs/search-syntax.md](docs/search-syntax.md).
 
 ## Requirements
 
@@ -212,7 +220,7 @@ Compose publishes ports 8000 (API) and 8080 (web) on `127.0.0.1` only. The REST 
 ## Documentation
 
 - [Search syntax](docs/search-syntax.md): operators, Biblioplex extensions, tested queries
-- [MCP server](docs/mcp.md): client setup, auth, all 77 tools, example prompts
+- [MCP server](docs/mcp.md): client setup, auth, all 79 tools, example prompts
 - [HTTP API reference](docs/api.md): every endpoint with curl examples
 - [Web UI](docs/web-ui.md): what each tab does
 - [Configuration](docs/configuration.md): environment variables
