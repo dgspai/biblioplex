@@ -721,7 +721,10 @@ function _buildSearchPanelHtml(slotPred, open) {
   return `<details class="build-search"${open ? " open" : ""}><summary>${summary}</summary>
     <div class="build-search-body" data-slot="${escapeHtml(slotPred || "")}">
       <div id="buildThemes" class="build-themes"></div>
-      <input type="text" id="bsQ" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="name, or DSL — e.g. o:&quot;draw a card&quot; cmc&lt;=2">
+      <div class="build-search-q">
+        <input type="text" id="bsQ" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="name, or DSL — e.g. o:&quot;draw a card&quot; cmc&lt;=2">
+        <button type="button" class="icon-btn" data-filter-for="bsQ" aria-label="Advanced filter" title="Advanced filter"><svg class="icon" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M2 4h12M4.5 8h7M7 12h2"/></svg></button>
+      </div>
       <div class="build-search-opts">
         <label><input type="checkbox" id="bsLegal"${on("bsLegal")}> Legal for commander</label>
         ${slotChk}

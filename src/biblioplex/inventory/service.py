@@ -9,6 +9,7 @@ from uuid import UUID
 
 from sqlalchemy import text
 
+from biblioplex.dsl.card_list_filter import card_list_where
 from biblioplex.inventory.deckbox import ParsedDeckboxItem
 
 
@@ -269,12 +270,8 @@ async def list_inventory(
 ) -> dict[str, Any]:
     """List inventory items with search filter and pagination."""
     offset = (max(1, page) - 1) * limit
-    where_clause = ""
     params: dict[str, Any] = {"limit": limit, "offset": offset}
-
-    if q and q.strip():
-        where_clause = "WHERE i.card_name ILIKE :q "
-        params["q"] = f"%{q.strip()}%"
+    where_clause = await card_list_where(conn, q, "i", "inventory", params)
 
     count_sql = f"SELECT COUNT(*) AS total FROM inventory i {where_clause}"  # noqa: S608
     count_res = await conn.execute(text(count_sql), params)

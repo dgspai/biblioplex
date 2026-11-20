@@ -1218,3 +1218,25 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-land-facets .chip[aria-pressed="true"] { background: var(--accent); color: var(--bg); border-color: var(--accent); }
 .build-land-mix { margin: -0.4rem 0 0.6rem; font-size: 0.85rem; }
 .build-land-mix .land-short, .build-slot-goals .land-short { color: var(--warn); font-weight: 600; }
+
+/* Advanced filter dialog (07-filter.js): label left, control right; stacked full-screen on phones. */
+dialog.filter-dialog { width: min(560px, calc(100vw - 32px)); }
+dialog.filter-dialog[open] { display: flex; flex-direction: column; }
+#filterFields { overflow-y: auto; min-height: 0; }
+.filter-row { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: var(--sp-2); align-items: center; padding: var(--sp-1) 0; }
+.filter-label { color: var(--fg-muted); font-size: var(--fs-sm); }
+.filter-ctl { display: flex; flex-wrap: wrap; gap: var(--sp-1) var(--sp-2); align-items: center; min-width: 0; }
+.filter-text { position: relative; flex: 1 1 auto; }
+.filter-text input { width: 100%; box-sizing: border-box; }
+.filter-ctl input[type="number"] { width: 6em; }
+.filter-ctl .chip { min-height: 28px; }
+.filter-ctl .chip[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.filter-foot { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--border); }
+.filter-preview { flex: 1 1 100%; min-height: 1.4em; font-family: ui-monospace, monospace; font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.filter-foot .btn--primary { margin-left: auto; }
+.build-search-q { display: flex; gap: var(--sp-1); align-items: center; margin-bottom: 0.5rem; }
+.build-search-body .build-search-q #bsQ { margin-bottom: 0; }
+@media (max-width: 640px) {
+  dialog.filter-dialog { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; padding: var(--sp-3) var(--sp-4); }
+  .filter-row { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+}
