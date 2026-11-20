@@ -1148,31 +1148,31 @@ async function _renderBuildStep6(body, entering) {
   await _runBuildSearch();
 }
 
-// Combos present in a deck + combos it's one card away from. `present`
-// rows carry `cards`/`results`; `near` rows carry `gap`/`in_deck`/`results`.
+// Combos in the deck, then one card away: missing card owned (+ add) or to buy.
+// Each row opens the combo in the Combos tab; the build is kept in localStorage.
+function _comboLink(c, title, extra) {
+  const res = (c.results || []).join(", ");
+  return `<li><a class="build-combo" href="?tab=combos&combo=${encodeURIComponent(c.id)}">
+    <span>${title}</span>${res ? `<span class="build-combo-res">${escapeHtml(res)}</span>` : ""}</a>${extra || ""}</li>`;
+}
+
 function _renderComboPanel(present, near) {
   present = present || [];
   near = near || [];
-  if (!present.length && !near.length) return "";
-  const row = (c) => {
-    const cards = (c.cards || []).join(" + ");
-    const res = (c.results || []).join(", ");
-    return `<li>${escapeHtml(cards)}${res ? " → " + escapeHtml(res) : ""}</li>`;
-  };
-  const nrow = (c) => {
-    const gap = (c.gap || []).map((g) => g.name).join(", ");
+  const owned = near.filter((c) => (c.gap || []).length && c.gap.every((g) => g.owned));
+  const buy = near.filter((c) => !owned.includes(c));
+  const nearRow = (c, add) => {
+    const gap = (c.gap || []).map((g) => g.name);
     const have = (c.in_deck || []).join(", ");
-    const res = (c.results || []).join(", ");
-    return `<li>add <strong>${escapeHtml(gap)}</strong>${have ? ` (have ${escapeHtml(have)})` : ""}${res ? " → " + escapeHtml(res) : ""}</li>`;
+    const title = `<strong>${escapeHtml(gap.join(", "))}</strong>${have ? ` + ${escapeHtml(have)}` : ""}`;
+    return _comboLink(c, title, add ? gap.map((n) => _addBtn(n, !!_build.deck[n])).join("") : "");
   };
-  let html = `<h3>Combos</h3>`;
-  if (present.length) {
-    html += `<p class="help">${present.length} in the deck:</p><ul class="build-combos">${present.map(row).join("")}</ul>`;
-  }
-  if (near.length) {
-    html += `<p class="help">${near.length} combo${near.length === 1 ? "" : "s"} one card away:</p><ul class="build-combos">${near.map(nrow).join("")}</ul>`;
-  }
-  return html;
+  const group = (label, rows) => rows.length
+    ? `<h4 class="build-combos-h">${label} · ${rows.length}</h4><ul class="build-combos">${rows.join("")}</ul>` : "";
+  const html = group("In the deck", present.map((c) => _comboLink(c, escapeHtml((c.cards || []).join(" + ")))))
+    + group("From your collection", owned.map((c) => nearRow(c, true)))
+    + group("Missing cards", buy.map((c) => nearRow(c, false)));
+  return html ? `<h3>Combos</h3>${html}` : "";
 }
 
 // Final step — the turn-7 goldfish test AND the read-only review, merged.
@@ -1201,14 +1201,17 @@ async function _renderBuildStep7(body) {
     <div id="buildSaveStatus" class="help"></div>`;
   _renderReviewSummary();
   const decklist = _buildDecklist();
-  const [gf, mull, combos, near] = await Promise.all([
+  // Owned and to-buy combos fetched apart, so neither group crowds out the other.
+  const nearCombos = (owned) => fetch(`/api/decks/near-combos?missing=1&limit=10&owned=${owned}`, {
+    method: "POST", headers: { "content-type": "application/json" },
+    body: JSON.stringify({ decklist }),
+  }).then((r) => (r.ok ? r.json() : null)).then((b) => (b && b.combos) || []).catch(() => []);
+  const [gf, mull, combos, owned, buy] = await Promise.all([
     _buildPost("/decks/goldfish", { decklist, hands: 400, seed: 42 }).catch(() => null),
     _buildPost("/decks/mulligan", { decklist, hands: 400, seed: 42 }).catch(() => null),
     _buildPost("/decks/combos", { decklist }).catch(() => null),
-    fetch("/api/decks/near-combos?missing=1&limit=10", {
-      method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ decklist }),
-    }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    nearCombos(true),
+    nearCombos(false),
   ]);
   const t7 = $("#buildTurn7");
   if (!t7) return;  // navigated away while goldfishing
@@ -1220,7 +1223,7 @@ async function _renderBuildStep7(body) {
   t7.innerHTML = `
     <p class="help">Keepable opening hands: <strong>${keep}</strong></p>
     ${gfLine}
-    ${_renderComboPanel(combos && combos.combos, near && near.combos)}`;
+    ${_renderComboPanel(combos && combos.combos, owned.concat(buy))}`;
 }
 
 // Analysis-driven half of the review: colour balance, unresolved names, and
