@@ -40,13 +40,17 @@ the template parses; `make check-served` diffs what nginx serves against your tr
 ## Schema changes
 
 `schema.sql` runs only on an empty `pgdata` volume. Any new column or index must also
-ship an in-place migration recipe in the commit body, so existing deployments can apply
-it without `make down-v`:
+ship an in-place migration, so existing deployments can apply it without `make down-v`.
+Put it in the PR description as a paragraph starting with `NOTICE:`, with the SQL inline:
 
-```sql
-ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...;
-CREATE INDEX IF NOT EXISTS ...;
+```text
+NOTICE: Before upgrading, run `ALTER TABLE cards ADD COLUMN IF NOT EXISTS x text;`
 ```
+
+PRs are squash-merged with the description as the commit body, and the release job
+copies `NOTICE:` paragraphs into [CHANGELOG.md](CHANGELOG.md) under "Additional Release
+Information". CI fails a PR that changes `schema.sql` without one; add
+`<!-- no-notice -->` when existing installs need nothing.
 
 ## New settings
 

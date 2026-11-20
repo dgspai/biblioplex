@@ -23,7 +23,7 @@ their `§` sections; those citations describe history and were left as written.
 
 `schema.sql` runs **only** on empty `pgdata` (mounted read-only at `/docker-entrypoint-initdb.d/schema.sql`). Existing deployments do not re-run it.
 
-Any new column or index MUST ship with an in-place migration recipe in the commit body — `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` or `CREATE INDEX IF NOT EXISTS ...`. Operators pick these up without a destructive `make down-v`. Example recipe (the `combos` trigram indexes):
+Any new column or index MUST ship with an in-place migration recipe — `ALTER TABLE ... ADD COLUMN IF NOT EXISTS ...` or `CREATE INDEX IF NOT EXISTS ...` — in the commit body **and** in the PR description as a `NOTICE:` paragraph (SQL inline, no code fence). PRs squash-merge with the description as the commit, and the release job copies `NOTICE:` paragraphs into `CHANGELOG.md`; CI fails a `schema.sql` change without one (`<!-- no-notice -->` opts out). Operators pick these up without a destructive `make down-v`. Example recipe (the `combos` trigram indexes):
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
