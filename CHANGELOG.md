@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.20.0 (2026-11-20)
+
+### Features
+
+- Land row in the advanced filter, docs for recent features
+  ([#38](https://github.com/dgspai/biblioplex/pull/38),
+  [`1ffffc9`](https://github.com/dgspai/biblioplex/commit/1ffffc9c2f250d361308a123a2d05531fda10a97))
+
+
 ## v0.19.0 (2026-11-20)
 
 ### Features
