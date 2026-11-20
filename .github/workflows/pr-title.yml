@@ -1,7 +1,8 @@
-name: PR title
+name: PR checks
 
-# Squash merges make the PR title the commit on main, and semantic-release
-# derives the version bump from it.
+# Squash merges make the PR title and description the commit on main:
+# semantic-release derives the version bump from the title and copies
+# `NOTICE:` paragraphs of the description into CHANGELOG.md.
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
@@ -20,4 +21,26 @@ jobs:
           re='^(feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert)(\([a-z0-9._/-]+\))?!?: [^ ].*$'
           if [[ "$TITLE" =~ $re ]]; then echo "ok: $TITLE"; exit 0; fi
           echo "::error::PR title must be '<type>(scope)?: subject' (feat|fix|perf|refactor|docs|test|build|ci|chore|style|revert). Got: $TITLE"
+          exit 1
+
+  # schema.sql only runs on an empty volume, so existing installs need the
+  # migration spelled out in the release notes.
+  notice:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - name: Schema changes carry a release notice
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          files=$(gh api "repos/$REPO/pulls/$PR/files" --paginate --jq '.[].filename')
+          if ! grep -qx 'schema.sql' <<<"$files"; then echo "ok: schema.sql untouched"; exit 0; fi
+          body=${BODY//$'\r'/}
+          if grep -qE '^NOTICE: .+' <<<"$body"; then echo "ok: release notice present"; exit 0; fi
+          if grep -qF '<!-- no-notice -->' <<<"$body"; then echo "ok: marked as needing no migration"; exit 0; fi
+          echo "::error::schema.sql changed: add a 'NOTICE: ...' paragraph to the PR description with the in-place migration (inline SQL, no code fence), or '<!-- no-notice -->' if existing installs need nothing."
           exit 1
