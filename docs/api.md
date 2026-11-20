@@ -115,6 +115,22 @@ Full set catalog with `{code, name, released_at, count}`. Ordered by release dat
 curl -fsS 'http://localhost:8000/sets' | jq '.data[:5]'
 ```
 
+### `GET /types`
+
+Every word of every type line (card types, supertypes, subtypes; split on spaces, em dash and `//`) with `{type, count}`, counted once per card, most common first. Backs `t:` autocomplete in the web filter. No prefix / limit knobs — bounded universe (~1k words), one payload; ETag per refresh epoch, like `/sets`.
+
+```bash
+curl -fsS 'http://localhost:8000/types' | jq '.data[:5]'
+```
+
+### `GET /cards/identity-tag-counts?identity=<wubrg>`
+
+Per oracle-tag counts for cards whose colour identity fits inside `identity`: `owned` (in inventory, quantity > 0) and `total`, each `{tag: count}`. Backs the Deck Building tab's Focus chips (deck / owned / total per theme).
+
+```bash
+curl -fsS 'http://localhost:8000/cards/identity-tag-counts?identity=rg' | jq '.total | to_entries[:5]'
+```
+
 ### `GET /cards/autocomplete?q=<fragment>`
 
 Scryfall-parity name autocomplete. Prefix hits (case-insensitive `LOWER(name) LIKE :prefix`) rank first, then `pg_trgm` word-similarity for typo tolerance. Returns up to 20 names in a Scryfall `catalog` envelope.
@@ -325,7 +341,7 @@ curl -fsS -X POST -F 'file=@collection.csv' -F 'mode=replace' \
 
 ### `GET /inventory?q=<name>&page=<n>&limit=<n>`
 
-Paginated listing of owned cards, joined to `cards` for `price_usd` / `type_line` / the full Scryfall payload. `q` is a case-insensitive substring filter on the stored card name. `limit` is capped at 200.
+Paginated listing of owned cards, joined to `cards` for `price_usd` / `type_line` / the full Scryfall payload. `q` is a case-insensitive substring filter on the stored card name, or [search syntax](search-syntax.md) when it uses at least one known key (`t:artifact usd<2`); a query that does not compile falls back to the name filter. `limit` is capped at 200.
 
 ### `GET /inventory/summary`
 
@@ -361,7 +377,7 @@ Errors: an unparseable file → `422 bad_request` **before** any write.
 
 ### `GET /wishlist?q=<name>&page=<n>&limit=<n>`
 
-Paginated wishlist listing. Each row carries `owned_quantity` — how many of that card the inventory already holds — so a client can flag entries you have since acquired.
+Paginated wishlist listing; `q` works as on `/inventory`. Each row carries `owned_quantity` — how many of that card the inventory already holds — so a client can flag entries you have since acquired.
 
 ### `GET /wishlist/summary`
 

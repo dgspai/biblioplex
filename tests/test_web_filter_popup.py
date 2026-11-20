@@ -39,6 +39,14 @@ CASES: list[tuple[dict[str, object], str]] = [
     ({"keyword": "First strike"}, 'kw:"First strike"'),
     ({"set": "Khans of Tarkir (ktk)"}, "set:ktk"),
     ({"collection": ["unowned", "wanted"]}, "is:unowned is:wanted"),
+    ({"land": ["tapped"]}, "land:tapped"),
+    ({"land": ["dual", "tri", "untapped"]}, "land:untapped (land:dual or land:tri)"),
+    ({"land": ["fetch", "utility"]}, "land:utility land:fetch"),
+    (
+        {"land": ["untapped", "conditional", "colorless", "mono", "dual", "tri", "five", "utility", "fetch"]},
+        "(land:untapped or land:conditional) (land:colorless or land:mono or land:dual or land:tri or land:five)"
+        " land:utility land:fetch",
+    ),
     (
         {"type": "Dragon", "color": {"op": "<=", "on": ["r"]}, "price": {"key": "usd", "op": "<", "n": "1"}},
         "t:Dragon c<=r usd<1",
@@ -95,4 +103,4 @@ def test_sections_hide_fields_they_already_cover(tmp_path: Path) -> None:
     omit = json.loads(out)
     assert {"owned", "unowned"} <= set(omit["invQ"])
     assert "wanted" in omit["wlQ"]
-    assert {"owned", "unowned", "format"} <= set(omit["bsQ"])
+    assert {"owned", "unowned", "format", "land"} <= set(omit["bsQ"])
