@@ -2,6 +2,14 @@
 
 <!-- version list -->
 
+## v0.19.0 (2026-11-20)
+
+### Features
+
+- Advanced filter popup on every card list ([#37](https://github.com/dgspai/biblioplex/pull/37),
+  [`f3f35b8`](https://github.com/dgspai/biblioplex/commit/f3f35b82886ad4232ca2a1a8f55b15598f8b6894))
+
+
 ## v0.18.0 (2026-11-19)
 
 ### Features
