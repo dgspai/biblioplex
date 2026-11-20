@@ -858,9 +858,9 @@ curl -fsS -X POST -H 'Content-Type: application/json' \
 
 Errors: empty/absent `decklist` → `422 bad_request`; `>64000` chars → `422`; `hands` or `hand_size` out of range → `422`.
 
-### `POST /decks/near-combos?missing=1&limit=25`
+### `POST /decks/near-combos?missing=1&limit=25&owned=<true|false>`
 
-Combos the deck is `1..missing` cards away from completing. cEDH-style signal for "you're 1 card from Thassa's Oracle." Same body as `/decks/combos`; adds per-combo `in_deck` and `gap` lists so consumers can render "have this, get that."
+Combos the deck is `1..missing` cards away from completing. cEDH-style signal for "you're 1 card from Thassa's Oracle." Same body as `/decks/combos`; adds per-combo `in_deck` and `gap` lists so consumers can render "have this, get that." Each gap card carries `owned` (in your inventory, quantity > 0). `owned=true` keeps only combos whose missing cards you all own (finish without buying); `owned=false` keeps the ones needing a card you don't own; unset returns both.
 
 ```bash
 curl -fsS -X POST -H 'Content-Type: application/json' \
@@ -869,7 +869,7 @@ curl -fsS -X POST -H 'Content-Type: application/json' \
 # {"object":"deck_near_combos",
 #  "combos":[{"id":"spellbook-42","missing":1,
 #              "in_deck":["Isochron Scepter"],
-#              "gap":[{"name":"Dramatic Reversal","id":"<uuid>"}],
+#              "gap":[{"name":"Dramatic Reversal","id":"<uuid>","owned":true}],
 #              "prereqs":"...","steps":"...","results":["Infinite mana"]}],
 #  "unresolved":[]}
 ```
