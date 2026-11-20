@@ -419,10 +419,11 @@ async def test_gap_cards_say_whether_you_own_them(app: FastAPI) -> None:
 
 
 @pytest.mark.asyncio
-async def test_owned_first_is_opt_in(app: FastAPI) -> None:
+async def test_owned_filter_is_opt_in(app: FastAPI) -> None:
     _, sql, params = await _near_call(app, "/decks/near-combos")
-    assert params["owned_first"] is False
-    _, _, params = await _near_call(app, "/decks/near-combos?owned_first=true")
-    assert params["owned_first"] is True
-    order = sql.lower()[sql.lower().rindex("order by") :]
-    assert "owned_first" in order and order.index("owned_first") < order.index("gap_count")
+    assert params["owned"] is None
+    _, _, params = await _near_call(app, "/decks/near-combos?owned=true")
+    assert params["owned"] is True
+    _, _, params = await _near_call(app, "/decks/near-combos?owned=false")
+    assert params["owned"] is False
+    assert "gap.all_owned = CAST(:owned AS boolean)" in sql

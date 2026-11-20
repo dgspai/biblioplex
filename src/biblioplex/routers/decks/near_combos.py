@@ -67,8 +67,8 @@ _NEAR_COMBOS_SQL = (
     "WHERE co.oracle_ids && CAST(:deck_oids AS uuid[]) "
     "  AND gap.gap_count BETWEEN 1 AND :missing "
     "  AND (CAST(:ci AS text[]) IS NULL OR co.color_identity <@ CAST(:ci AS text[])) "
-    "ORDER BY (CAST(:owned_first AS boolean) AND gap.all_owned) DESC, "
-    "         gap.gap_count ASC, co.id ASC "
+    "  AND (CAST(:owned AS boolean) IS NULL OR gap.all_owned = CAST(:owned AS boolean)) "
+    "ORDER BY gap.gap_count ASC, co.id ASC "
     "LIMIT :limit"
 )
 
@@ -107,11 +107,12 @@ async def decklist_near_combos(
         le=100,
         description="Max combos to return (sorted by gap ASC).",
     ),
-    owned_first: bool = Query(
-        default=False,
+    owned: bool | None = Query(
+        default=None,
         description=(
-            "Sort combos whose missing cards are all in your inventory first, "
-            "so a small `limit` keeps the ones you can finish without buying."
+            "`true`: only combos whose missing cards are all in your inventory "
+            "(finish them without buying). `false`: only combos with a missing "
+            "card you don't own. Unset: both."
         ),
     ),
     engine: _Engine = Depends(get_read_engine),
@@ -146,7 +147,7 @@ async def decklist_near_combos(
                     "missing": missing,
                     "limit": limit,
                     "ci": ci,
-                    "owned_first": owned_first,
+                    "owned": owned,
                 },
             )
             for row in result.all():
