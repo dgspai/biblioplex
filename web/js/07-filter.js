@@ -26,6 +26,16 @@ async function _fSuggestSets(q) {
   return _fPrefix(await _fSetList(), q);
 }
 
+// Land facets (land: in the DSL): OR within a group, AND across groups.
+// Shared with the Build land step.
+const _LAND_FACETS = [
+  ["untapped", "conditional", "tapped"],
+  ["colorless", "mono", "dual", "tri", "five"],
+  ["utility"],
+  ["fetch"],
+];
+const _LAND_LABEL = { conditional: "cond.", colorless: "C", five: "5c" };
+
 const _FILTER_FIELDS = [
   { id: "name", label: "Name", kind: "text", term: (v) => `name:${_fq(v)}`,
     suggest: async (q) => (await api(`/cards/autocomplete?q=${encodeURIComponent(q)}`)).data },
@@ -45,6 +55,9 @@ const _FILTER_FIELDS = [
   { id: "role", label: "Role", kind: "chips",
     options: PRED_LABELS.map((l) => [l, l.replace(/_/g, " "), `chip-pred pred-${l}`]),
     term: (v) => _fAny(v.map((l) => `pred:${l}`)) },
+  { id: "land", label: "Land", kind: "chips", groups: _LAND_FACETS,
+    options: _LAND_FACETS.flat().map((f) => [f, _LAND_LABEL[f] || f]),
+    term: (v) => _LAND_FACETS.map((g) => _fAny(g.filter((f) => v.includes(f)).map((f) => `land:${f}`))).filter(Boolean).join(" ") },
   { id: "format", label: "Legal in", kind: "select",
     options: ["commander", "standard", "pioneer", "modern", "legacy", "vintage", "pauper", "brawl", "oathbreaker"],
     term: (v) => `f:${v}` },
@@ -60,7 +73,7 @@ const _FILTER_FIELDS = [
 ];
 
 // What each section already filters by itself: a field id or a chip value.
-const _FILTER_OMIT = { invQ: ["owned", "unowned"], wlQ: ["wanted"], bsQ: ["owned", "unowned", "format"] };
+const _FILTER_OMIT = { invQ: ["owned", "unowned"], wlQ: ["wanted"], bsQ: ["owned", "unowned", "format", "land"] };
 
 function _filterQuery(values) {
   return _FILTER_FIELDS.map((f) => values[f.id] ? f.term(values[f.id]) : "").filter(Boolean).join(" ");
@@ -85,7 +98,9 @@ function _filterRow(f, omit) {
     ctl = `${keys}<select data-part="op" aria-label="Comparison">${["<=", "<", "=", ">=", ">"].map((o) => `<option${o === "<=" ? " selected" : ""}>${o}</option>`).join("")}</select>`
       + `<input type="number" id="${id}" data-part="n" inputmode="decimal" min="0" step="any">`;
   } else {
-    const opts = f.kind === "colors" ? f.pips.map(pip).join("") : f.options.map(chip).join("");
+    const opts = f.kind === "colors" ? f.pips.map(pip).join("")
+      : f.groups ? f.groups.map((g) => f.options.filter(([v]) => g.includes(v)).map(chip).join("")).join('<span class="build-land-sep"></span>')
+      : f.options.map(chip).join("");
     if (!opts.trim()) return "";
     const ops = f.ops ? `<select data-part="op" aria-label="Color match">${f.ops.map(([o, l]) => `<option value="${o}">${l}</option>`).join("")}</select>` : "";
     ctl = `<div class="chips" role="group" aria-labelledby="${id}">${opts}</div>${ops}`;
