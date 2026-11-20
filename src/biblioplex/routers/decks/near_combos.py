@@ -41,15 +41,21 @@ _NEAR_COMBOS_SQL = (
     "       co.results, "
     "       gap.gap_names, "
     "       gap.gap_ids, "
+    "       gap.gap_owned, "
     "       gap.gap_count AS missing_count, "
     "       in_deck.in_names "
     "FROM combos co "
     "LEFT JOIN LATERAL ( "
     "    SELECT array_agg(cd.name ORDER BY t.ord) AS gap_names, "
     "           array_agg(cd.id::text ORDER BY t.ord) AS gap_ids, "
+    "           array_agg(own.owned ORDER BY t.ord) AS gap_owned, "
+    "           bool_and(own.owned) AS all_owned, "
     "           count(*)::int AS gap_count "
     "    FROM unnest(co.oracle_ids) WITH ORDINALITY t(oid, ord) "
     "    LEFT JOIN cards cd ON cd.oracle_id = t.oid "
+    "    CROSS JOIN LATERAL (SELECT EXISTS ( "
+    "        SELECT 1 FROM inventory i WHERE i.oracle_id = t.oid AND i.quantity > 0 "
+    "    ) AS owned) own "
     "    WHERE NOT (t.oid = ANY(CAST(:deck_oids AS uuid[]))) "
     ") gap ON true "
     "LEFT JOIN LATERAL ( "
@@ -61,7 +67,8 @@ _NEAR_COMBOS_SQL = (
     "WHERE co.oracle_ids && CAST(:deck_oids AS uuid[]) "
     "  AND gap.gap_count BETWEEN 1 AND :missing "
     "  AND (CAST(:ci AS text[]) IS NULL OR co.color_identity <@ CAST(:ci AS text[])) "
-    "ORDER BY gap.gap_count ASC, co.id ASC "
+    "ORDER BY (CAST(:owned_first AS boolean) AND gap.all_owned) DESC, "
+    "         gap.gap_count ASC, co.id ASC "
     "LIMIT :limit"
 )
 
@@ -76,7 +83,8 @@ router = APIRouter(prefix="/decks", tags=["decks"])
         "Extension of `/decks/combos`. Returns every ingested combo whose "
         "gap (cards required but not present in the deck) is between 1 "
         "and `?missing` (default 1, cap 3). Response carries the in-deck "
-        "and gap card lists per combo so agents can render 'you're 1 card "
+        "and gap card lists per combo, each gap card with `owned` (in your "
+        "inventory), so agents can render 'you're 1 card "
         "from Thassa's Oracle — get Demonic Consultation.' GIN-backed via "
         "`combos.oracle_ids && CAST(:deck_oids AS uuid[])` for the pre-filter."
     ),
@@ -98,6 +106,13 @@ async def decklist_near_combos(
         ge=1,
         le=100,
         description="Max combos to return (sorted by gap ASC).",
+    ),
+    owned_first: bool = Query(
+        default=False,
+        description=(
+            "Sort combos whose missing cards are all in your inventory first, "
+            "so a small `limit` keeps the ones you can finish without buying."
+        ),
     ),
     engine: _Engine = Depends(get_read_engine),
 ) -> Any:
@@ -126,14 +141,21 @@ async def decklist_near_combos(
             )
             result = await conn.execute(
                 text(_NEAR_COMBOS_SQL),
-                {"deck_oids": deck_oids, "missing": missing, "limit": limit, "ci": ci},
+                {
+                    "deck_oids": deck_oids,
+                    "missing": missing,
+                    "limit": limit,
+                    "ci": ci,
+                    "owned_first": owned_first,
+                },
             )
             for row in result.all():
                 gap_names = list(row.gap_names or [])
                 gap_ids = list(row.gap_ids or [])
+                gap_owned = list(row.gap_owned or [])
                 gap = [
-                    {"name": n, "id": i}
-                    for n, i in zip(gap_names, gap_ids, strict=False)
+                    {"name": n, "id": i, "owned": bool(o)}
+                    for n, i, o in zip(gap_names, gap_ids, gap_owned, strict=False)
                 ]
                 combos_out.append(
                     {
