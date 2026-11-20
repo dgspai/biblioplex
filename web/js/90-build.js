@@ -741,17 +741,10 @@ function _buildSearchPanelHtml(slotPred, open) {
 }
 
 // Land-step facet chips: OR within a group, AND across groups.
-const _LAND_FACETS = [
-  ["untapped", "conditional", "tapped"],
-  ["colorless", "mono", "dual", "tri", "five"],
-  ["utility"],
-  ["fetch"],
-];
 const _buildLandSel = new Set();
 function _landFacetChipsHtml() {
-  const label = { conditional: "cond.", colorless: "C", five: "5c" };
   return `<div class="build-land-facets" role="group" aria-label="Land filters">${_LAND_FACETS.map((g) => g.map((f) =>
-    `<button type="button" class="chip" data-land-facet="${f}" aria-pressed="${_buildLandSel.has(f)}">${label[f] || f}</button>`
+    `<button type="button" class="chip" data-land-facet="${f}" aria-pressed="${_buildLandSel.has(f)}">${_LAND_LABEL[f] || f}</button>`
   ).join("")).join('<span class="build-land-sep"></span>')}</div>`;
 }
 function _landFacetQuery() {

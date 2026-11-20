@@ -86,7 +86,10 @@ def test_fetch_lands_get_their_own_group_and_label() -> None:
 
 
 def test_land_facets_offer_fetch() -> None:
-    assert "fetch" in BUILD[BUILD.index("const _LAND_FACETS") :][:800]
+    # One list, shared by the land step and the filter popup (07-filter.js).
+    shared = (WEB / "js" / "07-filter.js").read_text()
+    assert "fetch" in shared[shared.index("const _LAND_FACETS") :][:800]
+    assert "const _LAND_FACETS" not in BUILD
 
 
 def test_land_target_follows_curve_and_commander_cost() -> None:
