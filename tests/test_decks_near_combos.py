@@ -123,8 +123,10 @@ def _near_combo_row(
     steps: str | None = None,
     results: list[str] | None = None,
     gap_owned: list[bool] | None = None,
+    requires: list[dict[str, Any]] | None = None,
 ) -> Any:
     return SimpleNamespace(
+        requires=requires or [],
         combo_id=combo_id,
         prereqs=prereqs,
         steps=steps,
@@ -426,4 +428,4 @@ async def test_owned_filter_is_opt_in(app: FastAPI) -> None:
     assert params["owned"] is True
     _, _, params = await _near_call(app, "/decks/near-combos?owned=false")
     assert params["owned"] is False
-    assert "gap.all_owned = CAST(:owned AS boolean)" in sql
+    assert "COALESCE(gap.all_owned, true) AND COALESCE(req.all_owned, true)" in sql

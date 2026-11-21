@@ -17,6 +17,7 @@ from biblioplex.decklist.resolve import resolve_and_fetch_deck_rows
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.routers.cards import _Engine, get_read_engine
 
+from ._combo_requires import REQUIRES_CTE, REQUIRES_LATERAL
 from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN, _maindeck_entries
 
 
@@ -27,9 +28,10 @@ class BracketRequest(BaseModel):
 
 
 _COMBOS_COUNT_SQL = (
+    "WITH " + REQUIRES_CTE +
     "SELECT count(*) AS n "
-    "FROM combos "
-    "WHERE oracle_ids <@ CAST(:deck_oids AS uuid[])"
+    "FROM combos co " + REQUIRES_LATERAL +
+    "WHERE co.oracle_ids <@ CAST(:deck_oids AS uuid[]) AND req.missing = 0"
 )
 
 

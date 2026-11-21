@@ -18,6 +18,7 @@ from biblioplex.decklist.sections import parse_sections
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.routers.cards import _Engine, get_read_engine
 
+from ._combo_requires import REQUIRES_CTE, REQUIRES_LATERAL_OWNED, requires_payload
 from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN
 
 
@@ -34,17 +35,23 @@ class NearCombosRequest(BaseModel):
 # in the deck) and (b) the in-deck set. The outer `gap.gap_count BETWEEN
 # 1 AND :missing` gates the small-gap window and drops combos already
 # fully present (`gap_count = 0`), which is /decks/combos's job.
+# Template cards still needed (`req.missing`) add to the gap. MATERIALIZED
+# pins the GIN scan: inlined, the planner seq-scanned combos (4x slower).
 _NEAR_COMBOS_SQL = (
+    "WITH cand AS MATERIALIZED ( "  # noqa: S608 (constants only)
+    "    SELECT * FROM combos WHERE oracle_ids && CAST(:deck_oids AS uuid[]) "
+    "), " + REQUIRES_CTE +
     "SELECT co.id AS combo_id, "
+    "       req.requires, "
     "       co.prereqs, "
     "       co.steps, "
     "       co.results, "
     "       gap.gap_names, "
     "       gap.gap_ids, "
     "       gap.gap_owned, "
-    "       gap.gap_count AS missing_count, "
+    "       gap.gap_count + req.missing AS missing_count, "
     "       in_deck.in_names "
-    "FROM combos co "
+    "FROM cand co "
     "LEFT JOIN LATERAL ( "
     "    SELECT array_agg(cd.name ORDER BY t.ord) AS gap_names, "
     "           array_agg(cd.id::text ORDER BY t.ord) AS gap_ids, "
@@ -63,12 +70,13 @@ _NEAR_COMBOS_SQL = (
     "    FROM unnest(co.oracle_ids) WITH ORDINALITY t(oid, ord) "
     "    JOIN cards cd ON cd.oracle_id = t.oid "
     "    WHERE t.oid = ANY(CAST(:deck_oids AS uuid[])) "
-    ") in_deck ON true "
-    "WHERE co.oracle_ids && CAST(:deck_oids AS uuid[]) "
-    "  AND gap.gap_count BETWEEN 1 AND :missing "
+    ") in_deck ON true " + REQUIRES_LATERAL_OWNED +
+    "WHERE gap.gap_count + req.missing BETWEEN 1 AND :missing "
     "  AND (CAST(:ci AS text[]) IS NULL OR co.color_identity <@ CAST(:ci AS text[])) "
-    "  AND (CAST(:owned AS boolean) IS NULL OR gap.all_owned = CAST(:owned AS boolean)) "
-    "ORDER BY gap.gap_count ASC, co.id ASC "
+    "  AND (CAST(:owned AS boolean) IS NULL OR "
+    "       (COALESCE(gap.all_owned, true) AND COALESCE(req.all_owned, true)) "
+    "       = CAST(:owned AS boolean)) "
+    "ORDER BY gap.gap_count + req.missing ASC, co.id ASC "
     "LIMIT :limit"
 )
 
@@ -85,7 +93,10 @@ router = APIRouter(prefix="/decks", tags=["decks"])
         "and `?missing` (default 1, cap 3). Response carries the in-deck "
         "and gap card lists per combo, each gap card with `owned` (in your "
         "inventory), so agents can render 'you're 1 card "
-        "from Thassa's Oracle — get Demonic Consultation.' GIN-backed via "
+        "from Thassa's Oracle — get Demonic Consultation.' Template "
+        "requirements (`requires`, e.g. '1x Persist Creature') the deck "
+        "doesn't meet add to `missing`; each carries `owned` (matching "
+        "inventory cards not in the deck). GIN-backed via "
         "`combos.oracle_ids && CAST(:deck_oids AS uuid[])` for the pre-filter."
     ),
     responses={422: _ERROR_RESPONSE},
@@ -167,6 +178,7 @@ async def decklist_near_combos(
                         "in_deck": list(row.in_names or []),
                         "gap": gap,
                         "missing": int(row.missing_count),
+                        "requires": requires_payload(row.requires),
                     }
                 )
 

@@ -12,6 +12,7 @@ from biblioplex.decklist.resolve import resolve_and_fetch_deck_rows
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.routers.cards import _Engine, get_read_engine
 
+from ._combo_requires import REQUIRES_CTE, REQUIRES_LATERAL, requires_payload
 from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN, _maindeck_entries
 
 
@@ -22,7 +23,9 @@ class CombosRequest(BaseModel):
 
 
 _COMBOS_SUBSET_SQL = (
+    "WITH " + REQUIRES_CTE +  # noqa: S608 (constants only)
     "SELECT co.id AS combo_id, "
+    "       req.requires, "
     "       co.prereqs, "
     "       co.steps, "
     "       co.results, "
@@ -31,8 +34,9 @@ _COMBOS_SUBSET_SQL = (
     "         FROM unnest(co.oracle_ids) WITH ORDINALITY t(oid, ord) "
     "         JOIN cards cd ON cd.oracle_id = t.oid "
     "       ) AS card_names "
-    "FROM combos co "
+    "FROM combos co " + REQUIRES_LATERAL +
     "WHERE co.oracle_ids <@ CAST(:deck_oids AS uuid[]) "
+    "  AND req.missing = 0 "
     "ORDER BY co.id"
 )
 
@@ -47,7 +51,10 @@ router = APIRouter(prefix="/decks", tags=["decks"])
         "Parses a plaintext decklist, resolves names against `cards` "
         "(exact + trigram fallback at 0.4), and returns every ingested "
         "combo whose full card set is a subset of the resolved deck's "
-        "`oracle_id`s (`combos.oracle_ids <@ deck_oracle_ids`). Empty "
+        "`oracle_id`s (`combos.oracle_ids <@ deck_oracle_ids`) and whose "
+        "template requirements (`requires`, e.g. '1x Persist Creature') "
+        "are met by other deck cards. Unchecked templates (`checked: "
+        "false`, no usable query) count as met. Empty "
         "combos list when the corpus has no matches; unresolved names "
         "surface in a separate field like `/decks/analyze`."
     ),
@@ -88,6 +95,7 @@ async def decklist_combos(
                         "prereqs": row.prereqs,
                         "steps": row.steps,
                         "results": list(row.results or []),
+                        "requires": requires_payload(row.requires),
                     }
                 )
 
