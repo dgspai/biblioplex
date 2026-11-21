@@ -113,7 +113,7 @@ def test_requirement_link_opens_cards_in_place(tmp_path: Path) -> None:
 
 def test_slot_cycles_through_matching_cards() -> None:
     body = _fn(COMBOS, "_fillComboReqSlides")
-    assert "/cards/search?q=" in body and "order=edhrec" in body and ".slice(0, 6)" in body
+    assert "/cards/search?q=" in body and "order=edhrec" in body and "limit=6" in body
     assert "prefers-reduced-motion" in body
     assert "isConnected" in body and "clearInterval" in body
 

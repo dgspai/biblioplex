@@ -792,9 +792,9 @@ async function _runBuildSearch() {
   }
   out.innerHTML = `<p class="empty">Searching…</p>`;
   try {
-    // Over-fetch so client-side filters (hide-in-deck, ramp-land) still
-    // leave a full page.
-    const res = await api(`/cards/search?q=${encodeURIComponent(parts.join(" "))}&order=${sort}&limit=40&projection=${encodeURIComponent(_BUILD_LIST_PROJ)}`);
+    // Full page (no limit): hide-in-deck and ramp-land filter client-side,
+    // and a deck can hold most of the top 40.
+    const res = await api(`/cards/search?q=${encodeURIComponent(parts.join(" "))}&order=${sort}&projection=${encodeURIComponent(_BUILD_LIST_PROJ)}`);
     let cards = res.data || [];
     if ($("#bsHide") && $("#bsHide").checked) cards = cards.filter((c) => !_buildHas(c.name));
     if (rampMode) cards = cards.filter((c) => !_isLandType(c.type_line) || _landRamps(c));

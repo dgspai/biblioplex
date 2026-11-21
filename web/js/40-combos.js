@@ -115,7 +115,7 @@ async function _fillComboReqSlides(container) {
     delete slot.dataset.reqQ;  // claim it: renders can call this more than once
     let cards;
     try {
-      cards = (await api(`/cards/search?q=${q}&order=edhrec&projection=image_uris.small,card_faces`)).data.slice(0, 6);
+      cards = (await api(`/cards/search?q=${q}&order=edhrec&limit=6&projection=image_uris.small,card_faces`)).data;
     } catch { continue; }
     const srcs = cards.map((c) => c.image_uris?.small || c.card_faces?.[0]?.image_uris?.small).filter(Boolean);
     if (!slot.isConnected || !srcs.length) continue;

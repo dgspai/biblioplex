@@ -198,7 +198,7 @@ Exactly one of `exact`/`fuzzy` is required. Both or neither → `400 bad_request
 
 ### `GET /cards/search?q=<dsl>`
 
-DSL search (see [search-syntax.md](search-syntax.md)); returns a Scryfall `List` envelope, 175 results/page. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`, so collection and wishlist changes show in the next search.
+DSL search (see [search-syntax.md](search-syntax.md)); returns a Scryfall `List` envelope, 175 results/page; `limit=` (1–175) asks for fewer and pages by that size. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`, so collection and wishlist changes show in the next search.
 
 Params: `q` (required, ≤1000 chars); `order=name|cmc|power|toughness|released|color|edhrec|rarity|usd|relevance` (default `name`); `dir=auto|asc|desc` (auto → desc for `released`/`usd`/`relevance`, asc otherwise); `page>=1`; `unique=cards|prints|art` (all alias to `cards`); `projection=<comma-list>`. Always tie-broken by `id ASC`. Primary order is `NULLS LAST` so unranked/unpriced/non-numeric power cards sink regardless of direction. `order=relevance` sorts by trigram word-similarity between the query's bare-word terms and `name_search` — best match first; filter-only queries (no bare-word terms) fall back to `name_sort_key asc`.
 
