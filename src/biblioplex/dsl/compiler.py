@@ -1161,7 +1161,7 @@ def _face_generic_count(face_cost: sa.ColumnElement[str]) -> sa.ColumnElement[in
     # group is the first array element.
     rm = sa.func.regexp_matches(face_cost, r"\{(\d+)\}", "g").table_valued(
         sa.column("captures", postgresql.ARRAY(sa.Text))
-    )
+    ).render_derived(name="rm")
     captures = rm.c.captures
     n = sa.cast(captures[1], sa.Integer)
     return sa.func.coalesce(

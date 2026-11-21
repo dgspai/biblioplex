@@ -82,3 +82,9 @@ def test_m_less_than_other_costs_still_unsupported() -> None:
 
     with pytest.raises(UnsupportedOperatorError):
         compile_ast(parse("m<WW"), cards_table())
+
+
+def test_generic_pip_sum_names_the_captures_column() -> None:
+    # Without a column list Postgres has no `captures` column: m:2W was a 500.
+    sql = render(compile_ast(parse("m:2W"), cards_table()))
+    assert "(captures)" in sql
