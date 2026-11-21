@@ -88,3 +88,9 @@ def test_generic_pip_sum_names_the_captures_column() -> None:
     # Without a column list Postgres has no `captures` column: m:2W was a 500.
     sql = render(compile_ast(parse("m:2W"), cards_table()))
     assert "(captures)" in sql
+
+
+def test_mana_regex_matches_the_stored_cost_text() -> None:
+    """`m:/…/` reaches a single face's cost, e.g. a prepared card's spell half."""
+    sql = render(compile_ast(parse(r"m:/ \{1\}$/"), cards_table()))
+    assert "mana_cost_search" in sql and "~*" in sql

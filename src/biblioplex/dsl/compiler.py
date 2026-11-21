@@ -335,6 +335,8 @@ def _compile_kv(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     if key in _IDENTITY_KEYS:
         return _compile_color(node, cards.c.color_identity)
     if key in _MANA_KEYS:
+        if node.value_regex:
+            return cards.c.mana_cost_search.op("~*")(node.value)
         return _compile_mana(node, cards)
     if key in _CMC_KEYS:
         return _compile_cmc(node, cards)
