@@ -47,3 +47,13 @@ def test_regex_does_not_wrap_with_percent() -> None:
     sql = render(compile_ast(parse("o:/exact/"), cards))
     # The ILIKE form would inject %% around the pattern. Regex must not.
     assert "%exact%" not in sql
+
+
+def test_oracle_regex_anchors_match_each_line() -> None:
+    sql = render(compile_ast(parse("o:/^cycling/"), cards_table()))
+    assert "(?n)^cycling" in sql
+
+
+def test_oracle_regex_keeps_user_embedded_options() -> None:
+    sql = render(compile_ast(parse("o:/(?i)^cycling/"), cards_table()))
+    assert "(?n)" not in sql

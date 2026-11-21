@@ -324,7 +324,7 @@ def _compile_kv(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
         return _name_substring(cards, node.value)
     if key in _ORACLE_KEYS:
         if node.value_regex:
-            return cards.c.oracle_search.op("~*")(node.value)
+            return cards.c.oracle_search.op("~*")(_per_line(node.value))
         return _compile_oracle(node, cards)
     if key in _TYPE_KEYS:
         if node.value_regex:
@@ -614,6 +614,7 @@ def _compile_oracle(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
 # Modern rules text names the card by its type ("When this creature enters").
 _SELF_NOUNS = ("creature", "land", "artifact", "enchantment", "planeswalker", "permanent",
                "spell", "card", "vehicle", "equipment", "aura", "battle")
+_EMBEDDED_OPTIONS = re.compile(r"^\(\?[a-z]+\)")
 
 
 def _escape_ilike_sql(expr: sa.ColumnElement[Any]) -> sa.ColumnElement[Any]:
@@ -621,6 +622,11 @@ def _escape_ilike_sql(expr: sa.ColumnElement[Any]) -> sa.ColumnElement[Any]:
     for ch in ("\\", "_", "%"):
         expr = sa.func.replace(expr, sa.literal(ch), sa.literal("\\" + ch))
     return expr
+
+
+def _per_line(pattern: str) -> str:
+    """`^`/`$` anchor each line of rules text, as on Scryfall."""
+    return pattern if _EMBEDDED_OPTIONS.match(pattern) else "(?n)" + pattern
 
 
 def _compile_keyword(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
