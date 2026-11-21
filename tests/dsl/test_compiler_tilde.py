@@ -28,3 +28,17 @@ def test_o_without_tilde_unchanged() -> None:
     # No tilde, no name substitution.
     assert "cards.name" not in sql
     assert "oracle_search ILIKE" in sql
+
+
+def test_tilde_matches_how_rules_text_names_the_card() -> None:
+    """Oracle text says "this creature", the front face, or a legend's short name."""
+    sql = render(compile_ast(parse('o:"when ~ enters"'), cards_table()))
+    assert "this creature" in sql
+    assert "split_part" in sql
+    assert "' // '" in sql and "', '" in sql
+
+
+def test_negated_tilde_never_yields_null() -> None:
+    """A single-face card has no back-face name; NULL under NOT drops every row."""
+    sql = render(compile_ast(parse('-o:"~ enters tapped"'), cards_table()))
+    assert "coalesce" in sql.lower()
