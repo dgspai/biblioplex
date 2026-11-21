@@ -2,6 +2,21 @@
 
 <!-- version list -->
 
+## v0.21.0 (2026-11-20)
+
+### Documentation
+
+- One changelog, with migration notices from the release job
+  ([#39](https://github.com/dgspai/biblioplex/pull/39),
+  [`41888e9`](https://github.com/dgspai/biblioplex/commit/41888e9cb93c133808b60ed4b6b25af16f28b3ee))
+
+### Features
+
+- Build review combos grouped by what you need, and clickable
+  ([#40](https://github.com/dgspai/biblioplex/pull/40),
+  [`b7fc3d5`](https://github.com/dgspai/biblioplex/commit/b7fc3d59c7368d84107a7fab5aaa5fa61917b12e))
+
+
 ## v0.20.0 (2026-11-20)
 
 ### Features

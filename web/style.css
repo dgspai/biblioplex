@@ -1089,7 +1089,11 @@ dialog .inv-paste summary { color: var(--fg-muted); font-size: var(--fs-sm); }
 .build-dl-row:hover .build-dl-rm { opacity: 1; }
 .build-dl-rm:hover { color: var(--error-fg); }
 .build-combos { list-style: none; margin: 0.2rem 0 0.6rem; padding: 0; font-size: 0.9em; }
-.build-combos li { padding: 2px 0; border-bottom: 1px solid var(--border); }
+.build-combos li { display: flex; align-items: center; gap: var(--sp-2); border-bottom: 1px solid var(--border); }
+.build-combos-h { margin: var(--sp-3) 0 0; font-size: var(--fs-sm); font-weight: 600; color: var(--fg-muted); }
+.build-combo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: var(--sp-2) 0; color: var(--fg); text-decoration: none; }
+.build-combo:hover strong, .build-combo:focus-visible strong { text-decoration: underline; }
+.build-combo-res { color: var(--fg-muted); font-size: var(--fs-sm); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .build-dl-cost .mana-sym { height: 0.85em; width: 0.85em; margin: 0 0.5px; vertical-align: -0.1em; }
 @media (max-width: 900px) {
   .build-layout { flex-wrap: wrap; }
