@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from biblioplex.ingest.combo_template_queries import TEMPLATE_QUERIES
 from biblioplex.ingest.combos import _map_v2_variant, build_rows, template_card_query
 
 _PERSIST = {
@@ -62,3 +63,14 @@ def test_unusable_template_query_is_none() -> None:
     assert template_card_query(None) is None
     assert template_card_query("m<WW") is None
     assert template_card_query("((") is None
+
+
+def test_our_query_fills_a_template_spellbook_left_blank() -> None:
+    req = {"template": {"id": 85, "name": "Haste Enabler", "scryfallQuery": None}, "quantity": 1}
+    mapped = _map_v2_variant(_variant(requires=[req]))
+    assert mapped is not None
+    assert mapped["requires"][0]["query"] == TEMPLATE_QUERIES[85]
+
+
+def test_every_template_query_of_ours_compiles() -> None:
+    assert [i for i, q in TEMPLATE_QUERIES.items() if template_card_query(q) is None] == []

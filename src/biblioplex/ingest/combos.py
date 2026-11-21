@@ -50,6 +50,7 @@ from biblioplex import SCRYFALL_HEADERS
 from biblioplex.dsl.cards_table import CARDS
 from biblioplex.dsl.compiler import compile_ast
 from biblioplex.dsl.parser import parse
+from biblioplex.ingest.combo_template_queries import TEMPLATE_QUERIES
 
 _log = logging.getLogger(__name__)
 
@@ -238,6 +239,7 @@ def _map_requires(value: Any) -> list[dict[str, Any]] | None:
         qty = r.get("quantity", 1)
         if not isinstance(tid, int) or not isinstance(name, str) or not name:
             return None
+        query = TEMPLATE_QUERIES.get(tid) or query
         if not isinstance(qty, int) or qty < 1:
             return None
         out.append({
