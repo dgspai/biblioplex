@@ -210,7 +210,7 @@ def _map_v2_variant(variant: dict[str, Any]) -> dict[str, Any] | None:
         }
 
     Missing required fields (id, uses) → ``None`` (caller drops).
-    Prereqs fall back from ``notablePrerequisites`` to ``easyPrerequisites``.
+    Prereqs join ``easyPrerequisites`` and ``notablePrerequisites``, one per line.
     Defensive throughout — a partial variant collapses to sensible defaults
     rather than crashing the fetch loop.
     """
@@ -250,9 +250,12 @@ def _map_v2_variant(variant: dict[str, Any]) -> dict[str, Any] | None:
                 name = feature.get("name")
                 if isinstance(name, str) and name:
                     results.append(name)
-    prereqs = variant.get("notablePrerequisites") or variant.get("easyPrerequisites")
-    if not isinstance(prereqs, str) or not prereqs:
-        prereqs = None
+    prereq_parts = [
+        p
+        for p in (variant.get("easyPrerequisites"), variant.get("notablePrerequisites"))
+        if isinstance(p, str) and p
+    ]
+    prereqs = "\n".join(prereq_parts) or None
     steps = variant.get("description")
     if not isinstance(steps, str) or not steps:
         steps = None
