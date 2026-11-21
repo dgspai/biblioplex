@@ -723,6 +723,10 @@ function renderDetail(card, faceIdx, target) {
   const edhrecLink = edhrecUrl
     ? `<a class="ext-link" href="${escapeHtml(edhrecUrl)}" target="_blank" rel="noopener" title="Open on EDHREC">EDHREC</a>`
     : "";
+  const ligaName = (card.name || view.name || "").split(" // ")[0];
+  const ligaLink = ligaName
+    ? `<a class="ext-link" href="https://www.ligamagic.com.br/?view=cards%2Fsearch&tipo=1&card=${encodeURIComponent(ligaName)}" target="_blank" rel="noopener" title="Search on LigaMagic">LigaMagic</a>`
+    : "";
   pane.innerHTML = `
     <div class="detail-header">
       <h2>${escapeHtml(view.name || "?")}${_ownedBadge(card.oracle_id)}</h2>
@@ -731,6 +735,7 @@ function renderDetail(card, faceIdx, target) {
         <button type="button" class="copy-id" data-copy="${escapeHtml(card.id || "")}" title="Copy card id">copy id</button>
         ${scryLink}
         ${edhrecLink}
+        ${ligaLink}
       </div>
     </div>
     <p class="typeline">${escapeHtml(view.type_line || "")}</p>
