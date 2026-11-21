@@ -719,6 +719,8 @@ def _compile_otag(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     is a flat indexed equality — no recursive CTE per query.
     """
     value = node.value.strip().lower()
+    # Older hyphenated slugs (`man-land`) are stored spaced or joined (`manland`).
+    slugs = sorted({value, value.replace("-", " "), value.replace("-", "")})
     ot = sa.table(
         "oracle_tags",
         sa.column("oracle_id"),
@@ -727,7 +729,7 @@ def _compile_otag(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     return sa.exists(
         sa.select(sa.literal(1))
         .select_from(ot)
-        .where(sa.and_(ot.c.oracle_id == cards.c.oracle_id, ot.c.tag == value))
+        .where(sa.and_(ot.c.oracle_id == cards.c.oracle_id, ot.c.tag.in_(slugs)))
     )
 
 
