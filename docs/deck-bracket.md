@@ -26,7 +26,7 @@ formula.
 | `mld` | Scryfall Tagger `mass-land-destruction` slug | Armageddon, Ravages of War, Jokulhaups, Obliterate, ... |
 | `tutors` | Scryfall Tagger `tutor` slug | Broader than the earlier curated list — includes narrow tutors that Tagger community classifies as tutors. |
 | `extra_turns` | Scryfall Tagger `extra-turn` slug | Time Warp, Temporal Manipulation, Alrund's Epiphany, ... |
-| `combos` | Count from the combos table, filtered to combos whose full card set is a subset of the deck (`combos.oracle_ids <@ deck_oracle_ids`) | Only surfaces when `COMBOS_SOURCE_URL` is set + a refresh has completed. Combo count is the strongest single signal in the ladder below. |
+| `combos` | Count from the combos table, filtered to combos whose full card set is a subset of the deck (`combos.oracle_ids <@ deck_oracle_ids`) and whose generic requirements (e.g. "1x Persist Creature") other deck cards meet; requirements we can't check count as met | Only surfaces when `COMBOS_SOURCE_URL` is set + a refresh has completed. Combo count is the strongest single signal in the ladder below. |
 
 ## Bracket ladder (first match wins)
 
