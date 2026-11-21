@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.22.0 (2026-11-21)
+
+### Features
+
+- **web**: Card detail links to a LigaMagic search
+  ([#41](https://github.com/dgspai/biblioplex/pull/41),
+  [`e7df194`](https://github.com/dgspai/biblioplex/commit/e7df19444e6b3dae1f5928c82fef128e573fee96))
+
+
 ## v0.21.0 (2026-11-20)
 
 ### Documentation
