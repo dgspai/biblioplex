@@ -22,7 +22,9 @@ Operators with no Scryfall equivalent, or that read data Scryfall doesn't have (
 | `in:wishlist`, `is:wanted`, `is:unwanted`, `wanted>=N` | Your wishlist |
 | bare words with typos | Name matching tolerates typos via trigram similarity (`invason` finds Invasion cards) |
 
-`otag:` / `function:` use Scryfall Tagger slugs. Look slugs up with `GET /tags?prefix=...` rather than guessing: for example the board-wipe slugs are `boardwipe` and `sweeper-one-sided`, not `board-wipe`.
+In `o:`, `~` stands for the card itself: its name, either face, a legend's short name, or "this creature"/"this land"-style wording. In `o:/regex/`, `^` and `$` anchor each line of rules text, as on Scryfall.
+
+`otag:` / `function:` use Scryfall Tagger slugs; older hyphenated forms (`man-land`) also find the stored `manland`. Look slugs up with `GET /tags?prefix=...` rather than guessing: for example the board-wipe slugs are `boardwipe` and `sweeper-one-sided`, not `board-wipe`.
 
 ### Tested examples
 
