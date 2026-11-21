@@ -2,6 +2,25 @@
 
 <!-- version list -->
 
+## v0.23.0 (2026-11-21)
+
+### Features
+
+- **combos**: Generic template requirements for combos
+  ([#42](https://github.com/dgspai/biblioplex/pull/42),
+  [`018fafb`](https://github.com/dgspai/biblioplex/commit/018fafbffaf28b4b51ba3ed15bf58ec09663ca87))
+
+### Additional Release Information
+
+- **combos**: Existing installs must create the combo template tables, then run a full refresh
+  (cards and combos) so card text is re-stored with faces on separate lines and template
+  requirements are ingested: CREATE TABLE IF NOT EXISTS combo_templates (id integer PRIMARY KEY,
+  name text NOT NULL, scryfall_query text, oracle_ids uuid[]); CREATE TABLE IF NOT EXISTS
+  combo_requires (combo_id text NOT NULL REFERENCES combos (id) ON DELETE CASCADE, template_id
+  integer NOT NULL REFERENCES combo_templates (id), quantity integer NOT NULL DEFAULT 1, PRIMARY KEY
+  (combo_id, template_id)); Until the tables exist, the combo endpoints fail.
+
+
 ## v0.22.0 (2026-11-21)
 
 ### Features
