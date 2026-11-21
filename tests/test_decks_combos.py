@@ -125,6 +125,7 @@ def _combo_row(
     steps: str | None = None,
     results: list[str] | None = None,
     card_names: list[str] | None = None,
+    requires: list[dict[str, Any]] | None = None,
 ) -> Any:
     return SimpleNamespace(
         combo_id=combo_id,
@@ -132,6 +133,7 @@ def _combo_row(
         steps=steps,
         results=results or [],
         card_names=card_names or [],
+        requires=requires or [],
     )
 
 

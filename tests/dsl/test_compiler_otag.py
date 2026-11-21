@@ -42,3 +42,9 @@ def test_otag_combines_with_color() -> None:
     assert "'removal'" in sql
     assert "colors_eff" in sql
     assert " AND " in sql
+
+
+def test_hyphenated_slug_also_matches_spaced_and_joined_forms() -> None:
+    """Spellbook writes `soul-sister` / `man-land`; Tagger stores `soul sister` / `manland`."""
+    sql = render(compile_ast(parse("otag:man-land"), cards_table()))
+    assert "'man-land'" in sql and "'man land'" in sql and "'manland'" in sql

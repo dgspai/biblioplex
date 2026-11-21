@@ -9,11 +9,8 @@
 // during boot before this section executes.
 
 function _renderComboRow(combo, idx) {
-  const names = Array.isArray(combo.cards) ? combo.cards : [];
   const results = Array.isArray(combo.results) ? combo.results : [];
-  const title = names.length
-    ? escapeHtml(names.join(" + "))
-    : `Combo ${escapeHtml(combo.id || "?")}`;
+  const title = _comboTitle(combo);
   const tail = results.length
     ? `<div class="meta">${escapeHtml(results.join(", "))}</div>`
     : "";
@@ -65,7 +62,8 @@ function _renderComboDetail(combo) {
       <img class="combo-thumb" data-card-thumb="${escapeHtml(cid)}" alt="${escapeHtml(name)}" loading="lazy">
       <figcaption>${escapeHtml(name)}</figcaption>
     </button>`;
-  }).join("");
+  }).join("") + (combo.requires || []).map((r) => _comboReqTag(r, "combo-card combo-req",
+    `<span class="combo-req-slot"${r.checked && r.query ? ` data-req-q="${escapeHtml(r.query)}"` : ""}>${_comboReqMark(r)}</span><figcaption>${_comboReqLabel(r)}</figcaption>`)).join("");
   const results = Array.isArray(combo.results) ? combo.results : [];
   const resultsBlock = results.length
     ? `<div class="combo-section"><h3>Produces</h3><ul class="combo-prose">${
@@ -84,9 +82,7 @@ function _renderComboDetail(combo) {
         stepItems.map((s) => `<li>${renderSymbols(s)}</li>`).join("")
       }</ol></div>`
     : "";
-  const title = names.length
-    ? escapeHtml(names.join(" + "))
-    : `Combo ${escapeHtml(combo.id || "?")}`;
+  const title = _comboTitle(combo);
   const link = combo.id
     ? `<a class="ext-link" href="https://commanderspellbook.com/combo/${encodeURIComponent(combo.id)}/" target="_blank" rel="noopener">Spellbook</a>`
     : "";
@@ -109,6 +105,32 @@ async function _fillComboThumbs(container) {
     if (uris.small) img.src = uris.small;
     else img.remove();
   }));
+}
+
+// A requirement slot slowly cycles a few top cards that fill it. Decorative:
+// the link's label is the template name. Reduced motion keeps the first card.
+async function _fillComboReqSlides(container) {
+  for (const slot of container.querySelectorAll(".combo-req-slot[data-req-q]")) {
+    const q = encodeURIComponent(slot.dataset.reqQ);
+    delete slot.dataset.reqQ;  // claim it: renders can call this more than once
+    let cards;
+    try {
+      cards = (await api(`/cards/search?q=${q}&order=edhrec&limit=6&projection=image_uris.small,card_faces`)).data;
+    } catch { continue; }
+    const srcs = cards.map((c) => c.image_uris?.small || c.card_faces?.[0]?.image_uris?.small).filter(Boolean);
+    if (!slot.isConnected || !srcs.length) continue;
+    slot.insertAdjacentHTML("beforeend", srcs.map((src, i) =>
+      `<img src="${escapeHtml(src)}" alt="" loading="lazy"${i ? "" : ' class="on"'}>`).join(""));
+    if (srcs.length < 2 || matchMedia("(prefers-reduced-motion: reduce)").matches) continue;
+    const imgs = slot.querySelectorAll("img");
+    let i = 0;
+    const timer = setInterval(() => {
+      if (!slot.isConnected) return clearInterval(timer);
+      imgs[i].classList.remove("on");
+      i = (i + 1) % imgs.length;
+      imgs[i].classList.add("on");
+    }, 3000);
+  }
 }
 
 // Picked cards live in `_combosCards` (declared in 00-core.js with the other
@@ -239,6 +261,7 @@ async function _consumeCombosPreselect() {
   if (!combo) return;
   combosDetailEl.innerHTML = _renderComboDetail(combo);
   _fillComboThumbs(combosDetailEl);
+  _fillComboReqSlides(combosDetailEl);
 }
 
 if (combosFormEl) {
@@ -310,6 +333,7 @@ if (combosFormEl) {
     li.classList.add("selected");
     combosDetailEl.innerHTML = _renderComboDetail(combo);
     _fillComboThumbs(combosDetailEl);
+    _fillComboReqSlides(combosDetailEl);
   });
   // Cards inside the combo detail route back into the Cards tab: build a
   // DSL query that OR-matches every card in the combo (`!"A" or !"B"`) so

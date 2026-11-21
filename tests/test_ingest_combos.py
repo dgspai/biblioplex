@@ -417,3 +417,11 @@ async def test_bulk_prereqs_falls_back_to_easy() -> None:
     variant = _v2_variant("v1", ["A"], easyPrerequisites="Just do X.", description="Steps here.")
     batches = await _fetch(lambda _: _resp(_bulk(variant)))
     assert batches[0][0][0]["prereqs"] == "Just do X."
+
+
+async def test_bulk_prereqs_keeps_easy_and_notable() -> None:
+    variant = _v2_variant(
+        "v1", ["A"], easyPrerequisites="All in play.", notablePrerequisites="Opponent at 1 life."
+    )
+    batches = await _fetch(lambda _: _resp(_bulk(variant)))
+    assert batches[0][0][0]["prereqs"] == "All in play.\nOpponent at 1 life."

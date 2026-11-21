@@ -370,3 +370,9 @@ def test_flatten_preserves_original_fields() -> None:
     # New search keys added.
     for key in ("name_search", "type_search", "oracle_search", "mana_cost_search", "colors_eff"):
         assert key in out
+
+
+def test_back_face_text_starts_its_own_line() -> None:
+    """`o:/^flying/` must reach a back face's first ability."""
+    out = flatten_card(_transform_card())
+    assert any(line.startswith("Flying") for line in out["oracle_search"].split("\n"))

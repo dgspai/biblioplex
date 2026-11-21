@@ -53,13 +53,13 @@ def _coalesce(value: Any) -> str:
     return str(value)
 
 
-def _join_field(card: dict[str, Any], faces: list[dict[str, Any]], key: str) -> str:
-    """Space-join the top-level ``key`` with each face's ``key``, coalescing nulls."""
+def _join_field(card: dict[str, Any], faces: list[dict[str, Any]], key: str, sep: str = " ") -> str:
+    """Join the top-level ``key`` with each face's ``key``, coalescing nulls."""
     parts: list[str] = [_coalesce(card.get(key))]
     parts.extend(_coalesce(face.get(key)) for face in faces)
     # Preserve empty strings to keep semantics explicit; trim purely-whitespace
     # leftover whitespace at the edges so trgm indexes don't waste space.
-    joined = " ".join(parts).strip()
+    joined = sep.join(parts).strip()
     # If everything was empty / null, return '' so the NOT NULL column is
     # still legally populated.
     return joined
@@ -121,6 +121,7 @@ def flatten_card(card: dict[str, Any]) -> dict[str, Any]:
 
     out = dict(card)
     for src_key, dst_key in _SEARCH_FIELDS:
-        out[dst_key] = _join_field(card, faces, src_key)
+        # Faces on their own lines so per-line regex anchors reach back faces.
+        out[dst_key] = _join_field(card, faces, src_key, "\n" if src_key == "oracle_text" else " ")
     out["colors_eff"] = _colors_eff(card, faces)
     return out

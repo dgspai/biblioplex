@@ -324,7 +324,7 @@ def _compile_kv(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
         return _name_substring(cards, node.value)
     if key in _ORACLE_KEYS:
         if node.value_regex:
-            return cards.c.oracle_search.op("~*")(node.value)
+            return cards.c.oracle_search.op("~*")(_per_line(node.value))
         return _compile_oracle(node, cards)
     if key in _TYPE_KEYS:
         if node.value_regex:
@@ -335,6 +335,8 @@ def _compile_kv(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     if key in _IDENTITY_KEYS:
         return _compile_color(node, cards.c.color_identity)
     if key in _MANA_KEYS:
+        if node.value_regex:
+            return cards.c.mana_cost_search.op("~*")(node.value)
         return _compile_mana(node, cards)
     if key in _CMC_KEYS:
         return _compile_cmc(node, cards)
@@ -587,44 +589,46 @@ def _compile_pt(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
 
 
 def _compile_oracle(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
-    """`o:` / `oracle:` ILIKE on `oracle_search`, with `~`→name substitution.
+    """`o:` / `oracle:` ILIKE on `oracle_search`; `~` is the card itself.
 
-    Per §5.1, a literal `~` in the query value stands for the card's top-level
-    `name`. Since the substitution is row-dependent, we run it in SQL via
-    Postgres `replace`. Without `~`, we keep the simple ILIKE for clarity
-    and to preserve trgm-index friendliness.
-
-    On the `~` branch we also escape the three ILIKE metacharacters in
-    `cards.name` before pasting it into the pattern — backslash (ILIKE's
-    default escape) first, then `_` (any single char) and `%` (any run of
-    chars). Without this, names containing those literals would be treated
-    as wildcards and match unrelated rows (D10.3).
-
-    The user-supplied value is also escaped for ILIKE metachars (D13.1)
-    on both branches — `~` stays a literal since it's not an ILIKE
-    metachar and the sub-`replace` below only rewrites the `~` slot.
+    `~` matches every way rules text names the card: full name, either face,
+    a legend's short name, or "this <type>". Row values are ILIKE-escaped
+    (D10.3), the user value too (D13.1).
     """
     value = node.value
     if "~" not in value:
         return cards.c.oracle_search.ilike(f"%{_escape_ilike_value(value)}%")
-    # Escape ILIKE metachars in the row's `name` before substitution.
-    # Order matters: backslash first, then `_`/`%`.
-    escaped_name = sa.func.replace(
-        sa.func.replace(
-            sa.func.replace(cards.c.name, sa.literal("\\"), sa.literal("\\\\")),
-            sa.literal("_"),
-            sa.literal("\\_"),
-        ),
-        sa.literal("%"),
-        sa.literal("\\%"),
-    )
-    # Escape the value's non-`~` metachars Python-side, then per-row
-    # replace `~` with the SQL-escaped column expression.
     escaped_value = _escape_ilike_value(value)
-    pattern = sa.literal("%") + sa.func.replace(
-        sa.literal(escaped_value), "~", escaped_name
-    ) + sa.literal("%")
-    return cards.c.oracle_search.ilike(pattern)
+    front = sa.func.split_part(cards.c.name, " // ", 1)
+    names = [cards.c.name, front, sa.func.split_part(cards.c.name, " // ", 2),
+             sa.func.split_part(front, ", ", 1)]
+    selves: list[sa.ColumnElement[Any]] = [sa.func.nullif(_escape_ilike_sql(n), "") for n in names]
+    selves += [sa.literal(f"this {t}") for t in _SELF_NOUNS]
+    hits = sa.or_(*(
+        cards.c.oracle_search.ilike(
+            sa.literal("%") + sa.func.replace(sa.literal(escaped_value), "~", s) + sa.literal("%")
+        )
+        for s in selves
+    ))
+    return sa.func.coalesce(hits, sa.false())
+
+
+# Modern rules text names the card by its type ("When this creature enters").
+_SELF_NOUNS = ("creature", "land", "artifact", "enchantment", "planeswalker", "permanent",
+               "spell", "card", "vehicle", "equipment", "aura", "battle")
+_EMBEDDED_OPTIONS = re.compile(r"^\(\?[a-z]+\)")
+
+
+def _escape_ilike_sql(expr: sa.ColumnElement[Any]) -> sa.ColumnElement[Any]:
+    """Escape ILIKE metachars in a row value (backslash first) (D10.3)."""
+    for ch in ("\\", "_", "%"):
+        expr = sa.func.replace(expr, sa.literal(ch), sa.literal("\\" + ch))
+    return expr
+
+
+def _per_line(pattern: str) -> str:
+    """`^`/`$` anchor each line of rules text, as on Scryfall."""
+    return pattern if _EMBEDDED_OPTIONS.match(pattern) else "(?n)" + pattern
 
 
 def _compile_keyword(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
@@ -719,6 +723,8 @@ def _compile_otag(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     is a flat indexed equality — no recursive CTE per query.
     """
     value = node.value.strip().lower()
+    # Older hyphenated slugs (`man-land`) are stored spaced or joined (`manland`).
+    slugs = sorted({value, value.replace("-", " "), value.replace("-", "")})
     ot = sa.table(
         "oracle_tags",
         sa.column("oracle_id"),
@@ -727,7 +733,7 @@ def _compile_otag(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     return sa.exists(
         sa.select(sa.literal(1))
         .select_from(ot)
-        .where(sa.and_(ot.c.oracle_id == cards.c.oracle_id, ot.c.tag == value))
+        .where(sa.and_(ot.c.oracle_id == cards.c.oracle_id, ot.c.tag.in_(slugs)))
     )
 
 
@@ -1073,6 +1079,9 @@ def _compile_mana(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     """
     op = node.op
     query_ms = parse_cost_symbols(node.value)
+    if op == "<" and not any(query_ms.values()):
+        # ponytail: only `m<{0}` (no mana cost); general strict-subset `<` still raises.
+        return sa.func.coalesce(cards.c.mana_cost_search, "").op("~")(r"^\s*$")
 
     # Build per-face predicate: a SQLAlchemy expression referencing `face_cost`.
     face_cost: sa.ColumnElement[str] = sa.literal_column("face_cost", sa.Text)
@@ -1158,7 +1167,7 @@ def _face_generic_count(face_cost: sa.ColumnElement[str]) -> sa.ColumnElement[in
     # group is the first array element.
     rm = sa.func.regexp_matches(face_cost, r"\{(\d+)\}", "g").table_valued(
         sa.column("captures", postgresql.ARRAY(sa.Text))
-    )
+    ).render_derived(name="rm")
     captures = rm.c.captures
     n = sa.cast(captures[1], sa.Integer)
     return sa.func.coalesce(

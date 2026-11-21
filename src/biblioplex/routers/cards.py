@@ -43,6 +43,7 @@ from biblioplex.dsl.parser import ParseError, parse
 from biblioplex.errors import ErrorEnvelope
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.projection import ProjectionError, parse_projection, project
+from biblioplex.routers._combo_requires import REQUIRES_COLUMN, requires_payload
 
 # OpenAPI ``responses=`` fragment for the Scryfall-shaped 4xx body. Reused
 # across endpoints so the schema documents 4xx shapes (D8.2) without each
@@ -168,8 +169,8 @@ def _apply_projection(
 FUZZY_SIMILARITY_THRESHOLD = 0.4
 
 
-# §6.1: hard-coded page size. Scryfall serves 175 results per page; we
-# mirror that so agent clients can paginate identically.
+# §6.1: default and max page size. Scryfall serves 175 results per page; we
+# mirror that so agent clients can paginate identically. `limit=` asks for fewer.
 SEARCH_PAGE_SIZE = 175
 
 # §6.1: max query length. Bounds parser work + Postgres regex memory.
@@ -497,8 +498,15 @@ async def search_cards(
     page: int = Query(
         default=1,
         ge=1,
-        description="1-indexed page number; 175 results per page.",
+        description="1-indexed page number; `limit` results per page.",
         examples=[1],
+    ),
+    limit: int = Query(
+        default=SEARCH_PAGE_SIZE,
+        ge=1,
+        le=SEARCH_PAGE_SIZE,
+        description="Results per page (max 175). Ask for only what you need.",
+        examples=[10],
     ),
     format: str | None = Query(
         default=None,
@@ -522,7 +530,7 @@ async def search_cards(
         description=(
             "When `false`, skip the `COUNT(*) OVER ()` window — the "
             "response's `total_cards` is `null` and `has_more` is "
-            "derived from `len(data) == 175`. Useful for agents "
+            "derived from `len(data) == limit`. Useful for agents "
             "walking `next_page` links that don't need the running "
             "total on every request. Empty result sets do not 404 "
             "under `count=false` — the 404 rule only applies when "
@@ -630,11 +638,11 @@ async def search_cards(
     )
     primary_clause = sa.nulls_last(primary_directional)
 
-    offset = (page - 1) * SEARCH_PAGE_SIZE
+    offset = (page - 1) * limit
     # D15.15: `count=false` drops the `COUNT(*) OVER ()` window so
     # filter-only queries (`t:legendary`) don't pay a scan-and-count on
     # every page. Total is reported as `null` in the response; agents
-    # walking `next_page` links use `has_more = len(data) == 175` to
+    # walking `next_page` links use `has_more = len(data) == limit` to
     # decide whether to keep paginating.
     select_cols = [
         _CARDS.c.raw.label("raw"),
@@ -648,7 +656,7 @@ async def search_cards(
         .where(where)
         .order_by(primary_clause, _CARDS.c.id.asc())
         .offset(offset)
-        .limit(SEARCH_PAGE_SIZE)
+        .limit(limit)
     )
 
     async with engine.connect() as conn:  # type: ignore[attr-defined]
@@ -689,11 +697,8 @@ async def search_cards(
     else:
         data = [project(entry, projection_paths) for entry in decorated]
 
-    if total is not None:
-        has_more = total > page * SEARCH_PAGE_SIZE
-    else:
-        # D15.15 `count=false`: a full page means there might be more.
-        has_more = len(data) == SEARCH_PAGE_SIZE
+    # D15.15 `count=false`: a full page means there might be more.
+    has_more = total > page * limit if total is not None else len(data) == limit
     body: dict[str, Any] = {
         "object": "list",
         "total_cards": total,
@@ -1180,13 +1185,14 @@ async def get_card_combos(
     async with engine.connect() as conn:  # type: ignore[attr-defined]
         result = await conn.execute(
             text(
-                "SELECT c.oracle_id, "
+                "SELECT c.oracle_id, "  # noqa: S608 (constants only)
                 "       co.id AS combo_id, "
                 "       co.prereqs, "
                 "       co.steps, "
                 "       co.results, "
                 "       resolved.card_names, "
-                "       resolved.card_ids "
+                "       resolved.card_ids, "
+                + REQUIRES_COLUMN +
                 "FROM cards c "
                 "LEFT JOIN combos co ON c.oracle_id = ANY(co.oracle_ids) "
                 "LEFT JOIN LATERAL ( "
@@ -1212,6 +1218,7 @@ async def get_card_combos(
             "prereqs": r.prereqs,
             "steps": r.steps,
             "results": list(r.results or []),
+            "requires": requires_payload(r.requires),
         }
         for r in rows
         if r.combo_id is not None

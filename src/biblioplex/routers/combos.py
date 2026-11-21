@@ -22,6 +22,7 @@ from sqlalchemy import text
 
 from biblioplex.errors import ErrorEnvelope
 from biblioplex.errors import scryfall_error as _scryfall_error
+from biblioplex.routers._combo_requires import REQUIRES_COLUMN, requires_payload
 
 _ERROR_RESPONSE: dict[str, Any] = {
     "model": ErrorEnvelope,
@@ -44,7 +45,7 @@ router = APIRouter(prefix="/combos", tags=["combos"])
 # ponytail: single SELECT reused across search + detail; card-name
 # resolution stays in SQL (same LATERAL trick as /cards/:id/combos).
 _COMBO_SELECT = (
-    "SELECT co.id AS combo_id, "
+    "SELECT co.id AS combo_id, "  # noqa: S608 (constants only)
     "       co.color_identity, "
     "       co.prereqs, "
     "       co.steps, "
@@ -59,7 +60,8 @@ _COMBO_SELECT = (
     "         FROM unnest(co.oracle_ids) WITH ORDINALITY t(oid, ord) "
     "         JOIN cards cd ON cd.oracle_id = t.oid "
     "       ) AS card_ids, "
-    "       array_length(co.oracle_ids, 1) AS card_count "
+    "       array_length(co.oracle_ids, 1) AS card_count, "
+    + REQUIRES_COLUMN +
     "FROM combos co "
 )
 
@@ -91,6 +93,7 @@ def _row_to_combo(r: Any) -> dict[str, Any]:
         "steps": r.steps,
         "results": list(r.results or []),
         "card_count": r.card_count or 0,
+        "requires": requires_payload(r.requires),
     }
 
 

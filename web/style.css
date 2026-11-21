@@ -553,7 +553,7 @@ ul.similar-list .meta span { display: block; }
    wrapping the image + name caption. */
 .combo-cards { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 12px; }
 .combo-card {
-  margin: 0; flex: 0 1 210px;
+  margin: 0; flex: 0 1 min(210px, calc(50% - 6px));
   display: flex; flex-direction: column;
   background: transparent; border: 2px solid transparent; border-radius: 14px;
   padding: 4px; cursor: pointer; color: inherit; font: inherit;
@@ -568,6 +568,23 @@ ul.similar-list .meta span { display: block; }
   background: var(--bg-elev); border: 1px solid var(--border);
   display: block;
 }
+/* Template requirement: an empty card-shaped slot, captioned like the cards. */
+a.combo-req, span.combo-req { text-decoration: none; cursor: default; }
+a.combo-req { cursor: pointer; }
+.combo-req-slot {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; aspect-ratio: 488 / 680; border-radius: 10px;
+  border: 2px dashed var(--border); color: var(--fg-muted); font-size: var(--fs-xl);
+  position: relative; overflow: hidden;
+}
+.combo-req-slot img {
+  position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px);
+  object-fit: cover; border-radius: 6px; opacity: 0; transition: opacity 0.8s ease;
+}
+.combo-req-slot img.on { opacity: 1; }
+a.combo-req:hover .combo-req-slot { border-color: var(--accent); }
+.chip-req { border-style: dashed; text-decoration: none; }
+span.chip-req { cursor: default; }
 .combo-section { margin: 8px 0; font-size: var(--fs-sm); }
 .combo-section > h3 { margin: 0 0 4px; color: var(--fg-muted); font-size: var(--fs-sm); font-weight: 500; }
 .combo-prose { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 3px; }

@@ -198,7 +198,7 @@ Exactly one of `exact`/`fuzzy` is required. Both or neither → `400 bad_request
 
 ### `GET /cards/search?q=<dsl>`
 
-DSL search (see [search-syntax.md](search-syntax.md)); returns a Scryfall `List` envelope, 175 results/page. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`, so collection and wishlist changes show in the next search.
+DSL search (see [search-syntax.md](search-syntax.md)); returns a Scryfall `List` envelope, 175 results/page; `limit=` (1–175) asks for fewer and pages by that size. Always fresh: `Cache-Control: no-cache`, no `ETag`, never `304`, so collection and wishlist changes show in the next search.
 
 Params: `q` (required, ≤1000 chars); `order=name|cmc|power|toughness|released|color|edhrec|rarity|usd|relevance` (default `name`); `dir=auto|asc|desc` (auto → desc for `released`/`usd`/`relevance`, asc otherwise); `page>=1`; `unique=cards|prints|art` (all alias to `cards`); `projection=<comma-list>`. Always tie-broken by `id ASC`. Primary order is `NULLS LAST` so unranked/unpriced/non-numeric power cards sink regardless of direction. `order=relevance` sorts by trigram word-similarity between the query's bare-word terms and `name_search` — best match first; filter-only queries (no bare-word terms) fall back to `name_sort_key asc`.
 
@@ -256,7 +256,7 @@ No schema change: the override rides in the existing `label_reasons` jsonb colum
 
 ### `GET /cards/:id/combos`
 
-Commander Spellbook combos containing this card's `oracle_id`. Returns `{"object":"list","data":[{"id":"<spellbook-id>","cards":["Card A","Card B"],"card_ids":["<uuid>","<uuid>"],"prereqs":"...","steps":"...","results":["Infinite mana"]}]}`. `card_ids` mirrors `cards` order — lets clients (e.g. the web UI) link each combo participant back to `/cards/:id` without a name lookup. Empty `data` when the card exists but no ingested combo references it (or a deployment with `COMBOS_SOURCE_URL` set empty — the `combos` table is empty). `404 not_found` when the card is unknown. Always fresh: `Cache-Control: no-cache`, no `ETag`.
+Commander Spellbook combos containing this card's `oracle_id`. Returns `{"object":"list","data":[{"id":"<spellbook-id>","cards":["Card A","Card B"],"card_ids":["<uuid>","<uuid>"],"prereqs":"...","steps":"...","results":["Infinite mana"],"requires":[]}]}`. `requires` lists the generic cards Spellbook says the combo also needs, beyond the named ones: `[{"name":"Persist Creature","query":"keyword:persist t:creature","quantity":1,"checked":true}]`. `checked` is `false` when the template has no query we can run (prose-only such as "Haste Enabler", or syntax our DSL lacks); `query` is then `null` or unusable. Empty list when the combo has none. `card_ids` mirrors `cards` order — lets clients (e.g. the web UI) link each combo participant back to `/cards/:id` without a name lookup. Empty `data` when the card exists but no ingested combo references it (or a deployment with `COMBOS_SOURCE_URL` set empty — the `combos` table is empty). `404 not_found` when the card is unknown. Always fresh: `Cache-Control: no-cache`, no `ETag`.
 
 ```bash
 curl -fsS http://localhost:8000/cards/56ebc372-aabd-4174-a943-c7bf59e5028d/combos
@@ -281,7 +281,7 @@ Paginated combo browse over the ingested `combos` table. Filters (all optional, 
 * `page`, `page_size` — 1-indexed; `page_size` capped at 100 (default 25).
 * `sort=id|cards` — stable id (default) or ascending card count.
 
-Response `{"object":"list","data":[{...combo...}], "total": <int>, "page": <int>, "page_size": <int>, "has_more": <bool>}`. Each combo carries `id`, `cards`, `card_ids`, `color_identity`, `prereqs`, `steps`, `results`, `card_count`.
+Response `{"object":"list","data":[{...combo...}], "total": <int>, "page": <int>, "page_size": <int>, "has_more": <bool>}`. Each combo carries `id`, `cards`, `card_ids`, `color_identity`, `prereqs`, `steps`, `results`, `card_count`, `requires` (see `GET /cards/:id/combos`).
 
 ```bash
 curl -fsS 'http://localhost:8000/combos/search?ci=UR&result=infinite+mana&page_size=10'
@@ -817,7 +817,7 @@ Errors: empty / absent `decklist` → `422 bad_request`; `>64000` chars → `422
 
 ### `POST /decks/bracket`
 
-Rough 1–5 bracket estimate per WOTC's Sept-2024 Commander bracket system. Body `{"decklist": "<plaintext>"}` (≤64000 chars). Runs the resolve pipeline, counts curated bracket-shifting signals (game-changers, fast mana, MLD, tutors, extra turns) Python-side, and counts subset-matching ingested combos via one SQL. Response `{object: "deck_bracket", bracket: 1..5, signals: {...}, game_changers: [names], notes: [str], unresolved: []}`.
+Rough 1–5 bracket estimate per WOTC's Sept-2024 Commander bracket system. Body `{"decklist": "<plaintext>"}` (≤64000 chars). Runs the resolve pipeline, counts curated bracket-shifting signals (game-changers, fast mana, MLD, tutors, extra turns) Python-side, and counts ingested combos present in the deck (same rule as `/decks/combos`, template requirements included) via one SQL. Response `{object: "deck_bracket", bracket: 1..5, signals: {...}, game_changers: [names], notes: [str], unresolved: []}`.
 
 ```bash
 curl -fsS -X POST -H 'Content-Type: application/json' \
@@ -829,7 +829,7 @@ Rough estimate — WOTC's rubric is qualitative. See [`docs/deck-bracket.md`](de
 
 ### `POST /decks/combos`
 
-Decklist-scoped Commander Spellbook combo lookup. Body `{"decklist": "<plaintext>"}` (≤64000 chars, same cap as `/decks/analyze`). Resolves names via the same exact + trigram-fallback path, then returns every ingested combo whose full card set is a subset of the deck's `oracle_id`s (`combos.oracle_ids <@ deck_oracle_ids` — Postgres array subset, backed by the GIN index).
+Decklist-scoped Commander Spellbook combo lookup. Body `{"decklist": "<plaintext>"}` (≤64000 chars, same cap as `/decks/analyze`). Resolves names via the same exact + trigram-fallback path, then returns every ingested combo whose full card set is a subset of the deck's `oracle_id`s (`combos.oracle_ids <@ deck_oracle_ids` — Postgres array subset, backed by the GIN index) and whose template requirements the deck meets: at least `quantity` deck cards match the template, not counting the combo's own named cards. Unchecked templates count as met. Each `requires` entry adds `in_deck` (the deck cards that fill it) and `missing` (0 here).
 
 ```bash
 curl -fsS -X POST -H 'Content-Type: application/json' \
@@ -837,7 +837,7 @@ curl -fsS -X POST -H 'Content-Type: application/json' \
   http://localhost:8000/decks/combos
 # {"object":"deck_combos",
 #  "combos":[{"id":"spellbook-42","cards":["Isochron Scepter","Dramatic Reversal"],
-#              "prereqs":"...","steps":"...","results":["Infinite mana"]}],
+#              "prereqs":"...","steps":"...","results":["Infinite mana"],"requires":[]}],
 #  "unresolved":[]}
 ```
 
@@ -860,7 +860,7 @@ Errors: empty/absent `decklist` → `422 bad_request`; `>64000` chars → `422`;
 
 ### `POST /decks/near-combos?missing=1&limit=25&owned=<true|false>`
 
-Combos the deck is `1..missing` cards away from completing. cEDH-style signal for "you're 1 card from Thassa's Oracle." Same body as `/decks/combos`; adds per-combo `in_deck` and `gap` lists so consumers can render "have this, get that." Each gap card carries `owned` (in your inventory, quantity > 0). `owned=true` keeps only combos whose missing cards you all own (finish without buying); `owned=false` keeps the ones needing a card you don't own; unset returns both.
+Combos the deck is `1..missing` cards away from completing. cEDH-style signal for "you're 1 card from Thassa's Oracle." Same body as `/decks/combos`; adds per-combo `in_deck` and `gap` lists so consumers can render "have this, get that." Each gap card carries `owned` (in your inventory, quantity > 0). Template cards the deck still lacks count toward `missing`; their `requires` entry carries `missing` and `owned` (matching inventory cards outside the deck), and `gap` lists only named cards. `owned=true` keeps only combos whose missing cards you all own, including enough cards for each missing template (finish without buying); `owned=false` keeps the ones needing a card you don't own; unset returns both.
 
 ```bash
 curl -fsS -X POST -H 'Content-Type: application/json' \

@@ -792,9 +792,9 @@ async function _runBuildSearch() {
   }
   out.innerHTML = `<p class="empty">Searching…</p>`;
   try {
-    // Over-fetch so client-side filters (hide-in-deck, ramp-land) still
-    // leave a full page.
-    const res = await api(`/cards/search?q=${encodeURIComponent(parts.join(" "))}&order=${sort}&limit=40&projection=${encodeURIComponent(_BUILD_LIST_PROJ)}`);
+    // Full page (no limit): hide-in-deck and ramp-land filter client-side,
+    // and a deck can hold most of the top 40.
+    const res = await api(`/cards/search?q=${encodeURIComponent(parts.join(" "))}&order=${sort}&projection=${encodeURIComponent(_BUILD_LIST_PROJ)}`);
     let cards = res.data || [];
     if ($("#bsHide") && $("#bsHide").checked) cards = cards.filter((c) => !_buildHas(c.name));
     if (rampMode) cards = cards.filter((c) => !_isLandType(c.type_line) || _landRamps(c));
@@ -1156,20 +1156,31 @@ function _comboLink(c, title, extra) {
     <span>${title}</span>${res ? `<span class="build-combo-res">${escapeHtml(res)}</span>` : ""}</a>${extra || ""}</li>`;
 }
 
+// Template slots the deck still has to fill ("Persist Creature").
+function _comboGapReqs(c) {
+  return (c.requires || []).filter((r) => r.missing > 0);
+}
+
 function _renderComboPanel(present, near) {
   present = present || [];
   near = near || [];
-  const owned = near.filter((c) => (c.gap || []).length && c.gap.every((g) => g.owned));
+  const owned = near.filter((c) => ((c.gap || []).length || _comboGapReqs(c).length)
+    && (c.gap || []).every((g) => g.owned)
+    && _comboGapReqs(c).every((r) => (r.owned || 0) >= r.missing));
   const buy = near.filter((c) => !owned.includes(c));
   const nearRow = (c, add) => {
     const gap = (c.gap || []).map((g) => g.name);
+    const need = gap.map(escapeHtml).concat(_comboGapReqs(c).map(_comboReqLabel)).join(", ");
     const have = (c.in_deck || []).join(", ");
-    const title = `<strong>${escapeHtml(gap.join(", "))}</strong>${have ? ` + ${escapeHtml(have)}` : ""}`;
+    const title = `<strong>${need}</strong>${have ? ` + ${escapeHtml(have)}` : ""}`;
     return _comboLink(c, title, add ? gap.map((n) => _addBtn(n, !!_build.deck[n])).join("") : "");
   };
+  // A filled slot reads as the card filling it; unchecked ones keep the template name.
+  const presentTitle = (c) => (c.cards || []).map(escapeHtml).concat((c.requires || []).map((r) =>
+    (r.in_deck || []).length ? escapeHtml(r.in_deck.slice(0, r.quantity).join(" + ")) : _comboReqLabel(r))).join(" + ");
   const group = (label, rows) => rows.length
     ? `<h4 class="build-combos-h">${label} · ${rows.length}</h4><ul class="build-combos">${rows.join("")}</ul>` : "";
-  const html = group("In the deck", present.map((c) => _comboLink(c, escapeHtml((c.cards || []).join(" + ")))))
+  const html = group("In the deck", present.map((c) => _comboLink(c, presentTitle(c))))
     + group("From your collection", owned.map((c) => nearRow(c, true)))
     + group("Missing cards", buy.map((c) => nearRow(c, false)));
   return html ? `<h3>Combos</h3>${html}` : "";

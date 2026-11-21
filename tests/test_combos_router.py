@@ -118,6 +118,7 @@ def _row(**kwargs: Any) -> Any:
         "card_names": ["Isochron Scepter", "Dramatic Reversal"],
         "card_ids": ["id-a", "id-b"],
         "card_count": 2,
+        "requires": [],
     }
     base.update(kwargs)
     return SimpleNamespace(**base)
@@ -352,3 +353,14 @@ async def test_search_ci_c_with_colors_is_redundant(app: FastAPI) -> None:
     assert engine.last_conn is not None
     for _sql, params in engine.last_conn.calls:
         assert params.get("ci") == ["U"]
+
+
+@pytest.mark.asyncio
+async def test_combo_lists_its_template_requirements(app: FastAPI) -> None:
+    req = {"name": "Persist Creature", "query": "keyword:persist t:creature",
+           "quantity": 1, "checked": True}
+    engine = _FakeEngine([_row(requires=[req])], total=1)
+    app.dependency_overrides[get_read_engine] = lambda: engine
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
+        r = await ac.get("/combos/spellbook-1")
+    assert r.json()["requires"] == [req]

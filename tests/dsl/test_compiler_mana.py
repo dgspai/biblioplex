@@ -65,3 +65,32 @@ def test_m_empty_query_value_matches_any_nonempty_face() -> None:
     cards = cards_table()
     sql = render(compile_ast(parse('m:""'), cards))
     assert "EXISTS" in sql.upper()
+
+
+def test_m_less_than_zero_means_no_mana_cost() -> None:
+    # Commander Spellbook templates use `-m<{0}` to drop uncastable cards.
+    cards = cards_table()
+    sql = render(compile_ast(parse("m<{0}"), cards))
+    assert "mana_cost_search" in sql
+    assert "{W}" not in sql
+
+
+def test_m_less_than_other_costs_still_unsupported() -> None:
+    import pytest
+
+    from biblioplex.dsl.compiler import UnsupportedOperatorError
+
+    with pytest.raises(UnsupportedOperatorError):
+        compile_ast(parse("m<WW"), cards_table())
+
+
+def test_generic_pip_sum_names_the_captures_column() -> None:
+    # Without a column list Postgres has no `captures` column: m:2W was a 500.
+    sql = render(compile_ast(parse("m:2W"), cards_table()))
+    assert "(captures)" in sql
+
+
+def test_mana_regex_matches_the_stored_cost_text() -> None:
+    """`m:/…/` reaches a single face's cost, e.g. a prepared card's spell half."""
+    sql = render(compile_ast(parse(r"m:/ \{1\}$/"), cards_table()))
+    assert "mana_cost_search" in sql and "~*" in sql

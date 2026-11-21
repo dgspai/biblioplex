@@ -82,6 +82,7 @@ def _row(**kwargs: Any) -> Any:
         "results": None,
         "card_names": None,
         "card_ids": None,
+        "requires": None,
     }
     base.update(kwargs)
     return SimpleNamespace(**base)
@@ -213,3 +214,14 @@ async def test_combos_endpoint_null_card_names_survive(app: FastAPI) -> None:
     body = r.json()
     assert body["data"][0]["cards"] == []
     assert body["data"][0]["card_ids"] == []
+
+
+@pytest.mark.asyncio
+async def test_card_combos_list_template_requirements(app: FastAPI) -> None:
+    req = {"name": "Persist Creature", "query": None, "quantity": 2, "checked": False}
+    app.dependency_overrides[get_read_engine] = lambda: _FakeEngine(
+        [_row(combo_id="c1", card_names=["A"], card_ids=["a"], requires=[req])]
+    )
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as ac:
+        r = await ac.get(f"/cards/{_VALID_UUID}/combos")
+    assert r.json()["data"][0]["requires"] == [req]
