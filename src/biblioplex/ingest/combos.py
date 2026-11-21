@@ -43,9 +43,13 @@ from typing import IO, Any, Protocol
 
 import httpx
 import ijson
+import sqlalchemy as sa
 from sqlalchemy import text
 
 from biblioplex import SCRYFALL_HEADERS
+from biblioplex.dsl.cards_table import CARDS
+from biblioplex.dsl.compiler import compile_ast
+from biblioplex.dsl.parser import parse
 
 _log = logging.getLogger(__name__)
 
@@ -72,6 +76,18 @@ _INSERT_SQL: str = (
     "prereqs = EXCLUDED.prereqs, "
     "steps = EXCLUDED.steps, "
     "results = EXCLUDED.results"
+)
+
+_TEMPLATE_UPSERT_SQL: str = (
+    "INSERT INTO combo_templates (id, name, scryfall_query) "
+    "VALUES (:template_id, :name, :query) "
+    "ON CONFLICT (id) DO UPDATE SET "
+    "name = EXCLUDED.name, scryfall_query = EXCLUDED.scryfall_query"
+)
+_REQUIRES_INSERT_SQL: str = (
+    "INSERT INTO combo_requires (combo_id, template_id, quantity) "
+    "VALUES (:combo_id, :template_id, :quantity) "
+    "ON CONFLICT (combo_id, template_id) DO UPDATE SET quantity = EXCLUDED.quantity"
 )
 
 # Bug.27: `CAST(:names AS text[])` not `:names::text[]`. SQLAlchemy
@@ -189,9 +205,48 @@ def build_rows(
                 "prereqs": prereqs,
                 "steps": steps,
                 "results": _normalize_results(combo.get("results")),
+                "requires": list(combo.get("requires") or []),
             }
         )
     return rows
+
+
+def template_card_query(query: str | None) -> sa.Select[Any] | None:
+    """SELECT of oracle_ids matching a template's Scryfall query, or None
+    when there is no query or our DSL can't run it (requirement unchecked)."""
+    if not query:
+        return None
+    try:
+        pred = compile_ast(parse(query), CARDS)
+    except ValueError:
+        return None
+    return sa.select(CARDS.c.oracle_id).where(pred).distinct()
+
+
+def _map_requires(value: Any) -> list[dict[str, Any]] | None:
+    """Spellbook ``requires`` → template rows; None if any entry is malformed."""
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        return None
+    out: list[dict[str, Any]] = []
+    for r in value:
+        tpl = r.get("template") if isinstance(r, dict) else None
+        if not isinstance(tpl, dict):
+            return None
+        tid, name, query = tpl.get("id"), tpl.get("name"), tpl.get("scryfallQuery")
+        qty = r.get("quantity", 1)
+        if not isinstance(tid, int) or not isinstance(name, str) or not name:
+            return None
+        if not isinstance(qty, int) or qty < 1:
+            return None
+        out.append({
+            "template_id": tid,
+            "name": name,
+            "query": query if isinstance(query, str) and query else None,
+            "quantity": qty,
+        })
+    return out
 
 
 def _map_v2_variant(variant: dict[str, Any]) -> dict[str, Any] | None:
@@ -239,6 +294,10 @@ def _map_v2_variant(variant: dict[str, Any]) -> dict[str, Any] | None:
         cards.append(name)
     if not cards:
         return None
+    # Like Bug.20: dropping one bad requirement would make the combo look complete.
+    requires = _map_requires(variant.get("requires"))
+    if requires is None:
+        return None
     produces = variant.get("produces") or []
     results: list[str] = []
     if isinstance(produces, list):
@@ -266,6 +325,7 @@ def _map_v2_variant(variant: dict[str, Any]) -> dict[str, Any] | None:
         "prereqs": prereqs,
         "steps": steps,
         "results": results,
+        "requires": requires,
     }
 
 
@@ -388,6 +448,7 @@ async def ingest_combos_from_url(engine: _Engine, url: str) -> int:
     _log.info("combo ingest starting: url=%s", url)
 
     insert_stmt = text(_INSERT_SQL)
+    template_queries: dict[int, str | None] = {}
     seen_ids: set[str] = set()
     name_to_oracle: dict[str, str] = {}
     tried_names: set[str] = set()  # lowercased; avoids re-querying misses
@@ -419,9 +480,19 @@ async def ingest_combos_from_url(engine: _Engine, url: str) -> int:
             total_dropped += (raw_page_count - len(page)) + (len(page) - len(rows))
             if not rows:
                 continue
+            requires = [{"combo_id": r["id"], **q} for r in rows for q in r.pop("requires")]
+            templates = list({q["template_id"]: q for q in requires}.values())
             async with engine.begin() as conn:
                 for i in range(0, len(rows), COMBOS_INSERT_BATCH):
                     await conn.execute(insert_stmt, rows[i : i + COMBOS_INSERT_BATCH])
+                await conn.execute(
+                    text("DELETE FROM combo_requires WHERE combo_id = ANY(:ids)"),
+                    {"ids": [r["id"] for r in rows]},
+                )
+                if requires:
+                    await conn.execute(text(_TEMPLATE_UPSERT_SQL), templates)
+                    await conn.execute(text(_REQUIRES_INSERT_SQL), requires)
+            template_queries.update((t["template_id"], t["query"]) for t in templates)
             for r in rows:
                 seen_ids.add(r["id"])
             total_written += len(rows)
@@ -439,9 +510,36 @@ async def ingest_combos_from_url(engine: _Engine, url: str) -> int:
             {"seen": sorted(seen_ids)},
         )
     deleted = result.rowcount if result.rowcount is not None else -1
+    await _resolve_template_cards(engine, template_queries)
     _log.info(
         "combo ingest wrote %d rows from %d source combos"
         " (dropped %d unresolved, deleted %d stale)",
         total_written, total_seen, total_dropped, deleted,
     )
     return total_written
+
+
+async def _resolve_template_cards(engine: _Engine, queries: dict[int, str | None]) -> None:
+    """Store each template's matching oracle_ids; drop templates no combo uses."""
+    unchecked = 0
+    async with engine.begin() as conn:
+        await conn.execute(text(
+            "DELETE FROM combo_templates t WHERE NOT EXISTS "
+            "(SELECT 1 FROM combo_requires r WHERE r.template_id = t.id)"
+        ))
+        for tid, query in queries.items():
+            stmt = template_card_query(query)
+            oids = None
+            if stmt is not None:
+                # Zero matches = our DSL misreads the query (`~`, anchors), not a real empty set.
+                oids = [str(o) for o in (await conn.execute(stmt)).scalars()] or None
+            if oids is None:
+                unchecked += 1
+            await conn.execute(
+                text(
+                    "UPDATE combo_templates SET oracle_ids = CAST(:oids AS uuid[]) "
+                    "WHERE id = :id"
+                ),
+                {"oids": oids, "id": tid},
+            )
+    _log.info("combo templates: %d resolved, %d unchecked", len(queries) - unchecked, unchecked)

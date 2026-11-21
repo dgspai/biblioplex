@@ -296,6 +296,22 @@ CREATE INDEX IF NOT EXISTS combos_prereqs_trgm
 CREATE INDEX IF NOT EXISTS combos_steps_trgm
     ON combos USING gin (steps gin_trgm_ops);
 
+-- Spellbook "template" requirements: generic cards a combo also needs
+-- ("1x Persist Creature"). oracle_ids = cards matching scryfall_query;
+-- NULL when the query is missing or our DSL can't run it (unchecked).
+CREATE TABLE IF NOT EXISTS combo_templates (
+    id             integer PRIMARY KEY,
+    name           text    NOT NULL,
+    scryfall_query text,
+    oracle_ids     uuid[]
+);
+CREATE TABLE IF NOT EXISTS combo_requires (
+    combo_id    text    NOT NULL REFERENCES combos (id) ON DELETE CASCADE,
+    template_id integer NOT NULL REFERENCES combo_templates (id),
+    quantity    integer NOT NULL DEFAULT 1,
+    PRIMARY KEY (combo_id, template_id)
+);
+
 -- §4.2 step 3: staging table fed by ingest before the collapse step.
 -- Same shape as `cards` MINUS:
 --   * generated columns (name_sort_key, is_commander, embed_source)
