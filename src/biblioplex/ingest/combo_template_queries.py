@@ -28,6 +28,8 @@ TEMPLATE_QUERIES: dict[int, str] = {
     118: "otag:animate-land",
     119: r"o:/tap an untapped creature you control:/",
     120: r"t:creature o:/when (this creature|[^,\n]*) enters[^\n]*create [^\n]*creature token/",
+    # Spell half is the last cost in mana_cost_search; X counts as 0, hybrid as one.
+    152: r"keyword:prepared m:/ (\{X\})*(\{1\}|\{[^}0-9X]+\})(\{X\})*$/",
     157: r"t:creature o:/(when|whenever)[^\n]*(enters|dies)[^\n]*you gain ([4-9]|1[0-9]) life/",
     183: r"t:creature o:/(enters|enter)[^\n]*earthbend/",
     195: r"o:/(if|as)[^\n]*\+1\/\+1 counters? would be (put|placed)[^\n]*(plus|twice|that many|additional)/",
