@@ -37,7 +37,9 @@ def _render(tmp_path: Path, present: list[object], near: list[object]) -> str:
         _fn(CORE, "escapeHtml")
         + "const _build = { deck: { 'Walking Ballista': 1 } };\n"
         + _fn(BUILD, "_addBtn")
+        + _fn(CORE, "_comboReqLabel")
         + _fn(BUILD, "_comboLink")
+        + _fn(BUILD, "_comboGapReqs")
         + _fn(BUILD, "_renderComboPanel")
         + f"console.log(_renderComboPanel({json.dumps(present)}, {json.dumps(near)}));\n"
     )

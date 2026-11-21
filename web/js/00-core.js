@@ -1177,6 +1177,31 @@ async function loadSimilarInto(id, container) {
   }
 }
 
+// Spellbook template requirement ("Persist Creature"): a generic card slot.
+function _comboReqLabel(r) {
+  return escapeHtml(r.name) + (r.quantity > 1 ? ` ×${r.quantity}` : "");
+}
+
+// Unchecked = no usable query, so we can't tell whether a deck has one.
+function _comboReqMark(r) {
+  return r.checked && r.query ? ""
+    : `<span aria-hidden="true">?</span><span class="visually-hidden">not checked</span>`;
+}
+
+// Checked templates link to a Cards search for their query.
+function _comboReqTag(r, cls, inner) {
+  const mark = _comboReqMark(r);
+  const body = inner === undefined ? _comboReqLabel(r) + (mark ? " " + mark : "") : inner;
+  return mark ? `<span class="${cls} unchecked">${body}</span>`
+    : `<a class="${cls}" href="?q=${encodeURIComponent(r.query)}">${body}</a>`;
+}
+
+function _comboTitle(combo) {
+  const parts = (combo.cards || []).map(escapeHtml)
+    .concat((combo.requires || []).map(_comboReqLabel));
+  return parts.length ? parts.join(" + ") : `Combo ${escapeHtml(combo.id || "?")}`;
+}
+
 // Render one combo as a collapsed <details> with clickable card chips,
 // prereqs/steps/results prose, and a link to Commander Spellbook. Chip
 // carries `data-related-id` so the existing detailEl click handler
@@ -1192,7 +1217,7 @@ function _renderComboEntry(combo) {
       return `<button type="button" class="chip related-chip" data-related-id="${escapeHtml(cid)}">${escapeHtml(n)}</button>`;
     }
     return `<span class="chip chip-static">${escapeHtml(n)}</span>`;
-  }).join("");
+  }).join("") + (combo.requires || []).map((r) => _comboReqTag(r, "chip chip-req")).join("");
   const results = Array.isArray(combo.results) ? combo.results : [];
   const resultsLine = results.length
     ? `<p class="combo-results"><strong>Produces:</strong> ${escapeHtml(results.join(", "))}</p>`
@@ -1213,9 +1238,7 @@ function _renderComboEntry(combo) {
     ? `<a class="ext-link" href="${spellbookUrl}" target="_blank" rel="noopener">Spellbook</a>`
     : "";
   const links = [localLink, link].filter(Boolean).join(" · ");
-  const summary = names.length
-    ? escapeHtml(names.join(" + "))
-    : `Combo ${escapeHtml(combo.id || "?")}`;
+  const summary = _comboTitle(combo);
   return `<details class="combo-entry">
     <summary>${summary}${resultsLine ? ` <span class="combo-summary-tail">→ ${escapeHtml(results.join(", "))}</span>` : ""}</summary>
     <div class="combo-body">

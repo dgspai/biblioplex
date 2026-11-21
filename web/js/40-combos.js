@@ -9,11 +9,8 @@
 // during boot before this section executes.
 
 function _renderComboRow(combo, idx) {
-  const names = Array.isArray(combo.cards) ? combo.cards : [];
   const results = Array.isArray(combo.results) ? combo.results : [];
-  const title = names.length
-    ? escapeHtml(names.join(" + "))
-    : `Combo ${escapeHtml(combo.id || "?")}`;
+  const title = _comboTitle(combo);
   const tail = results.length
     ? `<div class="meta">${escapeHtml(results.join(", "))}</div>`
     : "";
@@ -65,7 +62,8 @@ function _renderComboDetail(combo) {
       <img class="combo-thumb" data-card-thumb="${escapeHtml(cid)}" alt="${escapeHtml(name)}" loading="lazy">
       <figcaption>${escapeHtml(name)}</figcaption>
     </button>`;
-  }).join("");
+  }).join("") + (combo.requires || []).map((r) => _comboReqTag(r, "combo-card combo-req",
+    `<span class="combo-req-slot">${_comboReqMark(r)}</span><figcaption>${_comboReqLabel(r)}</figcaption>`)).join("");
   const results = Array.isArray(combo.results) ? combo.results : [];
   const resultsBlock = results.length
     ? `<div class="combo-section"><h3>Produces</h3><ul class="combo-prose">${
@@ -84,9 +82,7 @@ function _renderComboDetail(combo) {
         stepItems.map((s) => `<li>${renderSymbols(s)}</li>`).join("")
       }</ol></div>`
     : "";
-  const title = names.length
-    ? escapeHtml(names.join(" + "))
-    : `Combo ${escapeHtml(combo.id || "?")}`;
+  const title = _comboTitle(combo);
   const link = combo.id
     ? `<a class="ext-link" href="https://commanderspellbook.com/combo/${encodeURIComponent(combo.id)}/" target="_blank" rel="noopener">Spellbook</a>`
     : "";
