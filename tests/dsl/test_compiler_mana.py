@@ -65,3 +65,20 @@ def test_m_empty_query_value_matches_any_nonempty_face() -> None:
     cards = cards_table()
     sql = render(compile_ast(parse('m:""'), cards))
     assert "EXISTS" in sql.upper()
+
+
+def test_m_less_than_zero_means_no_mana_cost() -> None:
+    # Commander Spellbook templates use `-m<{0}` to drop uncastable cards.
+    cards = cards_table()
+    sql = render(compile_ast(parse("m<{0}"), cards))
+    assert "mana_cost_search" in sql
+    assert "{W}" not in sql
+
+
+def test_m_less_than_other_costs_still_unsupported() -> None:
+    import pytest
+
+    from biblioplex.dsl.compiler import UnsupportedOperatorError
+
+    with pytest.raises(UnsupportedOperatorError):
+        compile_ast(parse("m<WW"), cards_table())

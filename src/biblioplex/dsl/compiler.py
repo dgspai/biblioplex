@@ -1073,6 +1073,9 @@ def _compile_mana(node: KeyValue, cards: sa.Table) -> sa.ColumnElement[bool]:
     """
     op = node.op
     query_ms = parse_cost_symbols(node.value)
+    if op == "<" and not any(query_ms.values()):
+        # ponytail: only `m<{0}` (no mana cost); general strict-subset `<` still raises.
+        return sa.func.coalesce(cards.c.mana_cost_search, "").op("~")(r"^\s*$")
 
     # Build per-face predicate: a SQLAlchemy expression referencing `face_cost`.
     face_cost: sa.ColumnElement[str] = sa.literal_column("face_cost", sa.Text)
