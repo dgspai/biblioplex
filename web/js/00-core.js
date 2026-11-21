@@ -1193,8 +1193,19 @@ function _comboReqTag(r, cls, inner) {
   const mark = _comboReqMark(r);
   const body = inner === undefined ? _comboReqLabel(r) + (mark ? " " + mark : "") : inner;
   return mark ? `<span class="${cls} unchecked">${body}</span>`
-    : `<a class="${cls}" href="?q=${encodeURIComponent(r.query)}">${body}</a>`;
+    : `<a class="${cls}" href="?q=${encodeURIComponent(r.query)}" data-search-q="${escapeHtml(r.query)}">${body}</a>`;
 }
+
+// Search links open Cards in place; modified clicks keep the browser's new-tab.
+document.addEventListener("click", (e) => {
+  const a = e.target.closest?.("a[data-search-q]");
+  if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  e.preventDefault();
+  _setTab("search");
+  qInput.value = a.dataset.searchQ;
+  selectedId = null;
+  form.dispatchEvent(new SubmitEvent("submit", { cancelable: true }));
+});
 
 function _comboTitle(combo) {
   const parts = (combo.cards || []).map(escapeHtml)

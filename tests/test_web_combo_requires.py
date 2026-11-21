@@ -100,3 +100,31 @@ def test_build_near_combo_missing_only_a_template_you_own(tmp_path: Path) -> Non
 
 def test_requirement_slot_keeps_card_proportions() -> None:
     assert ".combo-req-slot" in CSS and "aspect-ratio" in CSS[CSS.index(".combo-req-slot"):][:300]
+
+
+def test_requirement_link_opens_cards_in_place(tmp_path: Path) -> None:
+    """Plain click switches to Cards with the query; href stays for new-tab and agents."""
+    out = _run(tmp_path, f"console.log(_comboReqTag({json.dumps(PERSIST)}, 'chip'));")
+    assert 'data-search-q="keyword:persist t:creature"' in out
+    handler = CORE[CORE.index('closest?.("a[data-search-q]")') - 300:][:900]
+    assert "preventDefault" in handler and '_setTab("search")' in handler
+    assert "metaKey" in handler and "ctrlKey" in handler
+
+
+def test_slot_cycles_through_matching_cards() -> None:
+    body = _fn(COMBOS, "_fillComboReqSlides")
+    assert "/cards/search?q=" in body and "order=edhrec" in body and ".slice(0, 6)" in body
+    assert "prefers-reduced-motion" in body
+    assert "isConnected" in body and "clearInterval" in body
+
+
+def test_slideshow_is_decorative_and_crossfades() -> None:
+    body = _fn(COMBOS, "_fillComboReqSlides")
+    assert 'alt=""' in body
+    rule = CSS[CSS.index(".combo-req-slot img"):][:400]
+    assert "position: absolute" in rule and "transition" in rule
+
+
+def test_slot_is_filled_once_per_render() -> None:
+    body = _fn(COMBOS, "_fillComboReqSlides")
+    assert body.index("delete slot.dataset.reqQ") < body.index("await api(")
