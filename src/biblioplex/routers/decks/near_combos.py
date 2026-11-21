@@ -18,7 +18,7 @@ from biblioplex.decklist.sections import parse_sections
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.routers.cards import _Engine, get_read_engine
 
-from ._combo_requires import REQUIRES_CTE, REQUIRES_LATERAL_OWNED, requires_payload
+from .._combo_requires import REQUIRES_CTE, REQUIRES_LATERAL_OWNED, requires_payload
 from ._common import _ERROR_RESPONSE, DECKLIST_MAX_LEN
 
 

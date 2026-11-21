@@ -43,6 +43,7 @@ from biblioplex.dsl.parser import ParseError, parse
 from biblioplex.errors import ErrorEnvelope
 from biblioplex.errors import scryfall_error as _scryfall_error
 from biblioplex.projection import ProjectionError, parse_projection, project
+from biblioplex.routers._combo_requires import REQUIRES_COLUMN, requires_payload
 
 # OpenAPI ``responses=`` fragment for the Scryfall-shaped 4xx body. Reused
 # across endpoints so the schema documents 4xx shapes (D8.2) without each
@@ -1180,13 +1181,14 @@ async def get_card_combos(
     async with engine.connect() as conn:  # type: ignore[attr-defined]
         result = await conn.execute(
             text(
-                "SELECT c.oracle_id, "
+                "SELECT c.oracle_id, "  # noqa: S608 (constants only)
                 "       co.id AS combo_id, "
                 "       co.prereqs, "
                 "       co.steps, "
                 "       co.results, "
                 "       resolved.card_names, "
-                "       resolved.card_ids "
+                "       resolved.card_ids, "
+                + REQUIRES_COLUMN +
                 "FROM cards c "
                 "LEFT JOIN combos co ON c.oracle_id = ANY(co.oracle_ids) "
                 "LEFT JOIN LATERAL ( "
@@ -1212,6 +1214,7 @@ async def get_card_combos(
             "prereqs": r.prereqs,
             "steps": r.steps,
             "results": list(r.results or []),
+            "requires": requires_payload(r.requires),
         }
         for r in rows
         if r.combo_id is not None

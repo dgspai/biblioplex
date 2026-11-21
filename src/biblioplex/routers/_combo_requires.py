@@ -58,18 +58,32 @@ _OWNED_SQL = (
 )
 REQUIRES_LATERAL_OWNED = _LATERAL.format(owned_sql=_OWNED_SQL)
 
+# Deck-less variant for combo browsing: scalar subquery over `co`.
+REQUIRES_COLUMN = (
+    "(SELECT COALESCE(jsonb_agg(jsonb_build_object( "
+    "     'name', t.name, 'query', t.scryfall_query, "
+    "     'quantity', r.quantity, 'checked', t.oracle_ids IS NOT NULL "
+    "   ) ORDER BY t.id), CAST('[]' AS jsonb)) "
+    " FROM combo_requires r JOIN combo_templates t ON t.id = r.template_id "
+    " WHERE r.combo_id = co.id) AS requires "
+)
+
 
 def requires_payload(value: Any) -> list[dict[str, Any]]:
-    """``req.requires`` jsonb → response list (psycopg already decodes jsonb)."""
-    return [
-        {
+    """Requires jsonb → response list (psycopg already decodes jsonb).
+    Deck fields (in_deck, missing, owned) appear only when the SQL computed them."""
+    out = []
+    for r in value or []:
+        item: dict[str, Any] = {
             "name": r["name"],
             "query": r["query"],
             "quantity": int(r["quantity"]),
             "checked": bool(r["checked"]),
-            "in_deck": list(r["in_deck"] or []),
-            "missing": int(r["missing"]),
-            **({"owned": int(r["owned"])} if r.get("owned") is not None else {}),
         }
-        for r in (value or [])
-    ]
+        if "in_deck" in r:
+            item["in_deck"] = list(r["in_deck"] or [])
+            item["missing"] = int(r["missing"])
+        if r.get("owned") is not None:
+            item["owned"] = int(r["owned"])
+        out.append(item)
+    return out
