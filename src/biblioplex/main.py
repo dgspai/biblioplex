@@ -387,7 +387,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Construct engines eagerly so dependencies that read app.state.read_engine
     # work outside the lifespan context (e.g. TestClient / ASGITransport in
     # tests). Lifespan dispose remains in charge of teardown when invoked.
-    app.state.read_engine = make_read_engine(resolved.database_url)
+    app.state.read_engine = make_read_engine(
+        resolved.database_url, statement_timeout_ms=resolved.read_statement_timeout_ms
+    )
     app.state.refresh_engine = make_refresh_engine(resolved.database_url)
     # Process-local refresh telemetry — /health snapshots it, /admin/refresh
     # mutates it. Single instance per app so endpoints share the same view.

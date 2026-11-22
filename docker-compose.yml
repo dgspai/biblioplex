@@ -27,6 +27,7 @@ services:
       AUTO_REFRESH_IF_EMPTY: ${AUTO_REFRESH_IF_EMPTY:-true}
       COMBOS_SOURCE_URL: ${COMBOS_SOURCE_URL-https://json.commanderspellbook.com/variants.json.gz}
       MCP_AUTH_TOKEN: ${MCP_AUTH_TOKEN:-}
+      READ_STATEMENT_TIMEOUT_MS: ${READ_STATEMENT_TIMEOUT_MS:-5000}
       HF_HOME: /models
     volumes:
       - hfcache:/models

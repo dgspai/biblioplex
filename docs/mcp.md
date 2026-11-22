@@ -154,7 +154,7 @@ These work against a stack with a collection and a few decks imported. The tool 
 
 - **No auth on the REST API, no rate limiting.** By design; `/mcp` has optional bearer auth (above). Deploy behind whatever your environment uses; see [SECURITY.md](../SECURITY.md).
 - **CORS closed by default** (`CORS_ORIGINS` empty). Cross-site browser writes are rejected; see [SECURITY.md](../SECURITY.md).
-- **5s statement timeout** on the read pool (`statement_timeout=5000ms`). Bounds runaway `ILIKE`/regex queries. The refresh worker uses a separate pool with no timeout.
+- **Statement timeout** on the read pool (`READ_STATEMENT_TIMEOUT_MS`, default 5000). Bounds runaway `ILIKE`/regex queries. The refresh worker uses a separate pool with no timeout.
 - **Tool list size.** `tools/list` is about 86 KB, roughly 20k tokens of client context. Biblioplex has no setting to expose a subset of tools.
 - **Write-tool flags.** If your client supports tool annotations, write tools are flagged.
 - **Error envelope** is Scryfall-shaped for every error, including request-validation failures: `{"object":"error","status":<int>,"code":"<slug>","details":"<msg>"}`. Codes in use: `not_found`, `bad_request`, `unsupported_format`, `unsupported_operator`, `invalid_projection`.
