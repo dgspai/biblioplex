@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.24.0 (2026-11-22)
+
+### Features
+
+- **web**: Service worker serves the last good copy when the server fails
+  ([#44](https://github.com/dgspai/biblioplex/pull/44),
+  [`5b8356d`](https://github.com/dgspai/biblioplex/commit/5b8356dd26e6f6f9b490cb752ffe8f3a3470286d))
+
+
 ## v0.23.0 (2026-11-21)
 
 ### Features
