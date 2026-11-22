@@ -38,7 +38,7 @@ tags (independent — can run anytime, even alongside ingest)
 ```
 src/biblioplex/    package source
   config.py        env-backed Settings (pydantic-settings)
-  db.py            async engine factories (read pool w/ 5s statement_timeout)
+  db.py            async engine factories (read pool w/ statement_timeout)
   main.py          FastAPI app + lifespan
   routers/         HTTP routers (health, admin, cards, catalog, combos,
                    commanders, deck_library, inventory, wishlist,

@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     # with `openssl rand -hex 32`. Compose forwarding rule per CLAUDE.md
     # Env vars section — add to services.api.environment: too.
     mcp_auth_token: str = ""
+    # Per-query cap on request-serving SQL. Raise on slow disks so requests
+    # finish instead of 500ing; refresh has no cap.
+    read_statement_timeout_ms: int = 5000
 
 
 def get_settings() -> Settings:
