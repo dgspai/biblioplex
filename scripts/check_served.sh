@@ -111,6 +111,7 @@ compare_asset "app.js" "$WORK_DIR/app.js.expected" "app.js"
 compare_asset "index.html" "$WEB_DIR/index.html" "index.html"
 compare_asset "style.css"  "$WEB_DIR/style.css"  "style.css"
 compare_asset "helpers.js" "$WEB_DIR/helpers.js" "helpers.js"
+compare_asset "sw.js"      "$WEB_DIR/sw.js"      "sw.js"
 
 if [ "${#STALE[@]}" -gt 0 ]; then
   echo
