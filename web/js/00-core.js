@@ -1489,3 +1489,4 @@ themeBtn.addEventListener("click", () => {
 });
 applyTheme(localStorage.getItem("theme"));
 
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
