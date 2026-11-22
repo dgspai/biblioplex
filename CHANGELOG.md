@@ -2,6 +2,15 @@
 
 <!-- version list -->
 
+## v0.25.0 (2026-11-22)
+
+### Features
+
+- **config**: READ_STATEMENT_TIMEOUT_MS sets the request query timeout
+  ([#43](https://github.com/dgspai/biblioplex/pull/43),
+  [`7477813`](https://github.com/dgspai/biblioplex/commit/74778133f7d0bb477379295cbc2e4b7cd37e77ff))
+
+
 ## v0.24.0 (2026-11-22)
 
 ### Features
